@@ -128,6 +128,7 @@ class Admin(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def sudo(self, ctx, member: discord.Member, *, message):
+        """Pisze jako inny użytkownik (Webhook)"""
         await ctx.message.delete()
         webhook = await ctx.channel.create_webhook(name=member.display_name)
         await webhook.send(str(message), username=member.display_name, avatar_url=member.avatar.url or member.default_avatar.url)
@@ -136,11 +137,34 @@ class Admin(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def fakeban(self, ctx, member: discord.Member):
+        """Udawany ban"""
         await ctx.message.delete()
         embed = discord.Embed(title="🔨 BAN HAMMER!", description=f"Baka **{member.name}** zbanowany!\nPowód: Bycie zbyt słodkim", color=KAWAII_RED)
         embed.set_image(url=random.choice(GIFS_BAN))
         embed.set_footer(text="To tylko żart... ( ͡° ͜ʖ ͡°)")
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def dm(self, ctx, member: discord.Member, *, message):
+        """Wysyła wiadomość prywatną jako bot"""
+        await ctx.message.delete()
+        try:
+            await member.send(f"📩 **Wiadomość od Administracji:**\n{message}")
+            await ctx.send(f"✅ Wysłano DM do {member.name}.", delete_after=5)
+        except:
+            await ctx.send(f"❌ Użytkownik ma zablokowane DM.", delete_after=5)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def duch(self, ctx, member: discord.Member):
+        """(Troll) Straszy użytkownika na DM"""
+        await ctx.message.delete()
+        try:
+            await member.send("👻 BUUU! Widzę Cię... 👀")
+            await ctx.send(f"👻 Nastraszono {member.name}!", delete_after=5)
+        except:
+             await ctx.send("❌ Nie udało się nastraszyć (DM zablokowane).")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -166,6 +190,28 @@ class Admin(commands.Cog):
         await ctx.send(message)
 
     @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def nadaj_role(self, ctx, member: discord.Member, role: discord.Role):
+        if ctx.author.top_role <= role:
+            return await ctx.send("⛔ Ta rola jest powyżej Twojej!")
+        try:
+            await member.add_roles(role)
+            await ctx.send(f"✅ Nadano rolę **{role.name}** użytkownikowi {member.mention}!")
+        except Exception as e:
+            await ctx.send(f"❌ Błąd: {e}")
+
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def zabierz_role(self, ctx, member: discord.Member, role: discord.Role):
+        if ctx.author.top_role <= role:
+            return await ctx.send("⛔ Ta rola jest powyżej Twojej!")
+        try:
+            await member.remove_roles(role)
+            await ctx.send(f"🗑️ Zabrano rolę **{role.name}** użytkownikowi {member.mention}!")
+        except Exception as e:
+            await ctx.send(f"❌ Błąd: {e}")
+
+    @commands.command()
     @commands.has_permissions(ban_members=True)
     async def kick(self, ctx, member: discord.Member, *, reason="Brak"):
         if member.top_role >= ctx.author.top_role: return
@@ -188,6 +234,27 @@ class Admin(commands.Cog):
             embed.set_image(url=random.choice(GIFS_BAN))
             await ctx.send(embed=embed)
         except: await ctx.send("❌ Błąd.")
+
+    @commands.command()
+    @commands.has_permissions(ban_members=True)
+    async def unban(self, ctx, *, user_input):
+        """Odbanowuje użytkownika (ID lub nazwa)"""
+        try:
+            user_id = int(user_input)
+            user = await self.bot.fetch_user(user_id)
+            await ctx.guild.unban(user)
+            await ctx.send(f"🔓 Odbanowano **{user.name}**!")
+            return
+        except: pass
+        
+        banned_users = [entry async for entry in ctx.guild.bans()]
+        for ban_entry in banned_users:
+            user = ban_entry.user
+            if user.name == user_input:
+                await ctx.guild.unban(user)
+                await ctx.send(f"🔓 Odbanowano **{user.name}**!")
+                return
+        await ctx.send("❌ Nie znaleziono takiego bana.")
 
     @commands.command()
     @commands.has_permissions(moderate_members=True)

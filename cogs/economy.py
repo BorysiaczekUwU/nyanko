@@ -21,6 +21,19 @@ class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # NOWE KOMENDY ADMINISTRA - DODAWANIE/ZABIERANIE KASY
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def daj_kase(self, ctx, member: discord.Member, amount: int):
+        update_data(member.id, "balance", amount, "add")
+        await ctx.send(f"💸 **ADMIN:** Dodano **{amount}** monet dla {member.mention}!")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def zabierz_kase(self, ctx, member: discord.Member, amount: int):
+        update_data(member.id, "balance", -amount, "add")
+        await ctx.send(f"📉 **ADMIN:** Zabrano **{amount}** monet użytkownikowi {member.mention}!")
+
     @commands.command()
     async def portfel(self, ctx):
         data = get_data(ctx.author.id)
@@ -143,7 +156,7 @@ class Economy(commands.Cog):
             win = amount * 5
             update_data(ctx.author.id, "balance", win, "add")
             await ctx.send(f"🎉 JACKPOT! +{win}")
-        else: await ctx.send("❌ Przegrana.")
+        else: await ctx.send(f"❌ Przegrana.")
 
     @commands.command()
     async def rzut(self, ctx, amount: int, wybor: str):
