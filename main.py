@@ -8,6 +8,9 @@ import os
 import re
 from datetime import datetime, timedelta
 
+# --- IMPORT SERWERA WWW (DLA RENDER) ---
+from keep_alive import keep_alive
+
 # --- KONFIGURACJA INTENCJI ---
 intents = discord.Intents.default()
 intents.message_content = True
@@ -650,9 +653,14 @@ async def on_command_error(ctx, error):
     else: print(f"Error: {error}")
 
 # --- URUCHOMIENIE ---
-TOKEN = 'MTQ2OTQxNTgxNjIxMzU2MTQzNg.G3XyPY.dRgPM4scwVJYYgbbQIe1MJ-dh9HzsH-6F1sCGk' 
+# ... (START KEEPALIVE)
+keep_alive()
 
-if TOKEN == 'TWOJ_TOKEN_TUTAJ':
-    print("❌ BŁĄD: Wklej token w ostatniej linijce!")
+# POBIERANIE TOKENU ZE ZMIENNYCH ŚRODOWISKOWYCH (BEZPIECZNIE)
+TOKEN = os.environ.get('DISCORD_TOKEN')
+
+if not TOKEN:
+    print("❌ Błąd: Nie znaleziono tokenu w zmiennych środowiskowych (Environment Variables)!")
+    print("Upewnij się, że dodałeś DISCORD_TOKEN w ustawieniach Render.")
 else:
     bot.run(TOKEN)
