@@ -17,8 +17,8 @@ intents.voice_states = True # WAŻNE: Potrzebne do śledzenia VC!
 
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-# Lista plików do załadowania - DODANO cogs.levels
-COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general', 'cogs.levels']
+# Lista plików do załadowania - DODANO cogs.profile
+COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general', 'cogs.levels', 'cogs.profile']
 
 @bot.event
 async def on_ready():
