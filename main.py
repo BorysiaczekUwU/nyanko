@@ -1,54 +1,67 @@
 import discord
 from discord.ext import commands
-from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD
+import os
+import asyncio
 
-class General(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+# Próba importu keep_alive
+try:
+    from keep_alive import keep_alive
+except ImportError:
+    print("⚠️ BŁĄD: Brak pliku keep_alive.py lub biblioteki Flask!")
+    # Tworzymy pustą funkcję, żeby bot się nie wywalił od razu, 
+    # ale to znak, że requirements.txt jest błędny
+    def keep_alive(): pass
 
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        channel = discord.utils.get(member.guild.text_channels, name="ogólny")
-        if channel:
-            embed = discord.Embed(description=f"O nie... **{member.name}** uciekł... 💔", color=discord.Color.dark_grey())
-            await channel.send(embed=embed)
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
 
-    @commands.command()
-    async def userinfo(self, ctx, member: discord.Member = None):
-        member = member or ctx.author
-        embed = discord.Embed(title=f"🌸 {member.name}", color=member.color)
-        embed.add_field(name="ID", value=member.id)
-        embed.add_field(name="Konto od", value=member.created_at.strftime("%Y-%m-%d"))
-        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
-        await ctx.send(embed=embed)
+bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-    @commands.command()
-    async def serverinfo(self, ctx):
-        guild = ctx.guild
-        embed = discord.Embed(title=f"🏰 {guild.name}", color=KAWAII_GOLD)
-        embed.add_field(name="Właściciel", value=guild.owner.mention)
-        embed.add_field(name="Liczba osób", value=guild.member_count)
-        if guild.icon: embed.set_thumbnail(url=guild.icon.url)
-        await ctx.send(embed=embed)
+# Lista plików do załadowania
+COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general']
 
-    @commands.command()
-    async def pomoc(self, ctx):
-        embed = discord.Embed(title="🌸 Menu Główne", color=KAWAII_PINK)
-        embed.add_field(name="💰 Ekonomia", value="`!sklep`, `!kup`, `!uzyj`, `!portfel`, `!daily`", inline=False)
-        embed.add_field(name="🎰 Gry", value="`!slots`, `!rzut`", inline=False)
-        embed.add_field(name="🧸 Social", value="`!przytul`, `!pocaluj`, `!policzek`, `!pat`, `!ship`, `!kula`", inline=False)
-        embed.add_field(name="ℹ️ Info", value="`!userinfo`, `!serverinfo`", inline=False)
-        embed.set_footer(text="Dla adminów: !pomoca")
-        await ctx.send(embed=embed)
+@bot.event
+async def on_ready():
+    print(f'✨ Zalogowano jako {bot.user.name} (ID: {bot.user.id}) ✨')
+    print('~ System modułowy (Cogs) aktywny! ~')
+    
+    # Ładowanie rozszerzeń
+    for cog in COGS:
+        try:
+            await bot.load_extension(cog)
+            print(f'✅ Załadowano: {cog}')
+        except Exception as e:
+            print(f'❌ Błąd ładowania {cog}: {e}')
 
-    @commands.command()
-    @commands.has_permissions(kick_members=True)
-    async def pomoca(self, ctx):
-        embed = discord.Embed(title="🛡️ Menu Admina", color=KAWAII_RED)
-        embed.add_field(name="😈 Troll", value="`!sudo`, `!fakeban`", inline=False)
-        embed.add_field(name="☢️ Admin", value="`!nuke`, `!slowmode`, `!lock`, `!unlock`, `!say`", inline=False)
-        embed.add_field(name="⚖️ Kary", value="`!ban`, `!kick`, `!mute`, `!domena`", inline=False)
-        await ctx.send(embed=embed)
+    while True:
+        await bot.change_presence(activity=discord.Game(name="!pomoc | Moduły ⚙️"))
+        await asyncio.sleep(15)
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="Twoich sekretów 🤫"))
+        await asyncio.sleep(15)
 
-async def setup(bot):
-    await bot.add_cog(General(bot))
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("⛔ Brak uprawnień!")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("⚠️ Brakuje argumentu!")
+    elif isinstance(error, commands.CommandNotFound):
+        pass # Ignoruj nieznane komendy
+    else:
+        print(f"Error: {error}")
+
+# Uruchomienie serwera WWW (dla Rendera)
+keep_alive()
+
+# Pobieranie tokenu
+TOKEN = os.environ.get('DISCORD_TOKEN')
+
+if not TOKEN:
+    # To wyrzuci wyraźny błąd w logach Rendera zamiast cichego wyłączenia
+    raise ValueError("❌ BŁĄD KRYTYCZNY: Nie znaleziono DISCORD_TOKEN w zakładce Environment na Renderze!")
+else:
+    try:
+        bot.run(TOKEN)
+    except Exception as e:
+        raise ValueError(f"❌ Błąd podczas logowania (czy token jest poprawny?): {e}")
