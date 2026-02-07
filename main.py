@@ -8,18 +8,17 @@ try:
     from keep_alive import keep_alive
 except ImportError:
     print("⚠️ BŁĄD: Brak pliku keep_alive.py lub biblioteki Flask!")
-    # Tworzymy pustą funkcję, żeby bot się nie wywalił od razu, 
-    # ale to znak, że requirements.txt jest błędny
     def keep_alive(): pass
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+intents.voice_states = True # WAŻNE: Potrzebne do śledzenia VC!
 
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-# Lista plików do załadowania
-COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general']
+# Lista plików do załadowania - DODANO cogs.levels
+COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general', 'cogs.levels']
 
 @bot.event
 async def on_ready():
@@ -58,7 +57,6 @@ keep_alive()
 TOKEN = os.environ.get('DISCORD_TOKEN')
 
 if not TOKEN:
-    # To wyrzuci wyraźny błąd w logach Rendera zamiast cichego wyłączenia
     raise ValueError("❌ BŁĄD KRYTYCZNY: Nie znaleziono DISCORD_TOKEN w zakładce Environment na Renderze!")
 else:
     try:
