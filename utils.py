@@ -1,9 +1,25 @@
-import json
 import os
+import pymongo
+from pymongo import MongoClient
 
-ECONOMY_FILE = "economy.json"
-LEVELS_FILE = "levels.json"
-PROFILES_FILE = "profiles.json"
+# --- KONFIGURACJA BAZY DANYCH (MONGODB) ---
+# Pobieramy adres bazy z Environment Variables (tak jak Token)
+MONGO_URL = os.environ.get("MONGO_URL")
+
+# Połączenie z bazą
+if not MONGO_URL:
+    print("⚠️ OSTRZEŻENIE: Brak MONGO_URL! Dane nie będą zapisywane trwale (używam pamięci tymczasowej RAM).")
+    # Fallback dla testów lokalnych bez bazy (resetuje się po wyłączeniu)
+    cluster = None
+    db = None
+else:
+    cluster = MongoClient(MONGO_URL)
+    db = cluster["KawaiiBotDB"]
+
+# Kolekcje (Tabele)
+economy_col = db["economy"] if db is not None else None
+levels_col = db["levels"] if db is not None else None
+profiles_col = db["profiles"] if db is not None else None
 
 # --- LISTY KOLORÓW ---
 KAWAII_PINK = 0xFF69B4
@@ -11,91 +27,93 @@ KAWAII_RED = 0xFF0000
 KAWAII_GOLD = 0xFFD700
 KAWAII_BLUE = 0x87CEEB
 
-# --- EKONOMIA ---
-def load_economy():
-    if not os.path.exists(ECONOMY_FILE): return {}
-    with open(ECONOMY_FILE, "r") as f: return json.load(f)
+# --- POMOCNICZE FUNKCJE DLA MONGODB ---
+# Jeśli bazy brak, używamy słownika w RAM (dla bezpieczeństwa przed crashem)
+ram_storage = {"economy": {}, "levels": {}, "profiles": {}}
 
-def save_economy(data):
-    with open(ECONOMY_FILE, "w") as f: json.dump(data, f, indent=4)
-
-def get_data(user_id):
-    data = load_economy()
+def _get_doc(collection, col_name, user_id, default_doc):
     str_id = str(user_id)
-    if str_id not in data:
-        data[str_id] = {"balance": 0, "last_daily": None, "inventory": {}}
-    return data[str_id]
+    if collection is not None:
+        data = collection.find_one({"_id": str_id})
+        if not data:
+            data = default_doc
+            data["_id"] = str_id
+            collection.insert_one(data)
+        return data
+    else:
+        # Fallback RAM
+        return ram_storage[col_name].get(str_id, default_doc)
+
+def _update_doc(collection, col_name, user_id, update_dict):
+    str_id = str(user_id)
+    if collection is not None:
+        collection.update_one({"_id": str_id}, {"$set": update_dict}, upsert=True)
+    else:
+        # Fallback RAM
+        if str_id not in ram_storage[col_name]: ram_storage[col_name][str_id] = {}
+        ram_storage[col_name][str_id].update(update_dict)
+
+def _inc_doc(collection, col_name, user_id, field, amount):
+    str_id = str(user_id)
+    if collection is not None:
+        collection.update_one({"_id": str_id}, {"$inc": {field: amount}}, upsert=True)
+    else:
+        # Fallback RAM logic
+        pass 
+
+# --- EKONOMIA ---
+def get_data(user_id):
+    default = {"balance": 0, "last_daily": None, "inventory": {}}
+    return _get_doc(economy_col, "economy", user_id, default)
 
 def update_data(user_id, key, value, mode="set"):
-    data = load_economy()
-    str_id = str(user_id)
-    if str_id not in data: data[str_id] = {"balance": 0, "last_daily": None, "inventory": {}}
-    if mode == "add": data[str_id][key] += value
-    elif mode == "set": data[str_id][key] = value
-    save_economy(data)
+    if mode == "set":
+        _update_doc(economy_col, "economy", user_id, {key: value})
+    elif mode == "add":
+        # Dla inventory musimy pobrać i zapisać, bo struktura jest złożona
+        if key == "inventory":
+            data = get_data(user_id)
+            data["inventory"] = value
+            _update_doc(economy_col, "economy", user_id, {"inventory": value})
+        else:
+            _inc_doc(economy_col, "economy", user_id, key, value)
 
 def add_item(user_id, item_code):
-    data = load_economy()
-    str_id = str(user_id)
-    if str_id not in data: get_data(user_id)
-    inventory = data[str_id].get("inventory", {})
+    data = get_data(user_id)
+    inventory = data.get("inventory", {})
     inventory[item_code] = inventory.get(item_code, 0) + 1
-    data[str_id]["inventory"] = inventory
-    save_economy(data)
+    update_data(user_id, "inventory", inventory, "set")
 
 def remove_item(user_id, item_code):
-    data = load_economy()
-    str_id = str(user_id)
-    if str_id not in data: return False
-    inventory = data[str_id].get("inventory", {})
+    data = get_data(user_id)
+    inventory = data.get("inventory", {})
     if inventory.get(item_code, 0) > 0:
         inventory[item_code] -= 1
-        data[str_id]["inventory"] = inventory
-        save_economy(data)
+        update_data(user_id, "inventory", inventory, "set")
         return True
     return False
 
 # --- SYSTEM LEVELI ---
-def load_levels():
-    if not os.path.exists(LEVELS_FILE): return {}
-    with open(LEVELS_FILE, "r") as f: return json.load(f)
-
-def save_levels(data):
-    with open(LEVELS_FILE, "w") as f: json.dump(data, f, indent=4)
-
 def get_level_data(user_id):
-    data = load_levels()
-    str_id = str(user_id)
-    if str_id not in data: data[str_id] = {"xp": 0, "level": 1, "rep": 0, "last_rep": None}
-    return data[str_id]
+    default = {"xp": 0, "level": 1, "rep": 0, "last_rep": None}
+    return _get_doc(levels_col, "levels", user_id, default)
 
 def update_level_data(user_id, key, value, mode="set"):
-    data = load_levels()
-    str_id = str(user_id)
-    if str_id not in data: data[str_id] = {"xp": 0, "level": 1, "rep": 0, "last_rep": None}
-    if mode == "add": data[str_id][key] += value
-    elif mode == "set": data[str_id][key] = value
-    save_levels(data)
+    if mode == "set":
+        _update_doc(levels_col, "levels", user_id, {key: value})
+    elif mode == "add":
+        _inc_doc(levels_col, "levels", user_id, key, value)
 
 # --- SYSTEM PROFILI (BIO) ---
-def load_profiles():
-    if not os.path.exists(PROFILES_FILE): return {}
-    with open(PROFILES_FILE, "r") as f: return json.load(f)
-
-def save_profiles(data):
-    with open(PROFILES_FILE, "w") as f: json.dump(data, f, indent=4)
-
 def get_profile_data(user_id):
-    data = load_profiles()
-    str_id = str(user_id)
-    if str_id not in data:
-        data[str_id] = {"bio": "Jeszcze nic tu nie ma...", "age": "Nieznany", "gender": "Nieznana", "color": "pink"}
-    return data[str_id]
+    default = {
+        "bio": "Jeszcze nic tu nie ma...", 
+        "age": "Nieznany", 
+        "gender": "Nieznana", 
+        "color": "pink",
+        "birthday": "Nie ustawiono"
+    }
+    return _get_doc(profiles_col, "profiles", user_id, default)
 
 def update_profile(user_id, key, value):
-    data = load_profiles()
-    str_id = str(user_id)
-    if str_id not in data:
-        data[str_id] = {"bio": "Jeszcze nic tu nie ma...", "age": "Nieznany", "gender": "Nieznana", "color": "pink"}
-    data[str_id][key] = value
-    save_profiles(data)
+    _update_doc(profiles_col, "profiles", user_id, {key: value})
