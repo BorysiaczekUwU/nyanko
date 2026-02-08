@@ -2,13 +2,26 @@ import discord
 from discord.ext import commands
 import os
 import asyncio
+from flask import Flask
+from threading import Thread
 
-# Próba importu keep_alive
-try:
-    from keep_alive import keep_alive
-except ImportError:
-    print("⚠️ BŁĄD: Brak pliku keep_alive.py lub biblioteki Flask!")
-    def keep_alive(): pass
+# --- KONFIGURACJA SERWERA WWW (DLA RENDER) ---
+# Integrujemy to bezpośrednio tutaj, aby uniknąć błędów importu
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "I am alive! Bot działa."
+
+def run_web_server():
+    # Pobieramy port z otoczenia (wymóg Render) lub ustawiamy 8080
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = Thread(target=run_web_server)
+    t.start()
+# ---------------------------------------------
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -50,13 +63,14 @@ async def on_command_error(ctx, error):
     else:
         print(f"Error: {error}")
 
-# Uruchomienie serwera WWW (dla Rendera)
+# Uruchomienie serwera WWW
 keep_alive()
 
 # Pobieranie tokenu
 TOKEN = os.environ.get('DISCORD_TOKEN')
 
 if not TOKEN:
+    # Wyrzucamy głośny błąd, żebyś widział w logach, co jest nie tak
     raise ValueError("❌ BŁĄD KRYTYCZNY: Nie znaleziono DISCORD_TOKEN w zakładce Environment na Renderze!")
 else:
     try:
