@@ -1,5 +1,6 @@
 import os
 import pymongo
+import certifi
 from pymongo import MongoClient
 
 # --- KONFIGURACJA BAZY DANYCH (MONGODB) ---
@@ -13,7 +14,7 @@ if not MONGO_URL:
     cluster = None
     db = None
 else:
-    cluster = MongoClient(MONGO_URL)
+    cluster = MongoClient(MONGO_URL, tlsCAFile=certifi.where())
     db = cluster["KawaiiBotDB"]
 
 # Kolekcje (Tabele)
@@ -111,7 +112,8 @@ def get_profile_data(user_id):
         "age": "Nieznany", 
         "gender": "Nieznana", 
         "color": "pink",
-        "birthday": "Nie ustawiono"
+        "birthday": "Nie ustawiono",
+        "partner": None
     }
     return _get_doc(profiles_col, "profiles", user_id, default)
 
