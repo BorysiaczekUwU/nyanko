@@ -14,7 +14,8 @@ if not MONGO_URL:
     cluster = None
     db = None
 else:
-    cluster = MongoClient(MONGO_URL, tls=True, tlsAllowInvalidCertificates=True)
+    # Ustawiamy timeout na 5 sekund, żeby bot nie "wisiał" przy problemach z bazą
+    cluster = MongoClient(MONGO_URL, tls=True, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
     db = cluster["KawaiiBotDB"]
 
 # Kolekcje (Tabele)
@@ -132,7 +133,6 @@ def get_profile_data(user_id):
         "partner": None,
         "pronouns": "Nieznane",
         "status": "Nieznany"
-        "partner": None
     }
     return _get_doc(profiles_col, "profiles", user_id, default)
 
