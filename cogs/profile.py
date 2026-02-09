@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import asyncio
 from discord.ui import Modal, TextInput, View, Select
 from utils import get_profile_data, update_profile, get_level_data, get_data, KAWAII_PINK, KAWAII_BLUE
 
@@ -78,14 +79,27 @@ class Profile(commands.Cog):
 
     @commands.command()
     async def setbio(self, ctx):
-        """Otwiera panel ustawiania profilu"""
+        """Otwiera panel ustawiania profilu (Prywatnie)"""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
         embed = discord.Embed(
             title="🎨 Kreator Profilu",
             description="Użyj menu poniżej, aby ustawić swoje informacje!\nMożesz wybrać wiek, płeć, datę urodzin i napisać coś o sobie. ✨",
             color=KAWAII_BLUE
         )
         embed.set_footer(text="Bot stworzony przez BorysiaczekUwU 💖")
-        await ctx.send(embed=embed, view=SetBioView())
+
+        try:
+            await ctx.author.send(embed=embed, view=SetBioView())
+            # Opcjonalne potwierdzenie na kanale (znika po 5s)
+            temp_msg = await ctx.send(f"{ctx.author.mention}, wysłałam Ci panel ustawień w wiadomości prywatnej! 📩")
+            await asyncio.sleep(5)
+            await temp_msg.delete()
+        except discord.Forbidden:
+            await ctx.send(f"❌ {ctx.author.mention}, nie mogę wysłać Ci wiadomości prywatnej! Odblokuj DM.")
 
     @commands.command()
     async def bio(self, ctx, member: discord.Member = None):

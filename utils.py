@@ -14,7 +14,7 @@ if not MONGO_URL:
     cluster = None
     db = None
 else:
-    cluster = MongoClient(MONGO_URL, tls=True, tlsAllowInvalidCertificates=True)
+    cluster = MongoClient(MONGO_URL, tls=True, tlsCAFile=certifi.where())
     db = cluster["KawaiiBotDB"]
 
 # Kolekcje (Tabele)

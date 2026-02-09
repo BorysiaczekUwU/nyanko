@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import random
+import asyncio
 from datetime import datetime, timedelta
 from utils import get_data, update_data, add_item, remove_item, load_economy, save_economy, KAWAII_PINK, KAWAII_GOLD
 
@@ -36,6 +37,12 @@ class Economy(commands.Cog):
 
     @commands.command()
     async def portfel(self, ctx):
+        """Sprawdź swój stan konta (Prywatnie)"""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
         data = get_data(ctx.author.id)
         inv_text = ""
         for item, count in data["inventory"].items():
@@ -47,7 +54,13 @@ class Economy(commands.Cog):
         embed = discord.Embed(title="👛 Twój Portfel", color=KAWAII_GOLD)
         embed.add_field(name="💰 Monetki", value=f"**{data['balance']}**", inline=False)
         embed.add_field(name="🎒 Plecak", value=inv_text, inline=False)
-        await ctx.send(embed=embed)
+
+        try:
+            await ctx.author.send(embed=embed)
+        except discord.Forbidden:
+            temp = await ctx.send(f"❌ {ctx.author.mention}, odblokuj DM!")
+            await asyncio.sleep(5)
+            await temp.delete()
 
     @commands.command()
     async def daily(self, ctx):
