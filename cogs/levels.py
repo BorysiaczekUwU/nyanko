@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, tasks
 from datetime import datetime, timedelta
 import random
-from utils import get_level_data, update_level_data, load_levels, save_levels, KAWAII_PINK, KAWAII_GOLD
+from utils import get_level_data, update_level_data, KAWAII_PINK, KAWAII_GOLD
 
 # KONFIGURACJA RÓL ZA LEVEL
 # Klucz: Level, Wartość: Nazwa roli na Discordzie
