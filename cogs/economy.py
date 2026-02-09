@@ -144,31 +144,6 @@ class Economy(commands.Cog):
             remove_item(user_id, item_code)
             await ctx.send(f"📜 **{ctx.author.name}** czyści kartotekę!")
 
-    @commands.command()
-    async def slots(self, ctx, amount: int):
-        bal = get_data(ctx.author.id)["balance"]
-        if bal < amount: return
-        update_data(ctx.author.id, "balance", bal - amount, "set")
-        emojis = ["🍒", "💎", "7️⃣"]
-        a, b, c = random.choice(emojis), random.choice(emojis), random.choice(emojis)
-        msg = await ctx.send(f"🎰 | {a} | {b} | {c} |")
-        if a == b == c:
-            win = amount * 5
-            update_data(ctx.author.id, "balance", win, "add")
-            await ctx.send(f"🎉 JACKPOT! +{win}")
-        else: await ctx.send(f"❌ Przegrana.")
-
-    @commands.command()
-    async def rzut(self, ctx, amount: int, wybor: str):
-        bal = get_data(ctx.author.id)["balance"]
-        if bal < amount: return
-        update_data(ctx.author.id, "balance", bal - amount, "set")
-        wynik = random.choice(["orzeł", "reszka"])
-        if wybor.lower() in [wynik, "orzel" if wynik=="orzeł" else "x"]:
-            win = amount * 2
-            update_data(ctx.author.id, "balance", win, "add")
-            await ctx.send(f"🪙 Wypadł {wynik}! Wygrywasz {win}!")
-        else: await ctx.send(f"🪙 Wypadł {wynik}. Przegrałeś.")
 
 async def setup(bot):
     await bot.add_cog(Economy(bot))
