@@ -132,6 +132,7 @@ def get_profile_data(user_id):
         "partner": None,
         "pronouns": "Nieznane",
         "status": "Nieznany"
+        "partner": None
     }
     return _get_doc(profiles_col, "profiles", user_id, default)
 

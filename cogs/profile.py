@@ -189,6 +189,16 @@ class Profile(commands.Cog):
                  partner_txt = "Nieznany"
         embed.add_field(name="💖 Partner", value=partner_txt, inline=True)
 
+        partner_id = profile.get('partner')
+        partner_txt = "Brak"
+        if partner_id:
+             try:
+                 p_user = await self.bot.fetch_user(partner_id)
+                 partner_txt = f"{p_user.name} 💍"
+             except:
+                 partner_txt = "Nieznany"
+        embed.add_field(name="💖 Partner", value=partner_txt, inline=True)
+
         stats = (
             f"⭐ **Level:** {level_data['level']}\n"
             f"✨ **XP:** {level_data['xp']}\n"
