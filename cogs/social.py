@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import random
-from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD
+from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD, get_profile_data, update_profile
 
 GIFS_HUG = [
     "https://media.giphy.com/media/ODy2AThnlxWxO/giphy.gif",
@@ -62,6 +62,80 @@ class Social(commands.Cog):
     async def kula(self, ctx, *, pytanie):
         odpowiedzi = ["Oczywiście! 💖", "Raczej nie... (qwq)", "To pewne! 🌟", "Nie licz na to >_<", "Spytaj później ✨"]
         await ctx.send(f"🔮 **Pytanie:** {pytanie}\n✨ **Odpowiedź:** {random.choice(odpowiedzi)}")
+
+    @commands.command()
+    async def slub(self, ctx, member: discord.Member):
+        """Weź ślub z wybraną osobą! 💍"""
+        if member == ctx.author:
+            await ctx.send("Nie możesz poślubić samego siebie! (cJc)")
+            return
+
+        user_profile = get_profile_data(ctx.author.id)
+        target_profile = get_profile_data(member.id)
+
+        if user_profile.get("partner"):
+            await ctx.send("Jesteś już w związku! Najpierw weź rozwód. (qwq)")
+            return
+
+        if target_profile.get("partner"):
+            await ctx.send(f"**{member.name}** jest już w związku! 💔")
+            return
+
+        # Pytanie o zgodę
+        embed = discord.Embed(
+            title="💍 Oświadczyny!",
+            description=f"**{ctx.author.name}** oświadcza się **{member.name}**!\nCzy przyjmujesz oświadczyny? (napisz `tak` lub `nie`)",
+            color=KAWAII_PINK
+        )
+        await ctx.send(member.mention, embed=embed)
+
+        def check(m):
+            return m.author == member and m.channel == ctx.channel and m.content.lower() in ["tak", "nie"]
+
+        try:
+            msg = await self.bot.wait_for("message", check=check, timeout=60)
+            if msg.content.lower() == "tak":
+                update_profile(ctx.author.id, "partner", member.id)
+                update_profile(member.id, "partner", ctx.author.id)
+
+                success_embed = discord.Embed(
+                    title="💒 Nowe Małżeństwo!",
+                    description=f"🎉 Gratulacje! **{ctx.author.name}** i **{member.name}** są teraz małżeństwem! 💍💖",
+                    color=KAWAII_GOLD
+                )
+                await ctx.send(embed=success_embed)
+            else:
+                await ctx.send("💔 Oświadczyny odrzucone... (qwq)")
+        except:
+            await ctx.send("⌛ Czas minął... Oświadczyny anulowane.")
+
+    @commands.command()
+    async def rozwod(self, ctx):
+        """Weź rozwód ze swoim partnerem 💔"""
+        user_profile = get_profile_data(ctx.author.id)
+        partner_id = user_profile.get("partner")
+
+        if not partner_id:
+            await ctx.send("Nie masz z kim brać rozwodu! (cJc)")
+            return
+
+        # Czyścimy oba profile
+        update_profile(ctx.author.id, "partner", None)
+        update_profile(partner_id, "partner", None)
+
+        # Próbujemy zdobyć nazwę partnera
+        try:
+            partner = await self.bot.fetch_user(partner_id)
+            name = partner.name
+        except:
+            name = "Nieznany"
+
+        embed = discord.Embed(
+            title="💔 Rozwód",
+            description=f"Związek z **{name}** został zakończony... 🌧️",
+            color=KAWAII_RED
+        )
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Social(bot))

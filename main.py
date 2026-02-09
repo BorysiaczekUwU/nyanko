@@ -30,8 +30,8 @@ intents.voice_states = True # WAŻNE: Potrzebne do śledzenia VC!
 
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-# Lista plików do załadowania - DODANO cogs.profile
-COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general', 'cogs.levels', 'cogs.profile']
+# Lista plików do załadowania - DODANO cogs.profile, cogs.games
+COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general', 'cogs.levels', 'cogs.profile', 'cogs.games']
 
 @bot.event
 async def on_ready():
@@ -55,11 +55,19 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send("⛔ Brak uprawnień!")
+        embed = discord.Embed(title="⛔ Brak uprawnień", description="Nie masz wystarczających uprawnień, by tego użyć!", color=discord.Color.red())
+        await ctx.send(embed=embed)
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("⚠️ Brakuje argumentu!")
+        embed = discord.Embed(title="⚠️ Błąd argumentów", description=f"Brakuje wymaganych danych!\nUżycie: `{ctx.prefix}{ctx.command.name} {ctx.command.signature}`", color=discord.Color.orange())
+        await ctx.send(embed=embed)
+    elif isinstance(error, commands.BadArgument):
+        embed = discord.Embed(title="⚠️ Błędne dane", description="Podałeś nieprawidłowy format danych.", color=discord.Color.orange())
+        await ctx.send(embed=embed)
+    elif isinstance(error, commands.CommandOnCooldown):
+        embed = discord.Embed(title="⏳ Cooldown", description=f"Musisz poczekać {round(error.retry_after, 1)}s.", color=discord.Color.orange())
+        await ctx.send(embed=embed)
     elif isinstance(error, commands.CommandNotFound):
-        pass # Ignoruj nieznane komendy
+        pass
     else:
         print(f"Error: {error}")
 

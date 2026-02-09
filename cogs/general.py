@@ -52,8 +52,8 @@ class General(commands.Cog):
     async def pomoc(self, ctx):
         embed = discord.Embed(title="🌸 Menu Główne", description="Oto co potrafię! UwU", color=KAWAII_PINK)
         embed.add_field(name="💰 Ekonomia", value="`!sklep`, `!kup`, `!uzyj`, `!portfel`, `!daily`", inline=False)
-        embed.add_field(name="🎰 Gry", value="`!slots`, `!rzut`", inline=False)
-        embed.add_field(name="🧸 Social", value="`!przytul`, `!pocaluj`, `!policzek`, `!pat`, `!ship`, `!kula`", inline=False)
+        embed.add_field(name="🎰 Gry", value="`!maszyna`, `!moneta`, `!ruletka`, `!kostka`, `!wojna`, `!zgadnij`", inline=False)
+        embed.add_field(name="🧸 Social", value="`!przytul`, `!pocaluj`, `!policzek`, `!pat`, `!ship`, `!kula`, `!slub`, `!rozwod`", inline=False)
         embed.add_field(name="ℹ️ Info & Profil", value="`!botinfo`, `!userinfo`, `!bio`, `!setbio`", inline=False)
         embed.set_footer(text="Stworzony przez BorysiaczekUwU 💖 • Dla adminów: !pomoca")
         await ctx.send(embed=embed)
