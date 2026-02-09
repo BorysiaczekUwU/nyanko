@@ -94,6 +94,9 @@ def update_data(user_id, key, value, mode="set"):
             data["inventory"] = value
             _update_doc(economy_col, "economy", user_id, {"inventory": value})
         else:
+            # FIX: _inc_doc może nie działać jeśli dokument nie istnieje w bazie
+            # więc najpierw upewniamy się, że istnieje przez get_data
+            get_data(user_id)
             _inc_doc(economy_col, "economy", user_id, key, value)
 
 def add_item(user_id, item_code):
@@ -120,6 +123,7 @@ def update_level_data(user_id, key, value, mode="set"):
     if mode == "set":
         _update_doc(levels_col, "levels", user_id, {key: value})
     elif mode == "add":
+        get_level_data(user_id) # FIX: Upewnij się, że dokument istnieje
         _inc_doc(levels_col, "levels", user_id, key, value)
 
 # --- SYSTEM PROFILI (BIO) ---

@@ -36,38 +36,39 @@ class Levels(commands.Cog):
             new_xp -= needed
             current_lvl += 1
             
+            # Ważne: Zapisujemy zmiany
             update_level_data(user.id, "level", current_lvl, "set")
             update_level_data(user.id, "xp", new_xp, "set")
 
-            # --- SYSTEM RÓL ---
             if channel:
-                # Sprawdź czy za ten level jest rola
+                embed = discord.Embed(title="🎉 LEVEL UP! 🎉", description=f"Brawo **{user.mention}**! Awansowałeś na poziom **{current_lvl}**! ✨", color=KAWAII_GOLD)
+
+                # --- SYSTEM RÓL ---
                 if current_lvl in LEVEL_ROLES:
                     new_role_name = LEVEL_ROLES[current_lvl]
                     role = discord.utils.get(user.guild.roles, name=new_role_name)
                     
                     if role:
                         try:
-                            # Dodaj nową rolę
                             await user.add_roles(role)
-                            
-                            # Usuń stare role z leveli (opcjonalne, ale prosiłeś o to)
-                            # Iterujemy po niższych levelach i zabieramy role jeśli user je ma
+                            # Usuwanie starych ról
                             for lvl, r_name in LEVEL_ROLES.items():
                                 if lvl < current_lvl:
                                     old_role = discord.utils.get(user.guild.roles, name=r_name)
                                     if old_role and old_role in user.roles:
                                         await user.remove_roles(old_role)
-                                        
-                            await channel.send(f"🆙 **LEVEL UP!** {user.mention} wbija **Level {current_lvl}** i otrzymuje rangę **{new_role_name}**! 🎉")
+
+                            embed.add_field(name="Nowa Ranga", value=f"**{new_role_name}**")
                         except discord.Forbidden:
-                            await channel.send(f"🎉 **LEVEL UP!** {user.mention} wbija **Level {current_lvl}**! (Nie mogłam nadać roli - brak uprawnień 😿)")
+                            embed.set_footer(text="Brak uprawnień do nadania roli :(")
                     else:
-                        await channel.send(f"🎉 **LEVEL UP!** {user.mention} wbija **Level {current_lvl}**! (Rola {new_role_name} nie istnieje na serwerze)")
-                else:
-                    embed = discord.Embed(title="🎉 LEVEL UP! 🎉", description=f"Brawo **{user.mention}**! Awansowałeś na poziom **{current_lvl}**! ✨", color=KAWAII_GOLD)
-                    await channel.send(embed=embed)
+                        embed.set_footer(text=f"Rola {new_role_name} nie istnieje na serwerze.")
+
+                await channel.send(embed=embed)
         else:
+            # Tu był błąd logiczny - jeśli nie ma level up, musimy po prostu dodać XP
+            # Zamiast "set" całego XP, lepiej użyć "add" dla amount, ale
+            # ponieważ wyliczyliśmy new_xp, użyjmy "set" dla pewności
             update_level_data(user.id, "xp", new_xp, "set")
 
     @commands.Cog.listener()

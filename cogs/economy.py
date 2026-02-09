@@ -64,19 +64,25 @@ class Economy(commands.Cog):
 
     @commands.command()
     async def daily(self, ctx):
-        user_id = str(ctx.author.id)
+        user_id = ctx.author.id
         data = get_data(user_id)
         now = datetime.now()
-        if data["last_daily"]:
-            last = datetime.fromisoformat(data["last_daily"])
-            if now - last < timedelta(hours=24):
-                await ctx.send(f"⏳ Wróć jutro! (Cooldown)")
-                return
+
+        if data.get("last_daily"):
+            try:
+                last = datetime.fromisoformat(data["last_daily"])
+                if now - last < timedelta(hours=24):
+                    diff = last + timedelta(hours=24) - now
+                    hours, remainder = divmod(diff.seconds, 3600)
+                    minutes, _ = divmod(remainder, 60)
+                    await ctx.send(f"⏳ Wróć jutro! Za **{hours}h {minutes}m**.")
+                    return
+            except ValueError:
+                pass # Błąd parsowania daty, resetujemy
         
         update_data(user_id, "balance", 200, "add")
-        data = load_economy()
-        data[user_id]["last_daily"] = now.isoformat()
-        save_economy(data)
+        update_data(user_id, "last_daily", now.isoformat(), "set")
+
         await ctx.send("🎁 Odebrałeś **200** monet!")
 
     @commands.command()
