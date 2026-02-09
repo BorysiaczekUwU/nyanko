@@ -35,32 +35,48 @@ ram_storage = {"economy": {}, "levels": {}, "profiles": {}}
 def _get_doc(collection, col_name, user_id, default_doc):
     str_id = str(user_id)
     if collection is not None:
-        data = collection.find_one({"_id": str_id})
-        if not data:
-            data = default_doc
-            data["_id"] = str_id
-            collection.insert_one(data)
-        return data
-    else:
-        # Fallback RAM
-        return ram_storage[col_name].get(str_id, default_doc)
+        try:
+            data = collection.find_one({"_id": str_id})
+            if not data:
+                data = default_doc.copy()
+                data["_id"] = str_id
+                collection.insert_one(data)
+            return data
+        except Exception as e:
+            print(f"⚠️ Błąd MongoDB (get): {e}. Używam RAM.")
+
+    # Fallback RAM
+    if str_id not in ram_storage[col_name]:
+        ram_storage[col_name][str_id] = default_doc.copy()
+    return ram_storage[col_name][str_id]
 
 def _update_doc(collection, col_name, user_id, update_dict):
     str_id = str(user_id)
     if collection is not None:
-        collection.update_one({"_id": str_id}, {"$set": update_dict}, upsert=True)
-    else:
-        # Fallback RAM
-        if str_id not in ram_storage[col_name]: ram_storage[col_name][str_id] = {}
-        ram_storage[col_name][str_id].update(update_dict)
+        try:
+            collection.update_one({"_id": str_id}, {"$set": update_dict}, upsert=True)
+            return
+        except Exception as e:
+            print(f"⚠️ Błąd MongoDB (update): {e}. Używam RAM.")
+
+    # Fallback RAM
+    if str_id not in ram_storage[col_name]: ram_storage[col_name][str_id] = {}
+    ram_storage[col_name][str_id].update(update_dict)
 
 def _inc_doc(collection, col_name, user_id, field, amount):
     str_id = str(user_id)
     if collection is not None:
-        collection.update_one({"_id": str_id}, {"$inc": {field: amount}}, upsert=True)
-    else:
-        # Fallback RAM logic
-        pass 
+        try:
+            collection.update_one({"_id": str_id}, {"$inc": {field: amount}}, upsert=True)
+            return
+        except Exception as e:
+            print(f"⚠️ Błąd MongoDB (inc): {e}. Używam RAM.")
+
+    # Fallback RAM logic
+    if str_id not in ram_storage[col_name]: ram_storage[col_name][str_id] = {}
+
+    current_val = ram_storage[col_name][str_id].get(field, 0)
+    ram_storage[col_name][str_id][field] = current_val + amount
 
 # --- EKONOMIA ---
 def get_data(user_id):
@@ -113,6 +129,9 @@ def get_profile_data(user_id):
         "gender": "Nieznana", 
         "color": "pink",
         "birthday": "Nie ustawiono",
+        "partner": None,
+        "pronouns": "Nieznane",
+        "status": "Nieznany"
         "partner": None
     }
     return _get_doc(profiles_col, "profiles", user_id, default)
