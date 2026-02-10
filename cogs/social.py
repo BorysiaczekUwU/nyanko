@@ -141,7 +141,7 @@ class Social(commands.Cog):
     async def highfive(self, ctx, member: discord.Member):
         """Przybij piątkę! 🙌"""
         embed = discord.Embed(description=f"**{ctx.author.name}** przybija piątkę **{member.name}**! 🙌", color=KAWAII_GOLD)
-        embed.set_image(url="https://media.giphy.com/media/l1uk71T4mU6d6qM3Q/giphy.gif")
+        embed.set_image(url="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExOXp0MGpvcmo4YXdtY2M4ZGNvZHVzMm41eHo5bGk5dWVjc3ExamdhMyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SsyFAgnM1s3jfFeroV/giphy.gif")
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -161,7 +161,7 @@ class Social(commands.Cog):
     async def feed(self, ctx, member: discord.Member):
         """Nakarm kogoś 🍜"""
         embed = discord.Embed(description=f"**{ctx.author.name}** karmi **{member.name}**! Smacznego! 🍜", color=KAWAII_PINK)
-        embed.set_image(url="https://media.giphy.com/media/xT39Dp00VAaF9Klc1M/giphy.gif")
+        embed.set_image(url="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzFucW5nN2V6MWZzazg3bXY1eTY4ZTNmcnZ6MzIxZ3pyYTU3M3Q4bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QR7ci2sbhrkzxAuMHH/giphy.gif")
         await ctx.send(embed=embed)
 
 async def setup(bot):
