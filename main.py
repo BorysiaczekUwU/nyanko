@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import os
 import asyncio
 from flask import Flask
@@ -33,6 +33,12 @@ bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 # Lista plików do załadowania - DODANO cogs.profile, cogs.games
 COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general', 'cogs.levels', 'cogs.profile', 'cogs.games']
 
+@tasks.loop(seconds=30)
+async def status_loop():
+    await bot.change_presence(activity=discord.Game(name="!pomoc | Moduły ⚙️"))
+    await asyncio.sleep(15)
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="Twoich sekretów 🤫"))
+
 @bot.event
 async def on_ready():
     print(f'✨ Zalogowano jako {bot.user.name} (ID: {bot.user.id}) ✨')
@@ -46,11 +52,8 @@ async def on_ready():
         except Exception as e:
             print(f'❌ Błąd ładowania {cog}: {e}')
 
-    while True:
-        await bot.change_presence(activity=discord.Game(name="!pomoc | Moduły ⚙️"))
-        await asyncio.sleep(15)
-        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="Twoich sekretów 🤫"))
-        await asyncio.sleep(15)
+    if not status_loop.is_running():
+        status_loop.start()
 
 @bot.event
 async def on_command_error(ctx, error):

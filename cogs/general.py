@@ -2,6 +2,100 @@ import discord
 from discord.ext import commands
 from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD
 
+class HelpSelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="💰 Ekonomia", description="Giełda, Tycoon, Sklep, Praca", emoji="💰"),
+            discord.SelectOption(label="🎰 Gry", description="Kasyno, Kostka, Pojedynki", emoji="🎰"),
+            discord.SelectOption(label="🧸 Social", description="Przytulanie, Śluby, Roleplay", emoji="🧸"),
+            discord.SelectOption(label="ℹ️ Info & Profil", description="Statystyki, Bio", emoji="ℹ️"),
+            discord.SelectOption(label="🛡️ Administracja", description="Komendy moderatorskie", emoji="🛡️")
+        ]
+        super().__init__(placeholder="Wybierz kategorię...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        choice = self.values[0]
+        embed = discord.Embed(color=KAWAII_PINK)
+        embed.set_footer(text="Wybierz inną kategorię z listy poniżej ⬇️")
+
+        if choice == "💰 Ekonomia":
+            embed.title = "💰 Ekonomia & Tycoon"
+            embed.description = (
+                "**Podstawowe:**\n"
+                "`!daily` - Odbierz dzienną nagrodę\n"
+                "`!portfel` - Sprawdź stan konta, akcje i ekwipunek\n"
+                "`!sklep` - Kup przedmioty i role\n"
+                "`!kup <nazwa>` - Kup przedmiot\n"
+                "`!uzyj <kod>` - Użyj przedmiotu\n\n"
+                "**📈 Giełda:**\n"
+                "`!gielda` - Kursy akcji\n"
+                "`!wykres <ticker>` - Wykres ceny\n"
+                "`!kup_akcje <ticker> <ilość>`\n"
+                "`!sprzedaj_akcje <ticker> <ilość>`\n\n"
+                "**🏭 Tycoon:**\n"
+                "`!tycoon` - Status twojego imperium\n"
+                "`!sklep_tycoon` - Lista maszyn\n"
+                "`!kup_maszyne <nazwa>`\n"
+                "`!odbierz` - Odbierz wyprodukowaną kasę"
+            )
+
+        elif choice == "🎰 Gry":
+            embed.title = "🎰 Kasyno & Gry"
+            embed.description = (
+                "`!maszyna <stawka>` - Jednoręki bandyta\n"
+                "`!ruletka <stawka> <wybór>` - Ruletka (red/black/green/numer)\n"
+                "`!moneta <stawka> <orzel/reszka>` - Rzut monetą\n"
+                "`!kostka <stawka>` - Pojedynek na kości\n"
+                "`!wojna <stawka>` - Wojna karciana\n"
+                "`!zgadnij <stawka> <1-10>` - Zgadnij liczbę"
+            )
+
+        elif choice == "🧸 Social":
+            embed.title = "🧸 Social & Roleplay"
+            embed.description = (
+                "`!przytul`, `!pocaluj`, `!policzek`, `!pat`\n"
+                "`!kill`, `!feed`, `!highfive`\n"
+                "`!ship <osoba>` - Sprawdź miłość\n"
+                "`!kula <pytanie>` - Magiczna kula 8\n"
+                "`!slub <osoba>` - Weź ślub\n"
+                "`!rozwod` - Weź rozwód"
+            )
+
+        elif choice == "ℹ️ Info & Profil":
+            embed.title = "ℹ️ Informacje"
+            embed.description = (
+                "`!botinfo` - O bocie\n"
+                "`!serverinfo` - O serwerze\n"
+                "`!userinfo <osoba>` - O użytkowniku\n"
+                "`!bio` - Pokaż swoje bio\n"
+                "`!setbio` - Ustaw bio (interaktywnie)"
+            )
+
+        elif choice == "🛡️ Administracja":
+            if not interaction.user.guild_permissions.kick_members:
+                embed.color = KAWAII_RED
+                embed.description = "⛔ Nie masz uprawnień do przeglądania tej sekcji!"
+            else:
+                embed.title = "🛡️ Panel Admina"
+                embed.description = (
+                    "**Moderacja:**\n"
+                    "`!kick`, `!ban`, `!unban`\n"
+                    "`!mute`, `!lock`, `!unlock`\n"
+                    "`!nuke` (czyści kanał), `!slowmode`\n\n"
+                    "**Ekonomia Admin:**\n"
+                    "`!daj_kase <user> <kwota>`\n"
+                    "`!zabierz_kase <user> <kwota>`\n\n"
+                    "**Inne:**\n"
+                    "`!say`, `!dm`, `!sudo`"
+                )
+
+        await interaction.response.edit_message(embed=embed)
+
+class HelpView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=180)
+        self.add_item(HelpSelect())
+
 class General(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -22,7 +116,7 @@ class General(commands.Cog):
             "Pomagam w ekonomii, zarządzaniu poziomami i pilnuję porządku! ✨"
         )
         embed.add_field(name="🛠️ Twórca", value="**BorysiaczekUwU** 💖", inline=False)
-        embed.add_field(name="🎂 Wersja", value="2.0 (MongoDB Edition)", inline=True)
+        embed.add_field(name="🎂 Wersja", value="2.5 (Economy Update)", inline=True)
         embed.add_field(name="🏓 Ping", value=f"{round(self.bot.latency * 1000)}ms", inline=True)
         embed.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else self.bot.user.default_avatar.url)
         embed.set_footer(text="Dziękuję że jesteś z nami! 🌸")
@@ -50,23 +144,18 @@ class General(commands.Cog):
 
     @commands.command()
     async def pomoc(self, ctx):
-        embed = discord.Embed(title="🌸 Menu Główne", description="Oto co potrafię! UwU", color=KAWAII_PINK)
-        embed.add_field(name="💰 Ekonomia", value="`!sklep`, `!kup`, `!uzyj`, `!portfel`, `!daily`", inline=False)
-        embed.add_field(name="🎰 Gry", value="`!maszyna`, `!moneta`, `!ruletka`, `!kostka`, `!wojna`, `!zgadnij`", inline=False)
-        embed.add_field(name="🧸 Social", value="`!przytul`, `!pocaluj`, `!policzek`, `!pat`, `!ship`, `!kula`, `!slub`, `!rozwod`", inline=False)
-        embed.add_field(name="ℹ️ Info & Profil", value="`!botinfo`, `!userinfo`, `!bio`, `!setbio`", inline=False)
-        embed.set_footer(text="Stworzony przez BorysiaczekUwU 💖 • Dla adminów: !pomoca")
-        await ctx.send(embed=embed)
+        embed = discord.Embed(
+            title="🌸 Menu Pomocy 🌸",
+            description="Wybierz kategorię z menu poniżej, aby zobaczyć komendy! 👇",
+            color=KAWAII_PINK
+        )
+        embed.set_footer(text="Stworzony przez BorysiaczekUwU 💖 v2.5")
+        await ctx.send(embed=embed, view=HelpView())
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
     async def pomoca(self, ctx):
-        embed = discord.Embed(title="🛡️ Menu Admina", color=KAWAII_RED)
-        embed.add_field(name="😈 Troll", value="`!sudo`, `!fakeban`, `!duch`, `!dm`", inline=False)
-        embed.add_field(name="☢️ Admin", value="`!nuke`, `!slowmode`, `!lock`, `!unlock`, `!say`", inline=False)
-        embed.add_field(name="⚖️ Kary & Role", value="`!ban`, `!unban`, `!kick`, `!mute`, `!domena`\n`!nadaj_role`, `!zabierz_role`", inline=False)
-        embed.add_field(name="💰 Ekonomia", value="`!daj_kase`, `!zabierz_kase`", inline=False)
-        embed.set_footer(text="Bot by BorysiaczekUwU")
+        embed = discord.Embed(title="🛡️ Menu Admina (Legacy)", description="Użyj `!pomoc` i wybierz kategorię Admin!", color=KAWAII_RED)
         await ctx.send(embed=embed)
 
 async def setup(bot):

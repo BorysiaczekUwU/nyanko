@@ -80,9 +80,39 @@ def _inc_doc(collection, col_name, user_id, field, amount):
     ram_storage[col_name][str_id][field] = current_val + amount
 
 # --- EKONOMIA ---
+def get_market_data():
+    default = {
+        "companies": {
+            "TECH": {"name": "TechCorp", "price": 100.0, "history": []},
+            "ECO": {"name": "GreenEnergy", "price": 50.0, "history": []},
+            "FOOD": {"name": "FoodCo", "price": 30.0, "history": []},
+            "SPACE": {"name": "SpaceX", "price": 200.0, "history": []}
+        },
+        "last_update": None
+    }
+    return _get_doc(economy_col, "economy", "global_market", default)
+
+def update_market_data(companies):
+    # Aktualizujemy cały obiekt companies
+    _update_doc(economy_col, "economy", "global_market", {"companies": companies})
+
 def get_data(user_id):
-    default = {"balance": 0, "last_daily": None, "inventory": {}}
-    return _get_doc(economy_col, "economy", user_id, default)
+    default = {
+        "balance": 0,
+        "last_daily": None,
+        "inventory": {},
+        "stocks": {},
+        "tycoon": {
+            "machines": {},
+            "last_collection": None,
+            "stored_cash": 0.0
+        }
+    }
+    data = _get_doc(economy_col, "economy", user_id, default)
+    # Zabezpieczenie dla starych użytkowników (brakujące pola)
+    if "stocks" not in data: data["stocks"] = {}
+    if "tycoon" not in data: data["tycoon"] = {"machines": {}, "last_collection": None, "stored_cash": 0.0}
+    return data
 
 def update_data(user_id, key, value, mode="set"):
     if mode == "set":
