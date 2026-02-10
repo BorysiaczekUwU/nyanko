@@ -107,15 +107,35 @@ class AgeSelect(Select):
         update_profile(interaction.user.id, "age", self.values[0])
         await interaction.response.send_message(f"✅ Ustawiono wiek: **{self.values[0]}**", ephemeral=True)
 
+# --- WYBÓR PARTNERA ---
+class PartnerSelect(discord.ui.UserSelect):
+    def __init__(self):
+        super().__init__(placeholder="Wybierz swoją drugą połówkę... 💍", min_values=1, max_values=1, row=3)
+
+    async def callback(self, interaction: discord.Interaction):
+        target = self.values[0] # User/Member object
+
+        # Walidacja
+        if target.id == interaction.user.id:
+            await interaction.response.send_message("❌ Nie możesz wziąć ślubu ze sobą!", ephemeral=True)
+            return
+        if target.bot:
+            await interaction.response.send_message("❌ Nie możesz wziąć ślubu z botem!", ephemeral=True)
+            return
+
+        # Zapisz w bazie
+        update_profile(interaction.user.id, "partner", target.id)
+        await interaction.response.send_message(f"✅ Ustawiono partnera: **{target.name}**! 💍", ephemeral=True)
+
 # --- GŁÓWNY WIDOK USTAWIEŃ ---
 class SetBioView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        # Każdy Select musi być w oddzielnym rzędzie
-        self.add_item(GenderSelect())   # Row 0
-        self.add_item(PronounsSelect()) # Row 1
-        self.add_item(StatusSelect())   # Row 2
-        self.add_item(AgeSelect())      # Row 3
+        self.add_item(GenderSelect())
+        self.add_item(PronounsSelect())
+        self.add_item(StatusSelect())
+        self.add_item(AgeSelect())
+        self.add_item(PartnerSelect())
 
     @discord.ui.button(label="📝 Napisz Bio", style=discord.ButtonStyle.primary, emoji="✍️", row=4)
     async def bio_button(self, interaction: discord.Interaction, button: discord.ui.Button):
