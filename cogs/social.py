@@ -4,21 +4,21 @@ import random
 from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD, get_profile_data, update_profile
 
 GIFS_HUG = [
-    "https://media.giphy.com/media/ODy2AThnlxWxO/giphy.gif",
-    "https://media.giphy.com/media/lrr9rHuoNOE0ZwcTE/giphy.gif",
-    "https://media.giphy.com/media/PHZ7v9tfQu0o0/giphy.gif"
+    "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmRsaWN4N3h0eGV3eWdvZXowcHF1YTR6NmcxNW9nOTYyNzkwYXBwMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/1JmGiBtqTuehfYxuy9/giphy.gif",
+    "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmFmejR0Z201NTkxc3J2bjYzMDcwODNhZHJvcG5yeG13ZW53MjM4MyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5sokLWDYub7efuAD1M/giphy.gif",
+    "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExOG5mYW94NHMwZHk1OXg1MWY4enM4ajE1OXlidnF4OXh3cTBldWVjdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/PHZ7v9tfQu0o0/giphy.gif"
 ]
 GIFS_KISS = [
-    "https://media.giphy.com/media/FqBTvSNjNzeZG/giphy.gif",
-    "https://media.giphy.com/media/nyGFcsP0kAobm/giphy.gif"
+    "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGgyc2xzeHF1anN2eGs1MXg5YzQ5eGx5Nnloa3h3YzV2dGMza2t2OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/W1hd3uXRIbddu/giphy.gif",
+    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExY2hmZGc1ODJ4ZGYzaDltcDVqZDBsaWtueXZiNmJ5a2Y2a2Y1ZHcyZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8AduCFP7qQ660NEKns/giphy.gif"
 ]
 GIFS_SLAP = [
-    "https://media.giphy.com/media/10Am8idu3qWomI/giphy.gif",
-    "https://media.giphy.com/media/Lp5ideZTgwKmk/giphy.gif"
+    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXV2aDU3a2VycnRjZGhocGRwdXNmcHN3NHJkNnZlNmszZGo4aDV6biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/mEtSQlxqBtWWA/giphy.gif",
+    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmtodWozZ3A0M2hpczN1ZDNhamowNjlvZGU4dXJiMHU1bHI2dzVzcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JXuGatu6v9pUA/giphy.gif"
 ]
 GIFS_PAT = [
-    "https://media.giphy.com/media/5tmRHwTlHAA9WkVxTU/giphy.gif",
-    "https://media.giphy.com/media/L2z7dnOduqE6Y/giphy.gif"
+    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWJ3YmkxMG5ycWVsdzJtaXNoNG8xbTRhdDUydmQzZTlyZm4xNmJvOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/t9igJ3odrXBixqXtgf/giphy.gif",
+    "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2ZkeGJsc3VubXRqenQzYnAzMTJ1aGp0Zm5jajRnNmt6eHdudTkwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/FH0EiKkU2vjPHZ5op1/giphy.gif"
 ]
 
 class Social(commands.Cog):
