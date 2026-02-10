@@ -178,6 +178,30 @@ class Admin(commands.Cog):
         await new_ch.send(embed=embed)
 
     @commands.command()
+    @commands.has_permissions(manage_messages=True)
+    async def clear_user(self, ctx, member: discord.Member, amount: int = 10):
+        """Wyczyść wiadomości konkretnej osoby"""
+        def check(m):
+            return m.author == member
+
+        deleted = await ctx.channel.purge(limit=amount, check=check)
+        await ctx.send(f"🗑️ Usunięto **{len(deleted)}** wiadomości od {member.name}.", delete_after=5)
+
+    @commands.command()
+    @commands.has_permissions(manage_channels=True)
+    async def lockdown(self, ctx):
+        """Zablokuj kanał dla @everyone"""
+        await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
+        await ctx.send("🔒 KANAŁ ZABLOKOWANY!")
+
+    @commands.command()
+    @commands.has_permissions(manage_channels=True)
+    async def unlockdown(self, ctx):
+        """Odblokuj kanał dla @everyone"""
+        await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
+        await ctx.send("🔓 KANAŁ ODBLOKOWANY!")
+
+    @commands.command()
     @commands.has_permissions(manage_channels=True)
     async def slowmode(self, ctx, seconds: int):
         await ctx.channel.edit(slowmode_delay=seconds)

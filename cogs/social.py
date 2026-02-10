@@ -137,5 +137,32 @@ class Social(commands.Cog):
         )
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=['h5'])
+    async def highfive(self, ctx, member: discord.Member):
+        """Przybij piątkę! 🙌"""
+        embed = discord.Embed(description=f"**{ctx.author.name}** przybija piątkę **{member.name}**! 🙌", color=KAWAII_GOLD)
+        embed.set_image(url="https://media.giphy.com/media/l1uk71T4mU6d6qM3Q/giphy.gif")
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def kill(self, ctx, member: discord.Member):
+        """Wyeliminuj cel (RP) 🔪"""
+        kills = [
+            "rzuca w niego czołgiem!",
+            "atakuje go poduszką!",
+            "częstuje go zatrutym ciastkiem!",
+            "wysyła go w kosmos bez skafandra!",
+            "zrzuca na niego fortepian!"
+        ]
+        embed = discord.Embed(description=f"**{ctx.author.name}** {random.choice(kills)} **{member.name}** pada trupem! 💀", color=KAWAII_RED)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def feed(self, ctx, member: discord.Member):
+        """Nakarm kogoś 🍜"""
+        embed = discord.Embed(description=f"**{ctx.author.name}** karmi **{member.name}**! Smacznego! 🍜", color=KAWAII_PINK)
+        embed.set_image(url="https://media.giphy.com/media/xT39Dp00VAaF9Klc1M/giphy.gif")
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(Social(bot))

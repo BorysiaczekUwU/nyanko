@@ -5,14 +5,9 @@ import random
 from utils import get_level_data, update_level_data, load_levels, save_levels, KAWAII_PINK, KAWAII_GOLD
 
 # KONFIGURACJA RÓL ZA LEVEL
-# Klucz: Level, Wartość: Nazwa roli na Discordzie
-# Upewnij się, że stworzyłeś te role na serwerze i bot ma rolę wyżej od nich!
-LEVEL_ROLES = {
-    1: "🌱 Nowicjusz",
-    5: "🌸 Bywalec",
-    10: "⭐ Elita",
-    15: "👑 Legenda"
-}
+# Teraz automatycznie generujemy role w stylu "LVL 1", "LVL 2" ... "LVL 100"
+# Upewnij się, że masz te role na serwerze, albo bot je stworzy (jeśli ma uprawnienia, ale tutaj zakładamy że są)
+MAX_LEVEL = 100
 
 class Levels(commands.Cog):
     def __init__(self, bot):
@@ -20,14 +15,17 @@ class Levels(commands.Cog):
         self.voice_xp_loop.start()
 
     def xp_needed(self, level):
-        return 100 * level
+        # Wzór kwadratowy: trudniej wbijać wyższe levele
+        # Np. lvl 1->2: 5(1)+50+100 = 155 XP
+        # Np. lvl 10->11: 5(100)+500+100 = 1100 XP
+        return 5 * (level ** 2) + 50 * level + 100
 
     async def add_xp(self, user, amount, channel=None):
         data = get_level_data(user.id)
         current_xp = data["xp"]
         current_lvl = data["level"]
 
-        if current_lvl >= 15: return 
+        if current_lvl >= MAX_LEVEL: return
 
         new_xp = current_xp + amount
         needed = self.xp_needed(current_lvl)
@@ -43,26 +41,26 @@ class Levels(commands.Cog):
             if channel:
                 embed = discord.Embed(title="🎉 LEVEL UP! 🎉", description=f"Brawo **{user.mention}**! Awansowałeś na poziom **{current_lvl}**! ✨", color=KAWAII_GOLD)
 
-                # --- SYSTEM RÓL ---
-                if current_lvl in LEVEL_ROLES:
-                    new_role_name = LEVEL_ROLES[current_lvl]
-                    role = discord.utils.get(user.guild.roles, name=new_role_name)
-                    
-                    if role:
-                        try:
-                            await user.add_roles(role)
-                            # Usuwanie starych ról
-                            for lvl, r_name in LEVEL_ROLES.items():
-                                if lvl < current_lvl:
-                                    old_role = discord.utils.get(user.guild.roles, name=r_name)
-                                    if old_role and old_role in user.roles:
-                                        await user.remove_roles(old_role)
+                # --- NOWY SYSTEM RÓL (LVL X) ---
+                new_role_name = f"LVL {current_lvl}"
+                old_role_name = f"LVL {current_lvl - 1}"
 
-                            embed.add_field(name="Nowa Ranga", value=f"**{new_role_name}**")
-                        except discord.Forbidden:
-                            embed.set_footer(text="Brak uprawnień do nadania roli :(")
-                    else:
-                        embed.set_footer(text=f"Rola {new_role_name} nie istnieje na serwerze.")
+                role = discord.utils.get(user.guild.roles, name=new_role_name)
+                old_role = discord.utils.get(user.guild.roles, name=old_role_name)
+
+                if role:
+                    try:
+                        await user.add_roles(role)
+                        embed.add_field(name="Nowa Ranga", value=f"**{new_role_name}**")
+
+                        # Usuwamy poprzednią rangę (jeśli to nie 1 lvl)
+                        if old_role and old_role in user.roles:
+                            await user.remove_roles(old_role)
+
+                    except discord.Forbidden:
+                        embed.set_footer(text="Brak uprawnień do zarządzania rolami :(")
+                else:
+                    embed.set_footer(text=f"Rola {new_role_name} nie istnieje na serwerze. Stwórz ją!")
 
                 await channel.send(embed=embed)
         else:
@@ -100,7 +98,7 @@ class Levels(commands.Cog):
         rep = data["rep"]
         needed = self.xp_needed(lvl)
 
-        if lvl >= 15:
+        if lvl >= MAX_LEVEL:
             progress_bar = "MAX LEVEL 👑"
         else:
             percent = xp / needed
@@ -109,7 +107,7 @@ class Levels(commands.Cog):
 
         embed = discord.Embed(title=f"📊 Poziom: {member.name}", color=KAWAII_PINK)
         embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
-        embed.add_field(name="⭐ Level", value=f"**{lvl}** / 15", inline=True)
+        embed.add_field(name="⭐ Level", value=f"**{lvl}** / {MAX_LEVEL}", inline=True)
         embed.add_field(name="✨ XP", value=f"{xp} / {needed}", inline=True)
         embed.add_field(name="❤️ Reputacja", value=f"**{rep}**", inline=True)
         embed.add_field(name="📈 Postęp", value=progress_bar, inline=False)
