@@ -53,7 +53,8 @@ class GenderSelect(Select):
             discord.SelectOption(label="Niestandardowa...", emoji="⚧", value="custom"),
             discord.SelectOption(label="Inna / Tajemnica", emoji="👽", value="Tajemnica"),
         ]
-        super().__init__(placeholder="Wybierz płeć...", min_values=1, max_values=1, options=options, row=0)
+        # Usuwamy explicit row, View samo ustawi
+        super().__init__(placeholder="Wybierz płeć...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         val = self.values[0]
@@ -72,7 +73,7 @@ class PronounsSelect(Select):
             discord.SelectOption(label="Oni/Ich", value="Oni/Ich"),
             discord.SelectOption(label="Inne", value="Inne"),
         ]
-        super().__init__(placeholder="Wybierz zaimki...", min_values=1, max_values=1, options=options, row=1)
+        super().__init__(placeholder="Wybierz zaimki...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "pronouns", self.values[0])
@@ -88,7 +89,7 @@ class StatusSelect(Select):
             discord.SelectOption(label="Szukam", emoji="🔎", value="Szukam"),
             discord.SelectOption(label="Nie szukam", emoji="⛔", value="Nie szukam"),
         ]
-        super().__init__(placeholder="Twój status...", min_values=1, max_values=1, options=options, row=2)
+        super().__init__(placeholder="Twój status...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "status", self.values[0])
@@ -101,41 +102,21 @@ class AgeSelect(Select):
         ranges = ["< 13", "13-15", "16-18", "19-21", "22-25", "25+"]
         for r in ranges:
             options.append(discord.SelectOption(label=r, value=r))
-        super().__init__(placeholder="Wybierz wiek...", min_values=1, max_values=1, options=options, row=3)
+        super().__init__(placeholder="Wybierz wiek...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "age", self.values[0])
         await interaction.response.send_message(f"✅ Ustawiono wiek: **{self.values[0]}**", ephemeral=True)
 
-# --- WYBÓR PARTNERA ---
-class PartnerSelect(discord.ui.UserSelect):
-    def __init__(self):
-        super().__init__(placeholder="Wybierz swoją drugą połówkę... 💍", min_values=1, max_values=1, row=3)
-
-    async def callback(self, interaction: discord.Interaction):
-        target = self.values[0] # User/Member object
-
-        # Walidacja
-        if target.id == interaction.user.id:
-            await interaction.response.send_message("❌ Nie możesz wziąć ślubu ze sobą!", ephemeral=True)
-            return
-        if target.bot:
-            await interaction.response.send_message("❌ Nie możesz wziąć ślubu z botem!", ephemeral=True)
-            return
-
-        # Zapisz w bazie
-        update_profile(interaction.user.id, "partner", target.id)
-        await interaction.response.send_message(f"✅ Ustawiono partnera: **{target.name}**! 💍", ephemeral=True)
-
 # --- GŁÓWNY WIDOK USTAWIEŃ ---
 class SetBioView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(GenderSelect())
-        self.add_item(PronounsSelect())
-        self.add_item(StatusSelect())
-        self.add_item(AgeSelect())
-        self.add_item(PartnerSelect())
+        # Każdy Select musi być w oddzielnym rzędzie
+        self.add_item(GenderSelect())   # Row 0
+        self.add_item(PronounsSelect()) # Row 1
+        self.add_item(StatusSelect())   # Row 2
+        self.add_item(AgeSelect())      # Row 3
 
     @discord.ui.button(label="📝 Napisz Bio", style=discord.ButtonStyle.primary, emoji="✍️", row=4)
     async def bio_button(self, interaction: discord.Interaction, button: discord.ui.Button):

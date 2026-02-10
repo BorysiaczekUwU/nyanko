@@ -3,7 +3,7 @@ from discord.ext import commands
 import random
 import asyncio
 from datetime import datetime, timedelta
-from utils import get_data, update_data, add_item, remove_item, KAWAII_PINK, KAWAII_GOLD
+from utils import get_data, update_data, add_item, remove_item, load_economy, save_economy, KAWAII_PINK, KAWAII_GOLD
 
 SHOP_ROLES = {
     "VIP": 5000,

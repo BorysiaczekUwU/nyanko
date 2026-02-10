@@ -15,16 +15,8 @@ if not MONGO_URL:
     db = None
 else:
     # Ustawiamy timeout na 5 sekund, żeby bot nie "wisiał" przy problemach z bazą
-    try:
-        cluster = MongoClient(MONGO_URL, tls=True, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
-        db = cluster["KawaiiBotDB"]
-        # Sprawdź połączenie
-        cluster.server_info()
-        print("✅ Połączono z MongoDB!")
-    except Exception as e:
-        print(f"❌ Błąd połączenia z MongoDB: {e}. Przełączam na RAM.")
-        cluster = None
-        db = None
+    cluster = MongoClient(MONGO_URL, tls=True, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
+    db = cluster["KawaiiBotDB"]
 
 # Kolekcje (Tabele)
 economy_col = db["economy"] if db is not None else None
@@ -57,13 +49,6 @@ def _get_doc(collection, col_name, user_id, default_doc):
     # Fallback RAM
     if str_id not in ram_storage[col_name]:
         ram_storage[col_name][str_id] = default_doc.copy()
-    else:
-        # Uzupełnij brakujące klucze z default_doc (naprawa częściowych danych)
-        current = ram_storage[col_name][str_id]
-        for k, v in default_doc.items():
-            if k not in current:
-                current[k] = v
-
     return ram_storage[col_name][str_id]
 
 def _update_doc(collection, col_name, user_id, update_dict):
@@ -76,9 +61,7 @@ def _update_doc(collection, col_name, user_id, update_dict):
             print(f"⚠️ Błąd MongoDB (update): {e}. Używam RAM.")
 
     # Fallback RAM
-    if str_id not in ram_storage[col_name]:
-        ram_storage[col_name][str_id] = {}
-
+    if str_id not in ram_storage[col_name]: ram_storage[col_name][str_id] = {}
     ram_storage[col_name][str_id].update(update_dict)
 
 def _inc_doc(collection, col_name, user_id, field, amount):
@@ -91,8 +74,7 @@ def _inc_doc(collection, col_name, user_id, field, amount):
             print(f"⚠️ Błąd MongoDB (inc): {e}. Używam RAM.")
 
     # Fallback RAM logic
-    if str_id not in ram_storage[col_name]:
-        ram_storage[col_name][str_id] = {}
+    if str_id not in ram_storage[col_name]: ram_storage[col_name][str_id] = {}
 
     current_val = ram_storage[col_name][str_id].get(field, 0)
     ram_storage[col_name][str_id][field] = current_val + amount
