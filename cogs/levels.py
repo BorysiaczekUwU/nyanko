@@ -7,7 +7,7 @@ from utils import get_level_data, update_level_data, KAWAII_PINK, KAWAII_GOLD
 # KONFIGURACJA RÓL ZA LEVEL
 # Teraz automatycznie generujemy role w stylu "LVL 1", "LVL 2" ... "LVL 100"
 # Upewnij się, że masz te role na serwerze, albo bot je stworzy (jeśli ma uprawnienia, ale tutaj zakładamy że są)
-MAX_LEVEL = 100
+MAX_LEVEL = 8
 
 class Levels(commands.Cog):
     def __init__(self, bot):
