@@ -24,10 +24,10 @@ SHOP_ITEMS = {
 }
 
 TYCOON_MACHINES = {
-    "koparka": {"name": "⛏️ Koparka Bitcoin", "price": 500, "rate": 1},
-    "drukarnia": {"name": "🖨️ Drukarnia", "price": 2000, "rate": 5},
-    "mennica": {"name": "🏦 Mennica", "price": 10000, "rate": 25},
-    "bank": {"name": "🏛️ Bank Centralny", "price": 50000, "rate": 150}
+    "koparka": {"name": "⛏️ Koparka Bitcoin", "price": 500, "rate": 5},
+    "drukarnia": {"name": "🖨️ Drukarnia", "price": 2000, "rate": 20},
+    "mennica": {"name": "🏦 Mennica", "price": 10000, "rate": 100},
+    "bank": {"name": "🏛️ Bank Centralny", "price": 50000, "rate": 500}
 }
 
 class Economy(commands.Cog):
