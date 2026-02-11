@@ -5,7 +5,7 @@ import asyncio
 import io
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
-from utils import get_data, update_data, add_item, remove_item, get_market_data, update_market_data, KAWAII_PINK, KAWAII_GOLD, KAWAII_RED, KAWAII_BLUE
+from utils import get_data, update_data, add_item, remove_item, get_market_data, update_market_data, get_level_data, KAWAII_PINK, KAWAII_GOLD, KAWAII_RED, KAWAII_BLUE
 
 SHOP_ROLES = {
     "VIP": 5000,
@@ -20,7 +20,8 @@ SHOP_ITEMS = {
     "unwarn_ticket": {"name": "📜 Czysta Kartoteka", "price": 20000, "desc": "Resetuje twoje przewinienia (RP)"},
     "mystery_box": {"name": "🎁 Tajemnicza Skrzynia", "price": 1000, "desc": "Co jest w środku? (100 - 2000 monet)"},
     "ring": {"name": "💍 Pierścionek Zaręczynowy", "price": 5000, "desc": "Symbol miłości (wymagany do ślubu)"},
-    "crown": {"name": "👑 Złota Korona", "price": 100000, "desc": "Prestiżowy przedmiot dla elity"}
+    "crown": {"name": "👑 Złota Korona", "price": 100000, "desc": "Prestiżowy przedmiot dla elity"},
+    "fajerwerki": {"name": "🎆 Fajerwerki", "price": 500, "desc": "Wystrzel fajerwerki na czacie! (GIF)"}
 }
 
 TYCOON_MACHINES = {
@@ -265,6 +266,11 @@ class Economy(commands.Cog):
         data = get_data(user_id)
         now = datetime.now()
 
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
         if data.get("last_daily"):
             try:
                 last = datetime.fromisoformat(data["last_daily"])
@@ -272,7 +278,12 @@ class Economy(commands.Cog):
                     diff = last + timedelta(hours=24) - now
                     hours, remainder = divmod(diff.seconds, 3600)
                     minutes, _ = divmod(remainder, 60)
-                    await ctx.send(f"⏳ Wróć jutro! Za **{hours}h {minutes}m**.")
+
+                    msg = f"⏳ Wróć jutro! Za **{hours}h {minutes}m**."
+                    try:
+                        await ctx.author.send(msg)
+                    except:
+                        await ctx.send(f"{ctx.author.mention} {msg}", delete_after=5)
                     return
             except ValueError:
                 pass
@@ -280,7 +291,11 @@ class Economy(commands.Cog):
         update_data(user_id, "balance", 200, "add")
         update_data(user_id, "last_daily", now.isoformat(), "set")
 
-        await ctx.send("🎁 Odebrałeś **200** monet!")
+        msg = "🎁 Odebrałeś **200** monet!"
+        try:
+            await ctx.author.send(msg)
+        except:
+            await ctx.send(f"{ctx.author.mention} {msg}", delete_after=5)
 
     @commands.command()
     async def sklep(self, ctx):
@@ -372,6 +387,52 @@ class Economy(commands.Cog):
         elif item_code == "crown":
             await ctx.send("👑 Zakładasz koronę i czujesz się jak król! (To tylko przedmiot kosmetyczny)")
 
+        elif item_code == "fajerwerki":
+            remove_item(user_id, item_code)
+            embed = discord.Embed(title="🎆 FAJERWERKI! 🎆", description=f"**{ctx.author.name}** odpalił race!", color=KAWAII_RED)
+            embed.set_image(url="https://media.giphy.com/media/26tOZ42MgW6tuD9n2/giphy.gif")
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    async def praca(self, ctx):
+        """Idź do pracy i zarób monety (zależne od levelu)"""
+        user_id = ctx.author.id
+        data = get_data(user_id)
+        now = datetime.now()
+
+        # Sprawdzamy cooldown
+        if data.get("last_work"):
+            try:
+                last = datetime.fromisoformat(data["last_work"])
+                if now - last < timedelta(hours=24):
+                    diff = last + timedelta(hours=24) - now
+                    hours, remainder = divmod(diff.seconds, 3600)
+                    minutes, _ = divmod(remainder, 60)
+                    # Prywatna wiadomość o cooldownie
+                    try:
+                        await ctx.author.send(f"⏳ Musisz odpocząć! Wróć do pracy za **{hours}h {minutes}m**.")
+                    except:
+                        await ctx.send(f"⏳ {ctx.author.mention}, sprawdź DM! (Cooldown pracy)", delete_after=5)
+                    return
+            except ValueError:
+                pass
+
+        # Pobieramy level użytkownika
+        level_data = get_level_data(user_id)
+        level = level_data.get("level", 1)
+
+        # Wzór: Podstawa 200 + (Level * 10)
+        earnings = 200 + (level * 10)
+
+        update_data(user_id, "balance", earnings, "add")
+        update_data(user_id, "last_work", now.isoformat(), "set")
+
+        msg = f"💼 Ciężko pracowałeś i zarobiłeś **{earnings}** monet! (Bonus za {level} lvl)"
+        try:
+            await ctx.author.send(msg)
+        except:
+            await ctx.send(f"✅ {ctx.author.mention} {msg}", delete_after=10)
+
     # --- TYCOON COMMANDS ---
     def calculate_tycoon_income(self, user_id):
         data = get_data(user_id)
@@ -409,6 +470,11 @@ class Economy(commands.Cog):
     @commands.command()
     async def tycoon(self, ctx):
         """Sprawdź status swojego imperium"""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
         data = get_data(ctx.author.id)
         tycoon = data.get("tycoon", {})
         machines = tycoon.get("machines", {})
@@ -430,7 +496,10 @@ class Economy(commands.Cog):
         embed.add_field(name="💰 Do odebrania", value=f"**{income}** monet", inline=True)
         embed.set_footer(text="Użyj !odbierz aby zgarnąć kasę (max 24h) | !kup_maszyne <nazwa>")
 
-        await ctx.send(embed=embed)
+        try:
+            await ctx.author.send(embed=embed)
+        except discord.Forbidden:
+            await ctx.send(f"❌ {ctx.author.mention}, odblokuj DM!", delete_after=5)
 
     @commands.command()
     async def sklep_tycoon(self, ctx):
@@ -493,10 +562,15 @@ class Economy(commands.Cog):
     @commands.command()
     async def odbierz(self, ctx):
         """Odbierz wyprodukowane pieniądze"""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
         income, rate = self.calculate_tycoon_income(ctx.author.id)
 
         if income <= 0:
-            await ctx.send("❌ Nie ma nic do odebrania (lub minęło za mało czasu).")
+            await ctx.send("❌ Nie ma nic do odebrania (lub minęło za mało czasu).", delete_after=5)
             return
 
         update_data(ctx.author.id, "balance", income, "add")
@@ -507,7 +581,7 @@ class Economy(commands.Cog):
         tycoon["last_collection"] = datetime.now().isoformat()
         update_data(ctx.author.id, "tycoon", tycoon, "set")
 
-        await ctx.send(f"💰 Odebrano **{income}** monet z produkcji!")
+        await ctx.send(f"💰 {ctx.author.mention} odebrano **{income}** monet z produkcji!", delete_after=10)
 
 async def setup(bot):
     await bot.add_cog(Economy(bot))
