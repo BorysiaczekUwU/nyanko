@@ -18,16 +18,16 @@ SHOP_ITEMS = {
     "kick_ticket": {"name": "🎫 Bilet na Kicka", "price": 15000, "desc": "Wyrzuć kogoś raz (nie działa na adminów!)"},
     "mute_ticket": {"name": "🤐 Taśma Klejąca", "price": 5000, "desc": "Wycisz kogoś na 10 min"},
     "unwarn_ticket": {"name": "📜 Czysta Kartoteka", "price": 20000, "desc": "Resetuje twoje przewinienia (RP)"},
-    "mystery_box": {"name": "🎁 Tajemnicza Skrzynia", "price": 1000, "desc": "Co jest w środku? (500 - 5000 monet)"},
+    "mystery_box": {"name": "🎁 Tajemnicza Skrzynia", "price": 1000, "desc": "Co jest w środku? (100 - 2000 monet)"},
     "ring": {"name": "💍 Pierścionek Zaręczynowy", "price": 5000, "desc": "Symbol miłości (wymagany do ślubu)"},
     "crown": {"name": "👑 Złota Korona", "price": 100000, "desc": "Prestiżowy przedmiot dla elity"}
 }
 
 TYCOON_MACHINES = {
-    "koparka": {"name": "⛏️ Koparka Bitcoin", "price": 500, "rate": 10},
-    "drukarnia": {"name": "🖨️ Drukarnia", "price": 2000, "rate": 50},
-    "mennica": {"name": "🏦 Mennica", "price": 10000, "rate": 250},
-    "bank": {"name": "🏛️ Bank Centralny", "price": 50000, "rate": 1500}
+    "koparka": {"name": "⛏️ Koparka Bitcoin", "price": 500, "rate": 1},
+    "drukarnia": {"name": "🖨️ Drukarnia", "price": 2000, "rate": 5},
+    "mennica": {"name": "🏦 Mennica", "price": 10000, "rate": 25},
+    "bank": {"name": "🏛️ Bank Centralny", "price": 50000, "rate": 150}
 }
 
 class Economy(commands.Cog):
