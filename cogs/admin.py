@@ -44,7 +44,7 @@ class VerifyView(View):
         await interaction.response.send_message(f"🎉 **{self.member.name}** zweryfikowany! Kanał zniknie za 5s.")
         general = discord.utils.get(interaction.guild.text_channels, name="ogólny")
         if general:
-            embed = discord.Embed(description=f"Witamy **{self.member.mention}**! (≧◡≦) ♡\nNadano rolę **Bilecik był**! 🎟️", color=KAWAII_PINK)
+            embed = discord.Embed(description=f"Witamy **{self.member.mention}**! (≧◡≦) ♡\nNadano rolę **—͟͞✅・Bilecik**! 🎟️", color=KAWAII_PINK)
             await general.send(embed=embed)
 
         await asyncio.sleep(5)
@@ -102,9 +102,9 @@ class Admin(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         guild = member.guild
-        verified_role = discord.utils.get(guild.roles, name="Bilecik był")
+        verified_role = discord.utils.get(guild.roles, name="—͟͞✅・Bilecik")
         if not verified_role:
-            verified_role = await guild.create_role(name="Bilecik był", color=discord.Color.from_rgb(255, 182, 193))
+            verified_role = await guild.create_role(name="—͟͞✅・Bilecik", color=discord.Color.from_rgb(255, 182, 193))
 
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(view_channel=False),
@@ -313,7 +313,7 @@ class Admin(commands.Cog):
             jail_role = await guild.create_role(name="Izolatka", color=discord.Color.dark_grey())
             for channel in guild.channels: await channel.set_permissions(jail_role, view_channel=False)
 
-        verified_role = discord.utils.get(guild.roles, name="Bilecik był")
+        verified_role = discord.utils.get(guild.roles, name="—͟͞✅・Bilecik")
         if verified_role and verified_role in member.roles: await member.remove_roles(verified_role)
         await member.add_roles(jail_role)
         
