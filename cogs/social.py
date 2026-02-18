@@ -54,8 +54,12 @@ class Social(commands.Cog):
         procent = random.randint(0, 100)
         serca = "💖" * (procent // 10)
         msg = f"Miłość między **{ctx.author.name}** a **{member.name}** wynosi **{procent}%**!\n{serca}"
-        if procent > 90: msg += "\nTo przeznaczenie! (♥ω♥*)"
-        elif procent < 20: msg += "\nMoże zostańcie przyjaciółmi... (cJc)"
+        if procent > 90: 
+            msg += "\nTo przeznaczenie! (♥ω♥*)"
+            embed.set_image(url="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHVlazFzeHh6c2FzdWEzdnUxMTBia3U2b3pxemhzcjN5YTg3NTg3ZiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Vi0Ws3t4JSLOgdkaBq/giphy.gif")
+        elif procent < 20: 
+            msg += "\nMoże zostańcie przyjaciółmi... (cJc)"
+            embed.set_image(url="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDZjejdwOGd3ZGlodWoxbGVpNTU1Y3Z2ZWp0NWg1M2NzcWp1bDByOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xGDaiXa6ds8WS4jXUy/giphy.gif")
         await ctx.send(msg)
 
     @commands.command()
