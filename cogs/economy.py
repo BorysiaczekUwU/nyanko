@@ -15,7 +15,7 @@ SHOP_ROLES = {
 }
 
 SHOP_ITEMS = {
-    "kick_ticket": {"name": "🎫 Bilet na Kicka", "price": 15000, "desc": "Wyrzuć kogoś raz (nie działa na adminów!)"},
+    "kick_ticket": {"name": "🎫 Bilet na Kicka", "price": 150000, "desc": "Wyrzuć kogoś raz (nie działa na adminów!)"},
     "mute_ticket": {"name": "🤐 Taśma Klejąca", "price": 5000, "desc": "Wycisz kogoś na 10 min"},
     "unwarn_ticket": {"name": "📜 Czysta Kartoteka", "price": 20000, "desc": "Resetuje twoje przewinienia (RP)"},
     "mystery_box": {"name": "🎁 Tajemnicza Skrzynia", "price": 1000, "desc": "Co jest w środku? (100 - 2000 monet)"},
