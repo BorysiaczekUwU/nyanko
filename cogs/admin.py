@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ui import Button, View
 import random
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from utils import KAWAII_RED, KAWAII_PINK, KAWAII_GOLD, update_data
 
 # Gify
@@ -69,6 +69,12 @@ class TrialView(View):
         embed = discord.Embed(title="⚖️ WYROK ZAPADŁ!", description=f"**{self.member.name}** winny! Kara: **BAN**", color=KAWAII_RED)
         embed.set_image(url=random.choice(GIFS_BAN))
         await interaction.response.send_message(embed=embed)
+
+        # Publiczne ogłoszenie wyroku
+        general = discord.utils.get(interaction.guild.text_channels, name="ogólny")
+        if general:
+            await general.send(f"⚖️ **WYROK SĄDU:** Użytkownik {self.member.mention} został skazany na banicję! 🔨")
+
         await send_dm_log(self.member, interaction.guild.name, "Wyrok Sądu", "BAN")
         await asyncio.sleep(3)
         try:
@@ -87,6 +93,12 @@ class TrialView(View):
 
         embed = discord.Embed(title="🍀 UŁASKAWIENIE", description=f"**{self.member.name}** wolny! Oddaję bilecik! ✨", color=discord.Color.green())
         await interaction.response.send_message(embed=embed)
+
+        # Publiczne ogłoszenie ułaskawienia
+        general = discord.utils.get(interaction.guild.text_channels, name="ogólny")
+        if general:
+            await general.send(f"🍀 **UŁASKAWIENIE:** Użytkownik {self.member.mention} powrócił do nas! Witamy z powrotem! 🎉")
+
         try:
             await self.member.remove_roles(self.role_izolatka)
             if self.role_verified: await self.member.add_roles(self.role_verified)
@@ -97,10 +109,54 @@ class TrialView(View):
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.join_times = {} # {guild_id: [datetime, ...]}
+        self.raid_mode = {}  # {guild_id: bool}
+        self.raid_end_time = {} # {guild_id: datetime}
 
     # --- LISTENER: Weryfikacja po wejściu ---
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        # --- ANTI-RAID SYSTEM ---
+        guild_id = member.guild.id
+        now = datetime.now(timezone.utc)
+
+        # Inicjalizacja dla gildii
+        if guild_id not in self.join_times: self.join_times[guild_id] = []
+        if guild_id not in self.raid_mode: self.raid_mode[guild_id] = False
+        if guild_id not in self.raid_end_time: self.raid_end_time[guild_id] = None
+
+        # Czyszczenie starych wpisów (> 60s)
+        self.join_times[guild_id] = [t for t in self.join_times[guild_id] if (now - t).total_seconds() < 60]
+        self.join_times[guild_id].append(now)
+
+        # Sprawdzenie czy włączyć Raid Mode
+        if len(self.join_times[guild_id]) > 10 and not self.raid_mode[guild_id]:
+            self.raid_mode[guild_id] = True
+            self.raid_end_time[guild_id] = now + timedelta(minutes=5)
+            print(f"🚨 RAID MODE AKTYWOWANY W {member.guild.name} DO {self.raid_end_time[guild_id]}!")
+
+            # Opcjonalnie: Powiadomienie na kanale
+            general = discord.utils.get(member.guild.text_channels, name="ogólny")
+            if general:
+                await general.send("🚨 **SYSTEM ANTY-RAID AKTYWOWANY!** Nowi użytkownicy będą wyrzucani przez 5 minut.")
+
+        # Obsługa Raid Mode
+        if self.raid_mode[guild_id]:
+            if now > self.raid_end_time[guild_id]:
+                self.raid_mode[guild_id] = False
+                print(f"🚨 Raid Mode zakończony w {member.guild.name}.")
+                general = discord.utils.get(member.guild.text_channels, name="ogólny")
+                if general:
+                    await general.send("✅ **Sytuacja opanowana.** System Anty-Raid wyłączony.")
+            else:
+                # Wyrzucamy użytkownika
+                try:
+                    await member.send("⛔ Serwer jest w trybie ochrony przed rajdem. Spróbuj ponownie za 5 minut.")
+                    await member.kick(reason="Anti-Raid System")
+                    return # Przerywamy dalszą obsługę (weryfikację)
+                except Exception as e:
+                    print(f"Błąd kicka (raid): {e}")
+
         guild = member.guild
         verified_role = discord.utils.get(guild.roles, name="—͟͞✅・Bilecik")
         if not verified_role:
@@ -288,6 +344,21 @@ class Admin(commands.Cog):
         embed = discord.Embed(title="🤐 MUTE", description=f"**{member.name}** uciszony na **{minutes}m**.", color=discord.Color.dark_grey())
         embed.set_image(url=random.choice(GIFS_MUTE))
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(moderate_members=True)
+    async def unmute(self, ctx, member: discord.Member):
+        """Zdejmuje wyciszenie"""
+        if member.top_role >= ctx.author.top_role: return
+        await member.timeout(None)
+        await ctx.send(f"🔊 **{member.name}** odzyskał głos!")
+
+    @commands.command()
+    @commands.has_permissions(manage_messages=True)
+    async def purge(self, ctx, amount: int = 10):
+        """Usuwa określoną liczbę wiadomości"""
+        await ctx.channel.purge(limit=amount + 1)
+        await ctx.send(f"🗑️ Wyczyszczono **{amount}** wiadomości!", delete_after=5)
 
     @commands.command()
     @commands.has_permissions(manage_channels=True)

@@ -22,6 +22,7 @@ else:
 economy_col = db["economy"] if db is not None else None
 levels_col = db["levels"] if db is not None else None
 profiles_col = db["profiles"] if db is not None else None
+tickets_col = db["tickets"] if db is not None else None
 
 # --- LISTY KOLORÓW ---
 KAWAII_PINK = 0xFF69B4
@@ -31,7 +32,7 @@ KAWAII_BLUE = 0x87CEEB
 
 # --- POMOCNICZE FUNKCJE DLA MONGODB ---
 # Jeśli bazy brak, używamy słownika w RAM (dla bezpieczeństwa przed crashem)
-ram_storage = {"economy": {}, "levels": {}, "profiles": {}}
+ram_storage = {"economy": {}, "levels": {}, "profiles": {}, "tickets": {}}
 
 def _get_doc(collection, col_name, user_id, default_doc):
     str_id = str(user_id)
@@ -172,3 +173,13 @@ def get_profile_data(user_id):
 
 def update_profile(user_id, key, value):
     _update_doc(profiles_col, "profiles", user_id, {key: value})
+
+# --- SYSTEM TICKETÓW ---
+def get_ticket_user(user_id):
+    default = {
+        "has_opened_ticket": False
+    }
+    return _get_doc(tickets_col, "tickets", user_id, default)
+
+def update_ticket_user(user_id, key, value):
+    _update_doc(tickets_col, "tickets", user_id, {key: value})
