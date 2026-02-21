@@ -50,6 +50,44 @@ class VerifyView(View):
         await asyncio.sleep(5)
         await self.channel.delete()
 
+    @discord.ui.button(label="👋 WYRZUĆ", style=discord.ButtonStyle.danger, emoji="👢")
+    async def kick_button(self, interaction: discord.Interaction, button: Button):
+        if not interaction.user.guild_permissions.kick_members:
+            await interaction.response.send_message("⛔ Brak uprawnień do wyrzucania!", ephemeral=True)
+            return
+
+        try:
+            await interaction.response.send_message(f"👢 Wyrzucam {self.member.mention}...", ephemeral=True)
+            await self.member.kick(reason=f"Wyrzucono przy weryfikacji przez {interaction.user.name}")
+
+            embed = discord.Embed(title="👋 WYRZUCONO!", description=f"**{self.member.name}** nie przeszedł weryfikacji.", color=discord.Color.orange())
+            embed.set_image(url=random.choice(GIFS_KICK))
+            await self.channel.send(embed=embed)
+
+            await asyncio.sleep(5)
+            await self.channel.delete()
+        except Exception as e:
+            await self.channel.send(f"❌ Nie udało się wyrzucić użytkownika: {e}")
+
+    @discord.ui.button(label="🔨 ZBANUJ", style=discord.ButtonStyle.danger, emoji="🔨")
+    async def ban_button(self, interaction: discord.Interaction, button: Button):
+        if not interaction.user.guild_permissions.ban_members:
+            await interaction.response.send_message("⛔ Brak uprawnień do banowania!", ephemeral=True)
+            return
+
+        try:
+            await interaction.response.send_message(f"🔨 Banuję {self.member.mention}...", ephemeral=True)
+            await self.member.ban(reason=f"Zbanowano przy weryfikacji przez {interaction.user.name}")
+
+            embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{self.member.name}** nie przeszedł weryfikacji.", color=KAWAII_RED)
+            embed.set_image(url=random.choice(GIFS_BAN))
+            await self.channel.send(embed=embed)
+
+            await asyncio.sleep(5)
+            await self.channel.delete()
+        except Exception as e:
+            await self.channel.send(f"❌ Nie udało się zbanować użytkownika: {e}")
+
 class TrialView(View):
     def __init__(self, bot, member, role_izolatka, role_verified, channel):
         super().__init__(timeout=None)
