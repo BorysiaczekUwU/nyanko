@@ -57,7 +57,7 @@ class VerifyView(View):
             return
 
         try:
-            await interaction.response.send_message(f"👢 Wyrzucam {self.member.mention}...", ephemeral=True)
+            await interaction.response.send_message(f"👢 Wypierdalaj {self.member.mention}...", ephemeral=True)
             await self.member.kick(reason=f"Wyrzucono przy weryfikacji przez {interaction.user.name}")
 
             embed = discord.Embed(title="👋 WYRZUCONO!", description=f"**{self.member.name}** nie przeszedł weryfikacji.", color=discord.Color.orange())
@@ -76,7 +76,7 @@ class VerifyView(View):
             return
 
         try:
-            await interaction.response.send_message(f"🔨 Banuję {self.member.mention}...", ephemeral=True)
+            await interaction.response.send_message(f"🔨 Wypierdalaj i nie wracaj {self.member.mention}...", ephemeral=True)
             await self.member.ban(reason=f"Zbanowano przy weryfikacji przez {interaction.user.name}")
 
             embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{self.member.name}** nie przeszedł weryfikacji.", color=KAWAII_RED)
