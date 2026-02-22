@@ -213,7 +213,7 @@ class Admin(commands.Cog):
         channel_name = f"weryfikacja-{member.name}".lower().replace("#", "")
         try:
             channel = await guild.create_text_channel(channel_name, overwrites=overwrites)
-            embed = discord.Embed(title=f"🌸 Witaj {member.name}!", description="Napisz coś o sobie! Admin nada Ci **Bilecik**! 🎟️", color=KAWAII_PINK)
+            embed = discord.Embed(title=f"🌸 Witaj {member.name}!", description="Napisz coś o sobie! W międzyczasie możesz użyć komendy !setbio", color=KAWAII_PINK)
             view = VerifyView(self.bot, member, verified_role, channel)
             await channel.send(f"{member.mention}", embed=embed, view=view)
         except Exception as e: print(f"Błąd weryfikacji: {e}")
@@ -442,6 +442,138 @@ class Admin(commands.Cog):
         view = TrialView(self.bot, member, jail_role, verified_role, trial_ch)
         await trial_ch.send(f"{member.mention} {judge_role.mention}", embed=embed, view=view)
         await ctx.send(f"⛓️ **{member.name}** trafił do Domeny!")
+
+    @commands.command()
+    async def temat(self, ctx):
+        """Podaje losowy temat do rozmowy lub kontrowersyjne pytanie."""
+        topics = [
+            "Czy ananas pasuje na pizzę?",
+            "Gdybyś mógł zamienić się z kimś życiem na jeden dzień, kto by to był?",
+            "Jaka jest najbardziej bezużyteczna supermoc, jaką mógłbyś mieć?",
+            "Czy hot dog to kanapka?",
+            "Jaka jest twoja najbardziej kontrowersyjna opinia, której nikt nie popiera?",
+            "Jeśli kosmici wylądowali na Ziemi i kazali ci opisać ludzkość w trzech słowach, co byś powiedział?",
+            "Keczup na frytkach, obok frytek, czy bez keczupa?",
+            "Czy płatki z mlekiem to zupa?",
+            "Jaka jest najgorsza wymówka, jakiej kiedykolwiek użyłeś z sukcesem?",
+            "Co było pierwsze: jajko czy kura?",
+            "Gdybyś musiał jeść tylko jeden posiłek do końca życia, co by to było?",
+            "Kawa czy herbata? Dlaczego?",
+            "Czy zawsze trzeba mówić prawdę, nawet jeśli kogoś to zrani?",
+            "Gdybyś miał wehikuł czasu, wolałbyś cofnąć się w przeszłość czy polecieć w przyszłość?",
+            "Jakie jest najgłupsze prawo, o którym słyszałeś?",
+            "Psy czy koty?",
+            "Czy wierzysz w istnienie duchów?",
+            "Czy zdrada emocjonalna jest gorsza od fizycznej?",
+            "Co jest ważniejsze: miłość czy pieniądze?",
+            "Jeśli mógłbyś zlikwidować jedną rzecz na świecie, co by to było?",
+            "Czy lepsza jest bolesna prawda czy słodkie kłamstwo?",
+            "Jaka jest najdziwniejsza rzecz w twojej lodówce?",
+            "Czy to w porządku płakać w miejscach publicznych?",
+            "Gdybyś mógł ożywić jedną postać z filmu/książki, kto by to był?",
+            "Czy inteligencja to przekleństwo czy dar?",
+            "Wolałbyś stracić węch czy smak?",
+            "Czy ludzie w dzisiejszych czasach są bardziej samotni z powodu internetu?",
+            "Co jest najgorszą cechą u drugiego człowieka?",
+            "Jeśli twoje życie byłoby filmem, jaki by nosiło tytuł?",
+            "Jakiego przedmiotu powinno się uczyć w szkole, a się nie uczy?",
+            "Czy jesteśmy sami we wszechświecie?",
+            "Co jest Twoim największym lękiem?",
+            "Wolałbyś wiedzieć KIEDY umrzesz czy JAK umrzesz?",
+            "Jaka jest najlepsza wymówka od wyjścia na imprezę?",
+            "Czy wierzysz, że wszystko dzieje się po coś?",
+            "Z jakim historycznym władcą umówiłbyś się na piwo?",
+            "Jaki jest twój ulubiony suchar?",
+            "Gdybyś obudził się z milionem złotych, co kupiłbyś najpierw?",
+            "Jaka gra komputerowa zasługuje na miano arcydzieła?",
+            "W jakim uniwersum z filmów lub gier chciałbyś zamieszkać?",
+            "Co myślisz o sztucznej inteligencji, zabierze nam pracę czy pomoże?",
+            "Najbardziej przypałowa sytuacja z czasów szkolnych to...?",
+            "Czy wierzysz w karmę?",
+            "Jaka jest jedyna rzecz, której nigdy byś nie zrobił nawet za milion dolarów?",
+            "Czy lepiej być biednym i szczęśliwym, czy bogatym i nieszczęśliwym?",
+            "Co jest najtrudniejsze w byciu dorosłym?",
+            "Jaką jedną rzecz powiedziałbyś sobie 10 lat temu?",
+            "Czy łatwiej jest wybaczyć czy zapomnieć?",
+            "Jaka piosenka idealnie opisuje twój obecny nastrój?",
+            "Czym według ciebie jest prawdziwe szczęście?"
+        ]
+        embed = discord.Embed(title="🗣️ Temat do rozmowy", description=random.choice(topics), color=0x3498db)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def pochwal(self, ctx):
+        """Wysyła pozytywną wiadomość dla całego serwera, by każdemu umilić dzień."""
+        compliments = [
+            "Jesteście niesamowici! Dziękuję, że tu jesteście!",
+            "Ten serwer nie byłby taki sam bez Was wszystkich. Jesteście super! ❤️",
+            "Każdy z Was wnosi tu tyle dobrej energii, oby tak dalej!",
+            "Pamiętajcie, że każdy z Was jest wartościowy i wyjątkowy. Miłego dnia!",
+            "Uwielbiam czas spędzany z Wami. Jesteście najlepszą społecznością. 🥰",
+            "Jesteście dowodem na to, że w internecie można znaleźć cudownych ludzi!",
+            "Wysyłam dużo uścisków i pozytywnej energii dla każdego z Was! ✨",
+            "Oby dzisiejszy dzień przyniósł Wam same powody do uśmiechu!",
+            "Jesteście jak promień słońca w pochmurny dzień. Trzymajcie się cieplutko!",
+            "Dobra robota za samo bycie sobą! Ten serwer ma szczęście, że Was ma. 🌟"
+        ]
+        embed = discord.Embed(title="🌸 Chwila pozytywności", description=random.choice(compliments), color=KAWAII_PINK)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(manage_nicknames=True)
+    async def chname(self, ctx, member: discord.Member, *, new_name):
+        """[ZARZĄDZANIE] Zmienia pseudonim użytkownika na serwerze."""
+        try:
+            old_name = member.display_name
+            await member.edit(nick=new_name)
+            await ctx.send(f"✅ Zmieniono nick z **{old_name}** na **{new_name}**!")
+        except Exception as e:
+            await ctx.send(f"❌ Nie mogłem zmienić nicku: {e}")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def ruletka(self, ctx):
+        """[TROLL] Rosyjska ruletka. 1/6 szans na wyrzucenie (kick) z serwera!"""
+        if random.randint(1, 6) == 1:
+            try:
+                await ctx.author.send("💥 Pif paf! Przegrałeś w ruletkę...")
+                await ctx.author.kick(reason="Przegrał w rosyjską ruletkę.")
+                await ctx.send(f"💥 **{ctx.author.name}** przegrał w ruletkę i wyleciał z serwera!")
+            except:
+                await ctx.send(f"💥 **{ctx.author.name}** miał wylecieć przez ruletkę, ale ma zbyt potężną zbroję (brak uprawnień)!")
+        else:
+            await ctx.send(f"🔫 *Klik*... **{ctx.author.name}** miał szczęście. Następnym razem uważaj!")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def impostor(self, ctx):
+        """[TROLL] Losuje użytkownika z serwera i ogłasza go impostorem!"""
+        members = [m for m in ctx.guild.members if not m.bot]
+        if not members:
+            return
+        impostore = random.choice(members)
+        embed = discord.Embed(
+            title="🔴 WYKRYTO IMPOSTORA!", 
+            description=f"Wydaje mi się, że {impostore.mention} zachowuje się bardzo sus... ඞ",
+            color=KAWAII_RED
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def timeout_ruletka(self, ctx):
+        """[TROLL] Losuje użytkownika i daje mu timeout na 1 minutę."""
+        members = [m for m in ctx.guild.members if not m.bot and not m.guild_permissions.administrator]
+        if not members:
+            await ctx.send("Nie znalazłem żadnego godnego celu (bez admina).")
+            return
+        target = random.choice(members)
+        try:
+            await target.timeout(timedelta(minutes=1), reason="Timeout Ruletka")
+            embed = discord.Embed(title="⏱️ TIMEOUT RULETKA", description=f"O losie! {target.mention} dostał rykoszetem! (Mute na 1 minutę)", color=discord.Color.dark_grey())
+            await ctx.send(embed=embed)
+        except Exception as e:
+            await ctx.send(f"❌ Ktoś uniknął pocisku... (błąd: {e})")
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))

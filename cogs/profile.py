@@ -203,8 +203,6 @@ class Profile(commands.Cog):
             f"📦 **Przedmioty:** {sum(economy.get('inventory', {}).values())}"
         )
         embed.add_field(name="💎 Ekonomia", value=money_stats, inline=True)
-
-        embed.add_field(name="🎭 Główne Role", value=roles_str, inline=False)
         
         # Podpis twórcy
         embed.set_footer(text=f"Stworzony przez BorysiaczekUwU 💖 • ID: {member.id}")
