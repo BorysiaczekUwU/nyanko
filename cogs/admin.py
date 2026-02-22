@@ -531,7 +531,6 @@ class Admin(commands.Cog):
             await ctx.send(f"❌ Nie mogłem zmienić nicku: {e}")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
     async def rosyjska_ruletka(self, ctx):
         """[TROLL] Rosyjska ruletka. 1/6 szans na wyrzucenie (kick) z serwera!"""
         if random.randint(1, 6) == 1:
