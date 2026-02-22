@@ -102,9 +102,9 @@ class General(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        channel = discord.utils.get(member.guild.text_channels, name="ogólny")
+        channel = discord.utils.get(member.guild.text_channels, name="💬・pogadanki")
         if channel:
-            embed = discord.Embed(description=f"O nie... **{member.name}** uciekł... 💔", color=discord.Color.dark_grey())
+            embed = discord.Embed(description=f"O nie... **{member.name}** uciekł... Trzymaj się gdziekolwiek tam jesteś! 💔", color=discord.Color.dark_grey())
             await channel.send(embed=embed)
 
     @commands.command()

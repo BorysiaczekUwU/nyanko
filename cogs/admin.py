@@ -42,9 +42,9 @@ class VerifyView(View):
         update_data(self.member.id, "balance", 100, "add") # Bonus
         
         await interaction.response.send_message(f"🎉 **{self.member.name}** zweryfikowany! Kanał zniknie za 5s.")
-        general = discord.utils.get(interaction.guild.text_channels, name="ogólny")
+        general = discord.utils.get(interaction.guild.text_channels, name="💬・pogadanki")
         if general:
-            embed = discord.Embed(description=f"Witamy **{self.member.mention}**! (≧◡≦) ♡\nNadano rolę **—͟͞✅・Bilecik**! 🎟️", color=KAWAII_PINK)
+            embed = discord.Embed(description=f"Witamy **{self.member.mention}**! (≧◡≦) ♡\n Cieszymy się że tu jesteś! 💖", color=KAWAII_PINK)
             await general.send(embed=embed)
 
         await asyncio.sleep(5)
