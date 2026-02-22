@@ -532,7 +532,7 @@ class Admin(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def ruletka(self, ctx):
+    async def rosyjska_ruletka(self, ctx):
         """[TROLL] Rosyjska ruletka. 1/6 szans na wyrzucenie (kick) z serwera!"""
         if random.randint(1, 6) == 1:
             try:
