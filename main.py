@@ -2,6 +2,11 @@ import discord
 from discord.ext import commands, tasks
 import os
 import asyncio
+import logging
+import sys
+# Wymuszamy natychmiastowe wypisywanie printów w logach Render
+sys.stdout.reconfigure(line_buffering=True)
+
 from flask import Flask
 from threading import Thread
 
@@ -85,7 +90,8 @@ if not TOKEN:
     raise ValueError("❌ BŁĄD KRYTYCZNY: Nie znaleziono DISCORD_TOKEN w zakładce Environment na Renderze!")
 else:
     try:
-        bot.run(TOKEN)
+        print("⏳ Rozpoczynam łączenie z Discord API...", flush=True)
+        bot.run(TOKEN, log_level=logging.DEBUG)
     except Exception as e:
         error_msg = str(e)
         if "429" in error_msg or "Too Many Requests" in error_msg:
