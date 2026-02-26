@@ -87,4 +87,17 @@ else:
     try:
         bot.run(TOKEN)
     except Exception as e:
-        raise ValueError(f"❌ Błąd podczas logowania (czy token jest poprawny?): {e}")
+        error_msg = str(e)
+        if "429" in error_msg or "Too Many Requests" in error_msg:
+            print("\n=======================================================================")
+            print("⚠️ WYKRYTO BLOKADĘ CLOUDFLARE / DISCORD (Błąd 429)!")
+            print("⚠️ Bot wysyłał zapytania zbyt szybko i został tymczasowo zablokowany.")
+            print("⏳ Zabezpieczenie: Wstrzymuję restart na 5 minut, aby blokada IP minęła...")
+            print("=======================================================================\n")
+            import time
+            time.sleep(300)  # Odczekaj 5 minut przed zgaszeniem bota
+            print("🔄 Koniec pauzy. Render teraz bezpiecznie zrestartuje bota.")
+            import sys
+            sys.exit(1)
+        else:
+            raise ValueError(f"❌ Błąd podczas logowania (czy token jest poprawny?): {e}")
