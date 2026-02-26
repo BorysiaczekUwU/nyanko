@@ -53,6 +53,14 @@ class RoleSelectView(View):
         guild = interaction.guild
         user = interaction.user
         
+        # Opcjonalnie: Zaktualizuj bio w bazie danych od razu, niezależnie od trybu
+        # Najpierw wczytujemy obecne ustawienia kategorialne (np. "gender": "Niewiasta") z get_profile_data
+        current_data = get_profile_data(user.id)
+        
+        # Zapisujemy wybrane opcje jako string do profilu (z listy jeśli wielokrotny wybór)
+        chosen_values_str = ", ".join(select.values)
+        update_profile(user.id, category_name, chosen_values_str)
+        
         # Jeśli to komenda !setup_autorole (dla starych bywalców) chcąca zmienić role na żywo
         if self.is_setup:
             # Usuń wszystkie role z danej kategorii ze starych
@@ -69,7 +77,7 @@ class RoleSelectView(View):
                     await user.add_roles(r)
                     added_roles.append(r.name)
             
-            await interaction.response.send_message(f"✅ Zaktualizowano! Nowe role ({category_name}): {', '.join(added_roles)}", ephemeral=True)
+            await interaction.response.send_message(f"✅ Zaktualizowano profil i role! ({category_name}): {', '.join(added_roles)}", ephemeral=True)
         else:
             # System Weryfikacji: Zapamiętaj ID wybrane jako Pending Roles do wręczenia po akceptacji admina
             roles_to_add = []
@@ -78,12 +86,11 @@ class RoleSelectView(View):
                 if r: roles_to_add.append(r.id)
             
             # Filtr stare wejścia dla tej samej kategorii w pending
-            # Najpierw zdobądź wszystkie ID ról z tej kategorii na serwerze
             cat_role_ids = [discord.utils.get(guild.roles, name=rn).id for rn in ROLES[category_name] if discord.utils.get(guild.roles, name=rn)]
             pending_roles[user.id] = [rid for rid in pending_roles[user.id] if rid not in cat_role_ids]
             pending_roles[user.id].extend(roles_to_add)
             
-            await interaction.response.send_message(f"✅ Wybór {category_name} zapamiętany do momentu akceptacji przez administrację!", ephemeral=True)
+            await interaction.response.send_message(f"✅ Twój profil ({category_name}) zaktualizowany! Role na serwerze dostaniesz po weryfikacji.", ephemeral=True)
 
     @discord.ui.select(placeholder="Wybierz płeć!", min_values=1, max_values=1, options=[
         discord.SelectOption(label="Niewiasta", emoji="👱‍♀️"),
