@@ -23,6 +23,10 @@ async def send_dm_log(member, guild_name, reason, action_type):
         await member.send(embed=embed)
     except: pass
 
+class Admin(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
     # --- KOMENDY ---
     @commands.command()
     @commands.has_permissions(administrator=True)
