@@ -75,12 +75,6 @@ podzielona na poszczególne moduły (kategorie).
 ⭐ !clearwarns <@użytkownik>
    └ Czyści wszystkie ostrzeżenia użytkownika.
 
-⭐ !domena <@użytkownik>
-   └ Brak opisu.
-
-⭐ !temat 
-   └ Podaje losowy temat do rozmowy lub kontrowersyjne pytanie.
-
 ⭐ !pochwal 
    └ Wysyła pozytywną wiadomość dla całego serwera, by każdemu umilić dzień.
 
@@ -285,3 +279,8 @@ podzielona na poszczególne moduły (kategorie).
 --- 📂 MODUŁ: TICKETS ---
 ⭐ !setup_tickets 
    └ (Admin) Tworzy panel zgłoszeniowy (ticket) na danym kanale.
+
+
+--- 📂 MODUŁ: VERIFICATION ---
+⭐ !setup_autorole 
+   └ Ustawia publiczny kanał Auto-Color / Auto-Role dla Graczy do własnych edycji z poziomu Menu bez udziału administracji.
