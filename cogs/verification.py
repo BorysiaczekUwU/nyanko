@@ -93,9 +93,9 @@ class RoleSelectView(View):
             await interaction.response.send_message(f"✅ Twój profil ({category_name}) zaktualizowany! Role na serwerze dostaniesz po weryfikacji.", ephemeral=True)
 
     @discord.ui.select(placeholder="Wybierz płeć!", min_values=1, max_values=1, options=[
-        discord.SelectOption(label="Niewiasta", emoji="👱‍♀️"),
-        discord.SelectOption(label="Jegomość", emoji="👱‍♂️"),
-        discord.SelectOption(label="Helikopter Bojowy", emoji="🚁")
+        discord.SelectOption(label="—͟͞👧・Niewiasta", emoji="👱‍♀️"),
+        discord.SelectOption(label="—͟͞👦・Jegomość", emoji="👱‍♂️"),
+        discord.SelectOption(label="—͟͞👤・Helikopter Bojowy", emoji="🚁")
     ])
     async def gender_select(self, interaction: discord.Interaction, select: Select):
         await self.handle_roles(interaction, select, "gender")
