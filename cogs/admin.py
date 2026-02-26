@@ -410,6 +410,68 @@ class Admin(commands.Cog):
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
         await ctx.send("🔓 Odblokowano!")
 
+    # --- SYSTEM OSTRZEŻEŃ (WARNS) ---
+    def load_warns(self):
+        import json
+        import os
+        if not os.path.exists("data/warns.json"):
+            if not os.path.exists("data"): os.makedirs("data")
+            with open("data/warns.json", "w") as f: json.dump({}, f)
+        with open("data/warns.json", "r") as f: return json.load(f)
+
+    def save_warns(self, warns_data):
+        import json
+        with open("data/warns.json", "w") as f: json.dump(warns_data, f, indent=4)
+
+    @commands.command()
+    @commands.has_permissions(moderate_members=True)
+    async def warn(self, ctx, member: discord.Member, *, reason="Brak powodu"):
+        """Narzędzia: Nadaje ostrzeżenie użytkownikowi."""
+        if member.bot or member.top_role >= ctx.author.top_role:
+            return await ctx.send("⛔ Nie możesz nadać warna temu użytkownikowi.")
+        
+        warns = self.load_warns()
+        user_id = str(member.id)
+        if user_id not in warns: warns[user_id] = []
+        
+        warns[user_id].append({"reason": reason, "moderator": ctx.author.name, "date": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))})
+        self.save_warns(warns)
+
+        embed = discord.Embed(title="⚠️ OSTRZEŻENIE", description=f"Użytkownik {member.mention} otrzymał ostrzeżenie!", color=discord.Color.orange())
+        embed.add_field(name="Powód:", value=reason)
+        embed.set_footer(text=f"Aktualna liczba ostrzeżeń: {len(warns[user_id])}")
+        await ctx.send(embed=embed)
+        try: await member.send(f"⚠️ Zostałeś ostrzeżony na serwerze **{ctx.guild.name}** za: `{reason}`.")
+        except: pass
+
+    @commands.command(aliases=['warns'])
+    @commands.has_permissions(moderate_members=True)
+    async def warnings(self, ctx, member: discord.Member):
+        """Pokazuje listę ostrzeżeń użytkownika."""
+        warns = self.load_warns()
+        user_id = str(member.id)
+        
+        if user_id not in warns or len(warns[user_id]) == 0:
+            return await ctx.send(f"✨ {member.name} ma czyste konto!")
+
+        embed = discord.Embed(title=f"⚠️ Ostrzeżenia: {member.name}", color=discord.Color.orange())
+        for idx, w in enumerate(warns[user_id], 1):
+            embed.add_field(name=f"Warn #{idx} (od {w['moderator']})", value=f"Powód: {w['reason']}\nData: {w['date']}", inline=False)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def clearwarns(self, ctx, member: discord.Member):
+        """Czyści wszystkie ostrzeżenia użytkownika."""
+        warns = self.load_warns()
+        user_id = str(member.id)
+        if user_id in warns:
+            warns[user_id] = []
+            self.save_warns(warns)
+            await ctx.send(f"🧹 Pomyślnie wyczyszczono wszystkie ostrzeżenia dla {member.name}!")
+        else:
+            await ctx.send(f"⚠️ {member.name} nie ma żadnych ostrzeżeń.")
+
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def domena(self, ctx, member: discord.Member):

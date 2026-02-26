@@ -1,0 +1,287 @@
+============================================================
+               🌟 MEGA SPIS KOMEND BOTA NYANKO 🌟
+============================================================
+
+Poniżej znajduje się kompletna lista wszystkich komend (starych i nowych),
+podzielona na poszczególne moduły (kategorie).
+
+--- 📂 MODUŁ: ADMIN ---
+⭐ !sudo <@użytkownik> <message>
+   └ Pisze jako inny użytkownik (Webhook)
+
+⭐ !fakeban <@użytkownik>
+   └ Udawany ban
+
+⭐ !dm <@użytkownik> <message>
+   └ Wysyła wiadomość prywatną jako bot
+
+⭐ !duch <@użytkownik>
+   └ (Troll) Straszy użytkownika na DM
+
+⭐ !nuke 
+   └ Brak opisu.
+
+⭐ !clear_user <@użytkownik> <ilość>
+   └ Wyczyść wiadomości konkretnej osoby
+
+⭐ !lockdown 
+   └ Zablokuj kanał dla @everyone
+
+⭐ !unlockdown 
+   └ Odblokuj kanał dla @everyone
+
+⭐ !slowmode <sekundy>
+   └ Brak opisu.
+
+⭐ !say <message>
+   └ Brak opisu.
+
+⭐ !nadaj_role <@użytkownik> <@rola>
+   └ Brak opisu.
+
+⭐ !zabierz_role <@użytkownik> <@rola>
+   └ Brak opisu.
+
+⭐ !kick <@użytkownik> reason = "Brak"
+   └ Brak opisu.
+
+⭐ !ban <@użytkownik> reason = "Brak"
+   └ Brak opisu.
+
+⭐ !unban user_input
+   └ Odbanowuje użytkownika (ID lub nazwa)
+
+⭐ !mute <@użytkownik> <minuty> reason = "Spam"
+   └ Brak opisu.
+
+⭐ !unmute <@użytkownik>
+   └ Zdejmuje wyciszenie
+
+⭐ !purge <ilość>
+   └ Usuwa określoną liczbę wiadomości
+
+⭐ !lock 
+   └ Brak opisu.
+
+⭐ !unlock 
+   └ Brak opisu.
+
+⭐ !warn <@użytkownik> reason = "Brak powodu"
+   └ Narzędzia: Nadaje ostrzeżenie użytkownikowi.
+
+⭐ !warnings <@użytkownik>
+   └ Pokazuje listę ostrzeżeń użytkownika.
+
+⭐ !clearwarns <@użytkownik>
+   └ Czyści wszystkie ostrzeżenia użytkownika.
+
+⭐ !domena <@użytkownik>
+   └ Brak opisu.
+
+⭐ !temat 
+   └ Podaje losowy temat do rozmowy lub kontrowersyjne pytanie.
+
+⭐ !pochwal 
+   └ Wysyła pozytywną wiadomość dla całego serwera, by każdemu umilić dzień.
+
+⭐ !chname <@użytkownik> new_name
+   └ [ZARZĄDZANIE] Zmienia pseudonim użytkownika na serwerze.
+
+⭐ !rosyjska_ruletka 
+   └ [TROLL] Rosyjska ruletka. 1/6 szans na wyrzucenie (kick) z serwera!
+
+⭐ !impostor 
+   └ [TROLL] Losuje użytkownika z serwera i ogłasza go impostorem!
+
+⭐ !timeout_ruletka 
+   └ [TROLL] Losuje użytkownika i daje mu timeout na 1 minutę.
+
+
+--- 📂 MODUŁ: ECONOMY ---
+⭐ !daily 
+   └ Odbierz swoje darmowe, dzienne coinsy!
+
+⭐ !bal <@użytkownik>
+   └ Brak opisu.
+
+⭐ !work 
+   └ Zapracuj na kilka monet. Zarobek to 50-200 monet.
+
+⭐ !crime 
+   └ Zaryzykuj przestępstwo! Przeciętny zarobek to 100-300 monet (albo grzywna).
+
+⭐ !sklep 
+   └ Brak opisu.
+
+⭐ !buy item_name
+   └ Kup przedmiot ze sklepu.
+
+⭐ !ekwipunek <@użytkownik>
+   └ Pokazuje Twoje przedmioty.
+
+⭐ !eq <@użytkownik>
+   └ Pokazuje Twoje przedmioty.
+
+⭐ !use_z_p item_name
+   └ Brak opisu.
+
+⭐ !use_b_x item_name
+   └ Brak opisu.
+
+⭐ !use_m_k item_name
+   └ Brak opisu.
+
+⭐ !use item_name
+   └ Użyj przedmiotu z ekwipunku.
+
+⭐ !roulette color <ilość>
+   └ Zagraj w europejską ruletkę! Użycie: !roulette <kolor: czerwony|czarny|zielony> <kwota>
+
+⭐ !bj <ilość>
+   └ Klasyczny Blackjack z krupierem (botem). Zdobądź max 21 oczek!
+
+⭐ !blackjack <ilość>
+   └ Klasyczny Blackjack z krupierem (botem). Zdobądź max 21 oczek!
+
+⭐ !coinflip bet_on <ilość>
+   └ Zagraj w rzut monetą! Użycie: !coinflip <orzeł|reszka> <kwota>
+
+⭐ !cf bet_on <ilość>
+   └ Zagraj w rzut monetą! Użycie: !coinflip <orzeł|reszka> <kwota>
+
+⭐ !pay <@użytkownik> <ilość>
+   └ Przelej komuś swoje pieniądze. (Podatek 5%)
+
+⭐ !addmoney <@użytkownik> <ilość>
+   └ (Admin) Dodaj pieniądze.
+
+⭐ !removemoney <@użytkownik> <ilość>
+   └ (Admin) Zabierz pieniądze.
+
+⭐ !resetmoney <@użytkownik>
+   └ (Admin) Zresetuj pieniądze.
+
+⭐ !giveitem <@użytkownik> item_name
+   └ (Admin) Daj dowolny przedmiot użytkownikowi.
+
+
+--- 📂 MODUŁ: EVENTS ---
+⭐ !event 
+   └ Moduł do zarządzania wydarzeniami serwerowymi.
+
+⭐ !event create args: str
+   └ Tworzy nowe wydarzenie. Użycie: !event create Nazwa | Data | Opis
+
+⭐ !event join <ID>
+   └ Zapisuje na wybrane wydarzenie po jego ID.
+
+⭐ !event leave <ID>
+   └ Wypisuje z wybranego wydarzenia.
+
+⭐ !event cancel <ID>
+   └ Anuluje wydarzenie.
+
+⭐ !event list 
+   └ Wyświetla nadchodzące wydarzenia.
+
+
+--- 📂 MODUŁ: GAMES ---
+⭐ !slots <ilość>
+   └ Zagraj na maszynie losującej! Trzy takie same symbole = wielka wygrana.
+
+⭐ !rzut_koscia num_dice = 1
+   └ Symuluje rzut kośćmi do ułożenia gier towarzyskich typu D&D.
+
+⭐ !papier_kamien choice <ilość>
+   └ Klasyczny papier, kamień, nożyce z zakładem!
+
+⭐ !wykres token
+   └ Generuje fejkowe wykresy giełdowe dla zabawy na serwerze!
+
+⭐ !wykres_pro token
+   └ Bardziej rozbudowany wykres giełdowy (Candlestick).
+
+⭐ !kopalnia 
+   └ Kopalnia kryształów! Raz dziennie znajdź rzadki klejnot lub strąć czas na skały.
+
+
+--- 📂 MODUŁ: GENERAL ---
+⭐ !ping 
+   └ Sprawdza opóźnienie bota.
+
+⭐ !say <message>
+   └ Brak opisu.
+
+⭐ !avatar <@użytkownik>
+   └ Pokazuje avatar użytkownika.
+
+⭐ !serverinfo 
+   └ Pokazuje informacje o serwerze.
+
+⭐ !userinfo <@użytkownik>
+   └ Pokazuje informacje o użytkowniku.
+
+
+--- 📂 MODUŁ: LEVELS ---
+⭐ !poziom <@użytkownik>
+   └ Sprawdza poziom użytkownika i wyświetla estetyczny baner.
+
+⭐ !top 
+   └ Top 10 najbardziej aktywnych użytkowników serwera.
+
+
+--- 📂 MODUŁ: PROFILE ---
+⭐ !setbio bio
+   └ Ustaw krótki opis swojego profilu!
+
+⭐ !setcolor color_name_or_hex
+   └ Ustaw kolor swojego profilu! Kolory lub kody np. #FF0000
+
+⭐ !profil <@użytkownik>
+   └ Pokazuje wspaniałą kartę Twojego profilu!
+
+⭐ !rep_top 
+   └ Ranking użytkowników z najwyższą reputacją.
+
+
+--- 📂 MODUŁ: SOCIAL ---
+⭐ !przytul <@użytkownik>
+   └ Brak opisu.
+
+⭐ !pocaluj <@użytkownik>
+   └ Brak opisu.
+
+⭐ !policzek <@użytkownik>
+   └ Brak opisu.
+
+⭐ !pat <@użytkownik>
+   └ Brak opisu.
+
+⭐ !ship <@użytkownik>
+   └ Brak opisu.
+
+⭐ !kula pytanie
+   └ Brak opisu.
+
+⭐ !slub <@użytkownik>
+   └ Weź ślub z wybraną osobą! 💍
+
+⭐ !rozwod 
+   └ Weź rozwód ze swoim partnerem 💔
+
+⭐ !highfive <@użytkownik>
+   └ Przybij piątkę! 🙌
+
+⭐ !kill <@użytkownik>
+   └ Wyeliminuj cel (RP) 🔪
+
+⭐ !feed <@użytkownik>
+   └ Nakarm kogoś 🍜
+
+⭐ !rep <@użytkownik>
+   └ Przyznaj punkt reputacji innemu użytkownikowi.
+
+
+--- 📂 MODUŁ: TICKETS ---
+⭐ !setup_tickets 
+   └ (Admin) Tworzy panel zgłoszeniowy (ticket) na danym kanale.
