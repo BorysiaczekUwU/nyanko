@@ -53,6 +53,13 @@ class RoleSelectView(View):
         guild = interaction.guild
         user = interaction.user
         
+        if guild is None and self.member and hasattr(self.member, "guild"):
+            guild = self.member.guild
+            user = guild.get_member(user.id) or self.member
+            
+        if not guild or not hasattr(user, 'add_roles'):
+            return await interaction.response.send_message("❌ Błąd: Nie znaleziono serwera lub uprawnień (spróbuj z kanału).", ephemeral=True)
+        
         # Opcjonalnie: Zaktualizuj bio w bazie danych od razu, niezależnie od trybu
         # Najpierw wczytujemy obecne ustawienia kategorialne (np. "gender": "Niewiasta") z get_profile_data
         current_data = get_profile_data(user.id)
@@ -67,14 +74,16 @@ class RoleSelectView(View):
             for role_name in ROLES[category_name]:
                 r = discord.utils.get(guild.roles, name=role_name)
                 if r and r in user.roles:
-                    await user.remove_roles(r)
+                    try: await user.remove_roles(r)
+                    except: pass
             
             # Próba dodania wybranych
             added_roles = []
             for role_name in select.values:
                 r = discord.utils.get(guild.roles, name=role_name)
                 if r:
-                    await user.add_roles(r)
+                    try: await user.add_roles(r)
+                    except: pass
                     added_roles.append(r.name)
             
             await interaction.response.send_message(f"✅ Zaktualizowano profil i role! ({category_name}): {', '.join(added_roles)}", ephemeral=True)

@@ -4,6 +4,100 @@ import random
 import asyncio
 from utils import get_data, update_data, KAWAII_PINK, KAWAII_GOLD, KAWAII_RED, KAWAII_BLUE
 
+class BlackjackView(discord.ui.View):
+    def __init__(self, bot, player, bet, player_hand, dealer_hand, deck):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.player = player
+        self.bet = bet
+        self.player_hand = player_hand
+        self.dealer_hand = dealer_hand
+        self.deck = deck
+
+    def calculate_score(self, hand):
+        score = 0
+        aces = 0
+        for card in hand:
+            if card in ["J", "Q", "K"]:
+                score += 10
+            elif card == "A":
+                aces += 1
+                score += 11
+            else:
+                score += int(card)
+        while score > 21 and aces > 0:
+            score -= 10
+            aces -= 1
+        return score
+
+    def embed_game(self, show_dealer=False):
+        embed = discord.Embed(title="🃏 Blackjack", color=KAWAII_BLUE)
+        
+        d_score = self.calculate_score(self.dealer_hand) if show_dealer else "?"
+        d_cards = " ".join(self.dealer_hand) if show_dealer else f"{self.dealer_hand[0]} ?"
+        
+        p_score = self.calculate_score(self.player_hand)
+        p_cards = " ".join(self.player_hand)
+        
+        embed.add_field(name=f"Krupier ({d_score})", value=d_cards, inline=False)
+        embed.add_field(name=f"Gracz ({p_score})", value=p_cards, inline=False)
+        return embed
+
+    async def end_game(self, interaction, result, score):
+        for child in self.children:
+            child.disabled = True
+        
+        embed = self.embed_game(show_dealer=True)
+        if result == "win":
+            win = self.bet * 2
+            update_data(self.player.id, "balance", win, "add")
+            embed.description = f"🎉 Wygrywasz! (Zgarniasz **{win}**)"
+            embed.color = KAWAII_GOLD
+        elif result == "bj":
+            win = int(self.bet * 2.5)
+            update_data(self.player.id, "balance", win, "add")
+            embed.description = f"🔥 BLACKJACK! (Zgarniasz **{win}**)"
+            embed.color = KAWAII_GOLD
+        elif result == "lose":
+            embed.description = f"❌ Przegrywasz **{self.bet}**."
+            embed.color = KAWAII_RED
+        elif result == "tie":
+            update_data(self.player.id, "balance", self.bet, "add")
+            embed.description = f"🤝 Remis! Odzyskujesz stawkę."
+            
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Dobierz (Hit)", style=discord.ButtonStyle.primary)
+    async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.player.id: return
+        self.player_hand.append(self.deck.pop())
+        score = self.calculate_score(self.player_hand)
+        
+        if score > 21:
+            await self.end_game(interaction, "lose", score)
+        elif score == 21:
+            await self.stand(interaction, button)
+        else:
+            await interaction.response.edit_message(embed=self.embed_game(), view=self)
+
+    @discord.ui.button(label="Czekaj (Stand)", style=discord.ButtonStyle.danger)
+    async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction and interaction.user.id != self.player.id: return
+        
+        p_score = self.calculate_score(self.player_hand)
+        d_score = self.calculate_score(self.dealer_hand)
+        
+        while d_score < 17:
+            self.dealer_hand.append(self.deck.pop())
+            d_score = self.calculate_score(self.dealer_hand)
+            
+        if d_score > 21 or p_score > d_score:
+            await self.end_game(interaction, "win", p_score)
+        elif d_score > p_score:
+            await self.end_game(interaction, "lose", p_score)
+        else:
+            await self.end_game(interaction, "tie", p_score)
+
 class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -256,6 +350,32 @@ class Games(commands.Cog):
             embed.color = KAWAII_BLUE
 
         await ctx.send(embed=embed)
+
+    @commands.command(aliases=['bj'])
+    async def blackjack(self, ctx, amount: int):
+        """Zagraj w Blackjacka!"""
+        if not await self.check_balance(ctx, amount): return
+        
+        update_data(ctx.author.id, "balance", -amount, "add")
+        
+        deck = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"] * 4
+        random.shuffle(deck)
+        
+        p_hand = [deck.pop(), deck.pop()]
+        d_hand = [deck.pop(), deck.pop()]
+        
+        view = BlackjackView(self.bot, ctx.author, amount, p_hand, d_hand, deck)
+        
+        p_score = view.calculate_score(p_hand)
+        if p_score == 21:
+            v = view.embed_game(show_dealer=True)
+            win = int(amount * 2.5)
+            update_data(ctx.author.id, "balance", win, "add")
+            v.description = f"🔥 BLACKJACK! Zgarniasz **{win}** monet!"
+            v.color = KAWAII_GOLD
+            await ctx.send(embed=v)
+        else:
+            await ctx.send(embed=view.embed_game(), view=view)
 
 async def setup(bot):
     await bot.add_cog(Games(bot))

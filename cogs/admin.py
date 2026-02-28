@@ -22,6 +22,36 @@ async def send_dm_log(member, guild_name, reason, action_type):
         embed.set_footer(text="Decyzja jest ostateczna (chyba że kupisz unbana UwU)")
         await member.send(embed=embed)
     except: pass
+# --- WIDOK DOMENY ---
+class TrialView(View):
+    def __init__(self, bot, member, jail_role, verified_role, channel):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.member = member
+        self.jail_role = jail_role
+        self.verified_role = verified_role
+        self.channel = channel
+
+    @discord.ui.button(label="Ułaskaw", style=discord.ButtonStyle.green, emoji="🕊️")
+    async def pardon(self, interaction: discord.Interaction, button: Button):
+        if not interaction.user.guild_permissions.administrator:
+            return await interaction.response.send_message("Brak uprawnień!", ephemeral=True)
+            
+        await self.member.remove_roles(self.jail_role)
+        if self.verified_role:
+            await self.member.add_roles(self.verified_role)
+            
+        await interaction.response.send_message("Ułaskawiony!", ephemeral=True)
+        await self.channel.delete()
+
+    @discord.ui.button(label="Winny", style=discord.ButtonStyle.danger, emoji="🔨")
+    async def guilty(self, interaction: discord.Interaction, button: Button):
+        if not interaction.user.guild_permissions.ban_members:
+            return await interaction.response.send_message("Brak uprawnień!", ephemeral=True)
+            
+        await self.member.ban(reason="Domena Sądowa: Winny")
+        await interaction.response.send_message("Zbanowany!", ephemeral=True)
+        await self.channel.delete()
 
 class Admin(commands.Cog):
     def __init__(self, bot):

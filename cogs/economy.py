@@ -214,6 +214,27 @@ class Economy(commands.Cog):
         update_data(member.id, "balance", -amount, "add")
         await ctx.send(f"📉 **ADMIN:** Zabrano **{amount}** monet użytkownikowi {member.mention}!")
 
+    @commands.command(aliases=['daj', 'pay', 'przelew'])
+    async def zaplac(self, ctx, member: discord.Member, amount: int):
+        """Przelej monety innemu graczu"""
+        if amount <= 0:
+            return await ctx.send("❌ Kwota musi być dodatnia!")
+            
+        sender_id = ctx.author.id
+        receiver_id = member.id
+        
+        if sender_id == receiver_id:
+            return await ctx.send("❌ Nie możesz przelać sobie!")
+            
+        data = get_data(sender_id)
+        if data["balance"] < amount:
+            return await ctx.send(f"💸 Nie stać cię! Masz tylko: **{round(data['balance'], 2)}**")
+            
+        update_data(sender_id, "balance", -amount, "add")
+        update_data(receiver_id, "balance", amount, "add")
+        
+        await ctx.send(f"💸 **{ctx.author.name}** przelał **{amount}** monet użytkownikowi **{member.name}**!")
+
     @commands.command()
     async def portfel(self, ctx):
         """Sprawdź swój stan konta i aktywa"""

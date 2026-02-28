@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import aiohttp
 from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD
 
 class HelpSelect(discord.ui.Select):
@@ -157,6 +158,26 @@ class General(commands.Cog):
     async def pomoca(self, ctx):
         embed = discord.Embed(title="🛡️ Menu Admina (Legacy)", description="Użyj `!pomoc` i wybierz kategorię Admin!", color=KAWAII_RED)
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def hentai(self, ctx):
+        """[NSFW] Losowy obrazek hentai (anime 18+) z API."""
+        if not ctx.channel.is_nsfw():
+            return await ctx.send("❌ Ta komenda może być użyta tylko na kanale z włączoną opcją NSFW!")
+            
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://api.waifu.pics/nsfw/waifu") as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        url = data.get("url")
+                        embed = discord.Embed(title="🔞 Random Hentai", color=KAWAII_PINK)
+                        embed.set_image(url=url)
+                        await ctx.send(embed=embed)
+                    else:
+                        await ctx.send("❌ Błąd API. Spróbuj ponownie później.")
+        except Exception as e:
+            await ctx.send(f"❌ Wystąpił błąd: {e}")
 
 async def setup(bot):
     await bot.add_cog(General(bot))
