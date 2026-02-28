@@ -94,21 +94,36 @@ class AgeSelect(Select):
         update_profile(interaction.user.id, "age", self.values[0])
         await interaction.response.send_message(f"✅ Ustawiono wiek: **{self.values[0]}**", ephemeral=True)
 
-# --- GŁÓWNY WIDOK USTAWIEŃ BIO ---
-class OldSetBioView(View):
+# --- WIDOK DODATKÓW DO PROFILU (ZAIMKI, STATUS, URODZINY) ---
+class AddonsSelectView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(GenderSelect())   # Row 0
-        self.add_item(PronounsSelect()) # Row 1
-        self.add_item(StatusSelect())   # Row 2
-        self.add_item(AgeSelect())      # Row 3
+        self.add_item(PronounsSelect()) # Row 0
+        self.add_item(StatusSelect())   # Row 1
 
-    @discord.ui.button(label="📝 Napisz Bio", style=discord.ButtonStyle.primary, emoji="✍️", row=4)
+# --- GŁÓWNY HUB PROFILU ---
+class CombinedBioHub(View):
+    def __init__(self, bot):
+        super().__init__(timeout=None)
+        self.bot = bot
+
+    @discord.ui.button(label="🎭 Role Serwerowe", style=discord.ButtonStyle.primary, emoji="🎭", row=0)
+    async def roles_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Wysyła widok z pliku verification.py (Płeć, Wiek, Pingi)
+        view = RoleSelectView(self.bot, interaction.user, is_setup=True)
+        await interaction.response.send_message("Wybierz swoje serwerowe role z poniższego menu:", view=view, ephemeral=True)
+
+    @discord.ui.button(label="🏷️ Opcje Profilu", style=discord.ButtonStyle.primary, emoji="🏷️", row=0)
+    async def addons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Wysyła opcje związane tylko z bazą (Zaimki, Status)
+        view = AddonsSelectView()
+        await interaction.response.send_message("Skonfiguruj dodatki widoczne pod komendą `!bio`:", view=view, ephemeral=True)
+
+    @discord.ui.button(label="📝 Napisz Bio", style=discord.ButtonStyle.secondary, emoji="✍️", row=1)
     async def bio_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # We need BioModal from RoleSelectView's cog or redefine it here. We will just redefine it to keep it simple.
         await interaction.response.send_modal(BioModal())
 
-    @discord.ui.button(label="🎂 Ustaw Urodziny", style=discord.ButtonStyle.secondary, emoji="📅", row=4)
+    @discord.ui.button(label="🎂 Ustaw Urodziny", style=discord.ButtonStyle.secondary, emoji="📅", row=1)
     async def bday_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(BirthdayModal())
 
@@ -147,8 +162,8 @@ class Profile(commands.Cog):
         embed.set_footer(text="Bot stworzony przez BorysiaczekUwU 💖")
 
         try:
-            # Używamy OldSetBioView do ustawień profilu tekstu
-            view = OldSetBioView()
+            # Używamy CombinedBioHub, który łączy stare menusy z auto-role
+            view = CombinedBioHub(self.bot)
             await ctx.author.send(embed=embed, view=view)
             # Opcjonalne potwierdzenie na kanale (znika po 5s)
             temp_msg = await ctx.send(f"{ctx.author.mention}, wysłałam Ci panel ustawień w wiadomości prywatnej! 📩")

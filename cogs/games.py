@@ -377,5 +377,94 @@ class Games(commands.Cog):
         else:
             await ctx.send(embed=view.embed_game(), view=view)
 
+    @commands.command(aliases=['scratch'])
+    async def zdrapka(self, ctx, amount: int):
+        """Kup zdrapkę i wygraj kasę!"""
+        if not await self.check_balance(ctx, amount): return
+        
+        update_data(ctx.author.id, "balance", -amount, "add")
+        
+        emojis = ["🍒", "🍋", "💸", "💎", "⭐"]
+        e1, e2, e3 = random.choices(emojis, k=3)
+        
+        win = 0
+        if e1 == e2 == e3:
+            win = amount * 5
+        elif e1 == e2 or e2 == e3 or e1 == e3:
+            win = int(amount * 1.5)
+            
+        embed = discord.Embed(title="🎟️ Zdrapka Kawaii", color=KAWAII_PINK)
+        embed.description = f"Zdrapek kosztuje: **{amount}** monet. Oto twój wynik:\n\n"
+        embed.description += f"|| {e1} || || {e2} || || {e3} ||"
+        
+        if win > 0:
+            update_data(ctx.author.id, "balance", win, "add")
+            embed.add_field(name="Wynik", value=f"🎉 Wygrywasz **{win}** monet!", inline=False)
+            embed.color = KAWAII_GOLD
+        else:
+            embed.add_field(name="Wynik", value=f"❌ Niestety, nic nie wygrywasz.", inline=False)
+            embed.color = KAWAII_RED
+            
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def wyscig(self, ctx, amount: int, animal: str):
+        """Obstawiaj wyścigi! (zolw, krolik, pies, kot)"""
+        if not await self.check_balance(ctx, amount): return
+        
+        valid_animals = {"zolw": "🐢", "krolik": "🐰", "pies": "🐶", "kot": "🐱"}
+        animal = animal.lower()
+        if animal not in valid_animals:
+            return await ctx.send("⚠️ Wybierz zawodnika: `zolw`, `krolik`, `pies`, lub `kot`.")
+            
+        update_data(ctx.author.id, "balance", -amount, "add")
+        
+        msg = await ctx.send("🏁 Wyścig się rozpoczyna...")
+        await asyncio.sleep(2)
+        
+        winner_key = random.choice(list(valid_animals.keys()))
+        winner_emoji = valid_animals[winner_key]
+        
+        embed = discord.Embed(title="🏁 Tor Wyścigowy", color=KAWAII_BLUE)
+        embed.description = f"Twój faworyt: {valid_animals[animal]}\nZwycięzca na macie to... **{winner_emoji} {winner_key.upper()}**!"
+        
+        if animal == winner_key:
+            win = int(amount * 3.5)
+            update_data(ctx.author.id, "balance", win, "add")
+            embed.add_field(name="Wynik", value=f"🎉 Twój pupil wygrywa! Zgarniasz **{win}** monet!", inline=False)
+            embed.color = KAWAII_GOLD
+        else:
+            embed.add_field(name="Wynik", value=f"❌ Twój pupil przegrał. Tracisz stawkę.", inline=False)
+            embed.color = KAWAII_RED
+            
+        await msg.edit(content=None, embed=embed)
+
+    @commands.command()
+    async def kubki(self, ctx, amount: int, cup: int):
+        """Zgadnij gdzie jest piłeczka! (wybierz kubek 1, 2 lub 3)"""
+        if not await self.check_balance(ctx, amount): return
+        
+        if cup not in [1, 2, 3]:
+            return await ctx.send("⚠️ Musisz wybrać kubek: `1`, `2` lub `3`.")
+            
+        update_data(ctx.author.id, "balance", -amount, "add")
+        
+        winning_cup = random.randint(1, 3)
+        cups_display = ["🥤", "🥤", "🥤"]
+        cups_display[winning_cup - 1] = "🎱"  # pokazuje gdzie byla pila
+        
+        embed = discord.Embed(title="🥤 Gra w Trzy Kubki", color=KAWAII_GOLD)
+        embed.description = f"Obstawiałeś kubek nr **{cup}**.\n\nWynik: " + " ".join(cups_display)
+        
+        if cup == winning_cup:
+            win = int(amount * 2.5)
+            update_data(ctx.author.id, "balance", win, "add")
+            embed.add_field(name="Wynik", value=f"🎉 Znalazłeś piłeczkę! Wygrywasz **{win}** monet!", inline=False)
+        else:
+            embed.add_field(name="Wynik", value=f"❌ Pusto! Tracisz stawkę.", inline=False)
+            embed.color = KAWAII_RED
+            
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(Games(bot))

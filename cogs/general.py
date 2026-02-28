@@ -48,7 +48,11 @@ class HelpSelect(discord.ui.Select):
                 "`!moneta <stawka> <orzel/reszka>` - Rzut monetą\n"
                 "`!kostka <stawka>` - Pojedynek na kości\n"
                 "`!wojna <stawka>` - Wojna karciana\n"
-                "`!zgadnij <stawka> <1-10>` - Zgadnij liczbę"
+                "`!zgadnij <stawka> <1-10>` - Zgadnij liczbę\n"
+                "`!blackjack <stawka>` - Oczko z krupierem (Hit/Stand)\n"
+                "`!zdrapka <koszt>` - Kup e-zdrapkę z nagrodami\n"
+                "`!wyscig <stawka> <zolw/krolik/pies/kot>` - Wyścigi zwierząt\n"
+                "`!kubki <stawka> <1/2/3>` - Gdzie jest piłeczka?"
             )
 
         elif choice == "🧸 Social":
