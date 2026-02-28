@@ -5,7 +5,7 @@ import asyncio
 import io
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
-from utils import get_data, update_data, add_item, remove_item, get_market_data, update_market_data, get_level_data, KAWAII_PINK, KAWAII_GOLD, KAWAII_RED, KAWAII_BLUE
+from utils import get_data, update_data, add_item, remove_item, get_market_data, update_market_data, get_level_data, get_all_economy_users, KAWAII_PINK, KAWAII_GOLD, KAWAII_RED, KAWAII_BLUE
 
 SHOP_ROLES = {
     "VIP": 5000,
@@ -35,9 +35,85 @@ class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.stock_market_loop.start()
+        self.automation_loop.start()
 
     def cog_unload(self):
         self.stock_market_loop.cancel()
+        self.automation_loop.cancel()
+
+    @tasks.loop(minutes=30)
+    async def automation_loop(self):
+        """Pętla automatyzacji: zbiera kasę, daily i pracę dla graczy z włączoną automatyzacją."""
+        users = get_all_economy_users()
+        now = datetime.now()
+        
+        for u_id in users:
+            try:
+                user_id = int(u_id)
+            except:
+                continue
+                
+            data = get_data(user_id)
+            if not data.get("automation_enabled", False):
+                continue
+                
+            level_data = get_level_data(user_id)
+            level = level_data.get("level", 1)
+            
+            total_earned = 0
+            
+            # Wypłata z Tycoona
+            income, rate = self.calculate_tycoon_income(user_id)
+            if income > 0:
+                total_earned += income
+                tycoon = data.get("tycoon", {})
+                tycoon["last_collection"] = now.isoformat()
+                update_data(user_id, "tycoon", tycoon, "set")
+                
+            # Praca
+            can_work = True
+            if data.get("last_work"):
+                try:
+                    last_w = datetime.fromisoformat(data["last_work"])
+                    if now.date() == last_w.date(): can_work = False
+                except ValueError: pass
+                
+            if can_work:
+                work_earnings = 200 + (level * 10)
+                total_earned += work_earnings
+                update_data(user_id, "last_work", now.isoformat(), "set")
+                
+            # Prostytucja (jeśli user chce, dla uproszczenia bot automatyzuje wszystko)
+            can_wrr = True
+            if data.get("last_prostytucja"):
+                try:
+                    last_wrr = datetime.fromisoformat(data["last_prostytucja"])
+                    if now.date() == last_wrr.date(): can_wrr = False
+                except ValueError: pass
+                
+            if can_wrr:
+                wrr_earnings = 500 + (level * 25)
+                total_earned += wrr_earnings
+                update_data(user_id, "last_prostytucja", now.isoformat(), "set")
+                
+            # Daily
+            can_daily = True
+            if data.get("last_daily"):
+                try:
+                    last_d = datetime.fromisoformat(data["last_daily"])
+                    if now.date() == last_d.date(): can_daily = False
+                except ValueError: pass
+                
+            if can_daily:
+                total_earned += 200
+                update_data(user_id, "last_daily", now.isoformat(), "set")
+                
+            if total_earned > 0:
+                update_data(user_id, "balance", total_earned, "add")
+
+    @automation_loop.before_loop
+    async def before_auto_loop(self):
+        await self.bot.wait_until_ready()
 
     @tasks.loop(minutes=10)
     async def stock_market_loop(self):
@@ -295,12 +371,15 @@ class Economy(commands.Cog):
         if data.get("last_daily"):
             try:
                 last = datetime.fromisoformat(data["last_daily"])
-                if now - last < timedelta(hours=24):
-                    diff = last + timedelta(hours=24) - now
+                if now.date() == last.date():
+                    # Obliczanie czasu do północy
+                    tomorrow = now.date() + timedelta(days=1)
+                    midnight = datetime.combine(tomorrow, datetime.min.time())
+                    diff = midnight - now
                     hours, remainder = divmod(diff.seconds, 3600)
                     minutes, _ = divmod(remainder, 60)
 
-                    msg = f"⏳ Wróć jutro! Za **{hours}h {minutes}m**."
+                    msg = f"⏳ Dzisiejsza nagroda już odebrana! Wróć jutro za **{hours}h {minutes}m**."
                     try:
                         await ctx.author.send(msg)
                     except:
@@ -425,13 +504,16 @@ class Economy(commands.Cog):
         if data.get("last_work"):
             try:
                 last = datetime.fromisoformat(data["last_work"])
-                if now - last < timedelta(hours=24):
-                    diff = last + timedelta(hours=24) - now
+                if now.date() == last.date():
+                    # Obliczanie czasu do północy
+                    tomorrow = now.date() + timedelta(days=1)
+                    midnight = datetime.combine(tomorrow, datetime.min.time())
+                    diff = midnight - now
                     hours, remainder = divmod(diff.seconds, 3600)
                     minutes, _ = divmod(remainder, 60)
                     # Prywatna wiadomość o cooldownie
                     try:
-                        await ctx.author.send(f"⏳ Musisz odpocząć! Wróć do pracy za **{hours}h {minutes}m**.")
+                        await ctx.author.send(f"⏳ Musisz odpocząć! Wróć do pracy jutro za **{hours}h {minutes}m**.")
                     except:
                         await ctx.send(f"⏳ {ctx.author.mention}, sprawdź DM! (Cooldown pracy)", delete_after=5)
                     return
@@ -453,6 +535,62 @@ class Economy(commands.Cog):
             await ctx.author.send(msg)
         except:
             await ctx.send(f"✅ {ctx.author.mention} {msg}", delete_after=10)
+
+    @commands.command(aliases=['wrr'])
+    async def prostytucja(self, ctx):
+        """[NSFW] Najstarszy zawód świata. Szybki zysk."""
+        if not ctx.channel.is_nsfw():
+            return await ctx.send("❌ Ta komenda może być użyta tylko na kanale z opcją NSFW!")
+
+        user_id = ctx.author.id
+        data = get_data(user_id)
+        now = datetime.now()
+
+        # Sprawdzamy cooldown
+        if data.get("last_prostytucja"):
+            try:
+                last = datetime.fromisoformat(data["last_prostytucja"])
+                if now.date() == last.date():
+                    # Obliczanie czasu do północy
+                    tomorrow = now.date() + timedelta(days=1)
+                    midnight = datetime.combine(tomorrow, datetime.min.time())
+                    diff = midnight - now
+                    hours, remainder = divmod(diff.seconds, 3600)
+                    minutes, _ = divmod(remainder, 60)
+                    try:
+                        await ctx.author.send(f"⏳ Czas odpocząć brudasku! Możesz wrócić do pracy jutro za **{hours}h {minutes}m**.")
+                    except:
+                        await ctx.send(f"⏳ {ctx.author.mention}, masz przerwę w branży do jutra!", delete_after=5)
+                    return
+            except ValueError:
+                pass
+
+        # Pobieramy level użytkownika
+        level_data = get_level_data(user_id)
+        level = level_data.get("level", 1)
+
+        # Wzór: Podstawa 500 + (Level * 25)
+        earnings = 500 + (level * 25)
+
+        update_data(user_id, "balance", earnings, "add")
+        update_data(user_id, "last_prostytucja", now.isoformat(), "set")
+
+        # Obrazek Hentai via API
+        import aiohttp
+        embed = discord.Embed(title="🔞 Wykonano robotę", color=KAWAII_PINK)
+        msg_text = f"💦 Napracowałeś(aś) się i zarabiasz aż **{earnings}** monet na nocnych figlach!"
+        embed.description = msg_text
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://api.waifu.pics/nsfw/waifu") as resp:
+                    if resp.status == 200:
+                        api_data = await resp.json()
+                        embed.set_image(url=api_data.get("url"))
+        except:
+            pass # jeśli api padnie, wysłany zostanie tylko tekst
+
+        await ctx.send(embed=embed)
 
     # --- TYCOON COMMANDS ---
     def calculate_tycoon_income(self, user_id):
@@ -603,6 +741,60 @@ class Economy(commands.Cog):
         update_data(ctx.author.id, "tycoon", tycoon, "set")
 
         await ctx.send(f"💰 {ctx.author.mention} odebrano **{income}** monet z produkcji!", delete_after=10)
+
+    @commands.group(invoke_without_command=True)
+    async def automatyzacja(self, ctx):
+        """Główna komenda automatyzacji. Użyj !automatyzacja status/kup/wlacz/wylacz"""
+        embed = discord.Embed(title="⚙️ System Automatyzacji", description="Zarabiaj podczas snu!", color=KAWAII_GOLD)
+        embed.add_field(name="Dostępne komendy:", value="`!automatyzacja kup` - Koszt: 50,000 monet\n`!automatyzacja wlacz/wylacz` - Przełącz działanie\n`!automatyzacja status` - Zobacz stan automatu", inline=False)
+        await ctx.send(embed=embed)
+
+    @automatyzacja.command()
+    async def status(self, ctx):
+        data = get_data(ctx.author.id)
+        has_auto = data.get("automation_bought", False)
+        is_on = data.get("automation_enabled", False)
+        
+        if not has_auto:
+            return await ctx.send("❌ Nie posiadasz jeszcze systemu automatyzacji. Kup go używając `!automatyzacja kup` (50,000 monet).")
+            
+        stan = "🟢 WŁĄCZONA" if is_on else "🔴 WYŁĄCZONA"
+        embed = discord.Embed(title="⚙️ Status Automatyzacji", description=f"Twój automat jest obecnie: **{stan}**", color=KAWAII_BLUE)
+        await ctx.send(embed=embed)
+
+    @automatyzacja.command()
+    async def kup(self, ctx):
+        data = get_data(ctx.author.id)
+        if data.get("automation_bought", False):
+            return await ctx.send("✅ Już wykupiłeś dostęp do automatyzacji!")
+            
+        cost = 50000
+        if data["balance"] < cost:
+            return await ctx.send(f"💸 Nie stać cię! Potrzebujesz **{cost}** monet.")
+            
+        update_data(ctx.author.id, "balance", -cost, "add")
+        update_data(ctx.author.id, "automation_bought", True, "set")
+        update_data(ctx.author.id, "automation_enabled", True, "set")
+        
+        await ctx.send("🎉 Gratulacje! Kupiłeś **System Automatyzacji**. Moduł został włączony! (Będzie co 30 minut zbierać wszystkie bonusy i walutę z Tycoona)")
+
+    @automatyzacja.command()
+    async def wlacz(self, ctx):
+        data = get_data(ctx.author.id)
+        if not data.get("automation_bought", False):
+            return await ctx.send("❌ Najpierw musisz go kupić! (`!automatyzacja kup`)")
+            
+        update_data(ctx.author.id, "automation_enabled", True, "set")
+        await ctx.send("🟢 Automatyzacja została **WŁĄCZONA**.")
+
+    @automatyzacja.command()
+    async def wylacz(self, ctx):
+        data = get_data(ctx.author.id)
+        if not data.get("automation_bought", False):
+            return await ctx.send("❌ Najpierw musisz go kupić! (`!automatyzacja kup`)")
+            
+        update_data(ctx.author.id, "automation_enabled", False, "set")
+        await ctx.send("🔴 Automatyzacja została **WYŁĄCZONA**.")
 
 async def setup(bot):
     await bot.add_cog(Economy(bot))

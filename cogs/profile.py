@@ -5,6 +5,128 @@ from discord.ui import Modal, TextInput, View, Select
 from utils import get_profile_data, update_profile, get_level_data, get_data, KAWAII_PINK, KAWAII_BLUE
 from cogs.verification import RoleSelectView
 
+# --- MODAL DO WPISYWANIA URODZIN ---
+class BirthdayModal(Modal, title="Kiedy masz urodziny? 🎂"):
+    bday_input = TextInput(
+        label="Data urodzin",
+        placeholder="np. 15.04 lub 12 Grudnia",
+        max_length=20,
+        required=True
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        update_profile(interaction.user.id, "birthday", self.bday_input.value)
+        await interaction.response.send_message(f"✅ Zapisano urodziny: **{self.bday_input.value}**! 🎂", ephemeral=True)
+
+# --- MODAL DLA NIESTANDARDOWEJ PŁCI ---
+class CustomGenderModal(Modal, title="Wpisz swoją płeć ⚧"):
+    gender_input = TextInput(
+        label="Twoja Płeć",
+        placeholder="np. Kosmita, Dąb, Czołg...",
+        max_length=20,
+        required=True
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        update_profile(interaction.user.id, "gender", self.gender_input.value)
+        await interaction.response.send_message(f"✅ Ustawiono niestandardową płeć: **{self.gender_input.value}**", ephemeral=True)
+
+# --- WYBÓR PŁCI ---
+class GenderSelect(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Chłopak", emoji="👦", value="Chłopak"),
+            discord.SelectOption(label="Dziewczyna", emoji="👧", value="Dziewczyna"),
+            discord.SelectOption(label="Niestandardowa...", emoji="⚧", value="custom"),
+            discord.SelectOption(label="Inna / Tajemnica", emoji="👽", value="Tajemnica"),
+        ]
+        super().__init__(placeholder="Wybierz płeć...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        val = self.values[0]
+        if val == "custom":
+            await interaction.response.send_modal(CustomGenderModal())
+        else:
+            update_profile(interaction.user.id, "gender", val)
+            await interaction.response.send_message(f"✅ Ustawiono płeć: **{val}**", ephemeral=True)
+
+# --- WYBÓR ZAIMKÓW ---
+class PronounsSelect(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="On/Jego", value="On/Jego"),
+            discord.SelectOption(label="Ona/Jej", value="Ona/Jej"),
+            discord.SelectOption(label="Oni/Ich", value="Oni/Ich"),
+            discord.SelectOption(label="Inne", value="Inne"),
+        ]
+        super().__init__(placeholder="Wybierz zaimki...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        update_profile(interaction.user.id, "pronouns", self.values[0])
+        await interaction.response.send_message(f"✅ Ustawiono zaimki: **{self.values[0]}**", ephemeral=True)
+
+# --- WYBÓR STATUSU ZWIĄZKU ---
+class StatusSelect(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Singiel/ka", emoji="🔓", value="Singiel/ka"),
+            discord.SelectOption(label="W związku", emoji="💍", value="W związku"),
+            discord.SelectOption(label="To skomplikowane", emoji="🌀", value="To skomplikowane"),
+            discord.SelectOption(label="Szukam", emoji="🔎", value="Szukam"),
+            discord.SelectOption(label="Nie szukam", emoji="⛔", value="Nie szukam"),
+        ]
+        super().__init__(placeholder="Twój status...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        update_profile(interaction.user.id, "status", self.values[0])
+        await interaction.response.send_message(f"✅ Ustawiono status: **{self.values[0]}**", ephemeral=True)
+
+# --- WYBÓR WIEKU ---
+class AgeSelect(Select):
+    def __init__(self):
+        options = []
+        ranges = ["< 13", "13-15", "16-18", "19-21", "22-25", "25+"]
+        for r in ranges:
+            options.append(discord.SelectOption(label=r, value=r))
+        super().__init__(placeholder="Wybierz wiek...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        update_profile(interaction.user.id, "age", self.values[0])
+        await interaction.response.send_message(f"✅ Ustawiono wiek: **{self.values[0]}**", ephemeral=True)
+
+# --- GŁÓWNY WIDOK USTAWIEŃ BIO ---
+class OldSetBioView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(GenderSelect())   # Row 0
+        self.add_item(PronounsSelect()) # Row 1
+        self.add_item(StatusSelect())   # Row 2
+        self.add_item(AgeSelect())      # Row 3
+
+    @discord.ui.button(label="📝 Napisz Bio", style=discord.ButtonStyle.primary, emoji="✍️", row=4)
+    async def bio_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # We need BioModal from RoleSelectView's cog or redefine it here. We will just redefine it to keep it simple.
+        await interaction.response.send_modal(BioModal())
+
+    @discord.ui.button(label="🎂 Ustaw Urodziny", style=discord.ButtonStyle.secondary, emoji="📅", row=4)
+    async def bday_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(BirthdayModal())
+
+# --- MODAL DO WPISYWANIA BIO ---
+class BioModal(Modal, title="Opisz siebie ✨"):
+    bio_input = TextInput(
+        label="Twoje Bio",
+        style=discord.TextStyle.paragraph,
+        placeholder="Napisz coś fajnego o sobie...",
+        max_length=300,
+        required=True
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        update_profile(interaction.user.id, "bio", self.bio_input.value)
+        await interaction.response.send_message("✅ Bio zaktualizowane! Wygląda super! 💖", ephemeral=True)
+
+
 class Profile(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -25,7 +147,8 @@ class Profile(commands.Cog):
         embed.set_footer(text="Bot stworzony przez BorysiaczekUwU 💖")
 
         try:
-            view = RoleSelectView(self.bot, ctx.author, is_setup=True)
+            # Używamy OldSetBioView do ustawień profilu tekstu
+            view = OldSetBioView()
             await ctx.author.send(embed=embed, view=view)
             # Opcjonalne potwierdzenie na kanale (znika po 5s)
             temp_msg = await ctx.send(f"{ctx.author.mention}, wysłałam Ci panel ustawień w wiadomości prywatnej! 📩")

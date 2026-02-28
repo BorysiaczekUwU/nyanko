@@ -145,6 +145,22 @@ def remove_item(user_id, item_code):
         return True
     return False
 
+def get_all_economy_users():
+    users = []
+    if economy_col is not None:
+        try:
+            for doc in economy_col.find({}):
+                # Ignoruj globalne dokumenty jak global_market
+                if doc.get("_id") != "global_market":
+                    users.append(doc.get("_id"))
+        except Exception as e:
+            print(f"Błąd db: {e}")
+    else:
+        for user_id in ram_storage["economy"].keys():
+            if user_id != "global_market":
+                users.append(user_id)
+    return users
+
 # --- SYSTEM LEVELI ---
 def get_level_data(user_id):
     default = {"xp": 0, "level": 1, "rep": 0, "last_rep": None}
