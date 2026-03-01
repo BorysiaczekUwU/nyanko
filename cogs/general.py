@@ -59,11 +59,13 @@ class HelpSelect(discord.ui.Select):
             embed.title = "🧸 Social & Roleplay"
             embed.description = (
                 "`!przytul`, `!pocaluj`, `!policzek`, `!pat`\n"
+                "`!ugryz`, `!liz`, `!pogon`, `!taniec`, `!bonk`\n"
                 "`!kill`, `!feed`, `!highfive`\n"
                 "`!ship <osoba>` - Sprawdź miłość\n"
                 "`!kula <pytanie>` - Magiczna kula 8\n"
                 "`!slub <osoba>` - Weź ślub\n"
-                "`!rozwod` - Weź rozwód"
+                "`!rozwod` - Weź rozwód\n"
+                "`!adoptuj <osoba>` - Adoptuj dziecko do rodziny"
             )
 
         elif choice == "ℹ️ Info & Profil":

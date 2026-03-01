@@ -20,6 +20,26 @@ GIFS_PAT = [
     "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWJ3YmkxMG5ycWVsdzJtaXNoNG8xbTRhdDUydmQzZTlyZm4xNmJvOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/t9igJ3odrXBixqXtgf/giphy.gif",
     "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2ZkeGJsc3VubXRqenQzYnAzMTJ1aGp0Zm5jajRnNmt6eHdudTkwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/FH0EiKkU2vjPHZ5op1/giphy.gif"
 ]
+GIFS_BITE = [
+    "https://media.giphy.com/media/10gZpyX9hDlwD6/giphy.gif",
+    "https://media.giphy.com/media/OqQvwiFWD0hck/giphy.gif"
+]
+GIFS_LICK = [
+    "https://media.giphy.com/media/G1EXcEbQnU0h2/giphy.gif",
+    "https://media.giphy.com/media/aB1Q0Y49iQ2uQ/giphy.gif"
+]
+GIFS_CHASE = [
+    "https://media.giphy.com/media/11zTElH1h51Ohi/giphy.gif",
+    "https://media.giphy.com/media/l41YkxvU8c7J7Bba0/giphy.gif"
+]
+GIFS_DANCE = [
+    "https://media.giphy.com/media/1tHzw9PZCB3gY/giphy.gif",
+    "https://media.giphy.com/media/4ZgPHE43XklyM/giphy.gif"
+]
+GIFS_BONK = [
+    "https://media.giphy.com/media/HxMhuDg7O4pKOhhcRC/giphy.gif",
+    "https://media.giphy.com/media/qs4ll1FSxKnNHeSmom/giphy.gif"
+]
 
 class Social(commands.Cog):
     def __init__(self, bot):
@@ -167,6 +187,81 @@ class Social(commands.Cog):
         embed = discord.Embed(description=f"**{ctx.author.name}** karmi **{member.name}**! Smacznego! 🍜", color=KAWAII_PINK)
         embed.set_image(url="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzFucW5nN2V6MWZzazg3bXY1eTY4ZTNmcnZ6MzIxZ3pyYTU3M3Q4bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QR7ci2sbhrkzxAuMHH/giphy.gif")
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def ugryz(self, ctx, member: discord.Member):
+        embed = discord.Embed(description=f"**{ctx.author.name}** gryzie **{member.name}**! Chaps! 🧛‍♀️", color=KAWAII_RED)
+        embed.set_image(url=random.choice(GIFS_BITE))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def liz(self, ctx, member: discord.Member):
+        embed = discord.Embed(description=f"**{ctx.author.name}** liże **{member.name}**! Mlem! 👅", color=KAWAII_PINK)
+        embed.set_image(url=random.choice(GIFS_LICK))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def pogon(self, ctx, member: discord.Member):
+        embed = discord.Embed(description=f"**{ctx.author.name}** biegnie za **{member.name}**! Wracaj tu! 🏃‍♀️💨", color=KAWAII_BLUE)
+        embed.set_image(url=random.choice(GIFS_CHASE))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def taniec(self, ctx, member: discord.Member):
+        embed = discord.Embed(description=f"**{ctx.author.name}** tańczy z **{member.name}** na parkiecie! 💃🕺", color=KAWAII_GOLD)
+        embed.set_image(url=random.choice(GIFS_DANCE))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def bonk(self, ctx, member: discord.Member):
+        embed = discord.Embed(description=f"**{ctx.author.name}** robi BONK **{member.name}**! Idziesz do horny jail! 🏏", color=0xFF0000)
+        embed.set_image(url=random.choice(GIFS_BONK))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def adoptuj(self, ctx, member: discord.Member):
+        """Adoptuj wybraną osobę do swojej wirtualnej rodziny! 🍼"""
+        if member == ctx.author:
+            return await ctx.send("❌ Nie możesz adoptować samego siebie!")
+
+        user_p = get_profile_data(ctx.author.id)
+        target_p = get_profile_data(member.id)
+        
+        user_children = user_p.get("children", [])
+        if member.id in user_children:
+            return await ctx.send(f"❌ **{member.name}** jest już Twoim urwisem!")
+            
+        if target_p.get("parent"):
+            return await ctx.send(f"❌ **{member.name}** ma już prawowitego opiekuna!")
+
+        embed = discord.Embed(
+            title="🍼 Papiery Adopcyjne!",
+            description=f"**{ctx.author.name}** pragnie Cię zaadoptować, **{member.name}**!\nCzy zgadzasz się na dołączenie do rodziny? (napisz `tak` lub `nie`)",
+            color=KAWAII_PINK
+        )
+        await ctx.send(member.mention, embed=embed)
+
+        def check(m):
+            return m.author == member and m.channel == ctx.channel and m.content.lower() in ["tak", "nie"]
+
+        try:
+            msg = await self.bot.wait_for("message", check=check, timeout=60)
+            if msg.content.lower() == "tak":
+                # Aktualizacja obydwu profilów. MongoDB wspiera listy dla dzieci
+                user_children.append(member.id)
+                update_profile(ctx.author.id, "children", user_children)
+                update_profile(member.id, "parent", ctx.author.id)
+
+                success_embed = discord.Embed(
+                    title="🎉 Nowa Rodzina!",
+                    description=f"Wspaniale! **{ctx.author.name}** oficjalnie adoptował/a **{member.name}**! 💖🍼",
+                    color=KAWAII_GOLD
+                )
+                await ctx.send(embed=success_embed)
+            else:
+                await ctx.send("💔 Adopcja odrzucona... (qwq)")
+        except:
+            await ctx.send("⌛ Dokumenty wygasły... Adopcja anulowana.")
 
 async def setup(bot):
     await bot.add_cog(Social(bot))
