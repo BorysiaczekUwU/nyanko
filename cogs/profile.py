@@ -209,6 +209,31 @@ class Profile(commands.Cog):
                  partner_txt = "Nieznany"
         embed.add_field(name="💖 Partner", value=partner_txt, inline=True)
 
+        parent_id = profile.get('parent')
+        if parent_id:
+            try:
+                par_user = await self.bot.fetch_user(parent_id)
+                parent_txt = f"{par_user.name} 🍼"
+            except:
+                parent_txt = "Nieznany"
+            embed.add_field(name="👨‍👩‍👦 Opiekun", value=parent_txt, inline=True)
+            
+        children_ids = profile.get('children', [])
+        if children_ids:
+            child_names = []
+            for cid in children_ids[:3]: # Max 3 do wypisania by nie zaspamic embeda
+                try:
+                    c_user = await self.bot.fetch_user(cid)
+                    child_names.append(c_user.name)
+                except:
+                    pass
+            kids_txt = ", ".join(child_names)
+            if len(children_ids) > 3:
+                kids_txt += f" (+{len(children_ids)-3})"
+            if not kids_txt:
+                kids_txt = "Brak"
+            embed.add_field(name="👶 Dziatki", value=kids_txt, inline=True)
+
         stats = (
             f"⭐ **Level:** {level_data['level']}\n"
             f"✨ **XP:** {level_data['xp']}\n"

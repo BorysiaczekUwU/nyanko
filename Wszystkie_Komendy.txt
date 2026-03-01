@@ -224,6 +224,20 @@ podzielona na poszczególne moduły (kategorie).
    └ Top 10 najbardziej aktywnych użytkowników serwera.
 
 
+--- 📂 MODUŁ: NSFW ---
+⭐ !porn 
+   └ Normalne zdjęcie 18+. Tylko na kanałach NSFW.
+
+⭐ !yuri 
+   └ DziewczynaxDziewczyna 18+. Tylko na kanałach NSFW.
+
+⭐ !yaoi 
+   └ ChłopakxChłopak 18+. Tylko na kanałach NSFW.
+
+⭐ !femboy 
+   └ Femboy 18+. Tylko na kanałach NSFW.
+
+
 --- 📂 MODUŁ: PROFILE ---
 ⭐ !setbio bio
    └ Ustaw krótki opis swojego profilu!
@@ -274,6 +288,9 @@ podzielona na poszczególne moduły (kategorie).
 
 ⭐ !rep <@użytkownik>
    └ Przyznaj punkt reputacji innemu użytkownikowi.
+
+⭐ !zagroz <@użytkownik>
+   └ Losowa, komiczna groźba! 😈
 
 
 --- 📂 MODUŁ: TICKETS ---

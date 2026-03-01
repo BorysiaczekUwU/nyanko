@@ -263,5 +263,51 @@ class Social(commands.Cog):
         except:
             await ctx.send("⌛ Dokumenty wygasły... Adopcja anulowana.")
 
+    @commands.command()
+    async def zagroz(self, ctx, member: discord.Member = None):
+        """Losowa, komiczna groźba! 😈"""
+        if member == ctx.author:
+            return await ctx.send("❌ Nie możesz grozić samemu sobie, to dziwne...")
+        
+        grozby = [
+            "Zaraz wyrwę ci zęby i zrobię z nich kwadratowy naszyjnik!",
+            "Zrobię ci z twarzy puzzle i zgubię najważniejszy element!",
+            "Wrzucę cię do pralki na program wirowania bez litości!",
+            "Zaplotę ci rzęsy z brwiami na supeł!",
+            "Nakręcę film o twoim życiu i nie dam ci głównej roli!",
+            "Zrobię ci z włosów spaghetti i posypię parmezanem!",
+            "Zamienię twoje palce u stóp u rąk miejscami!",
+            "Nakleję ci na czoło karny chlebek ze smalcem!",
+            "Utkam ci sweter z twoich własnych łez i zmuszę cię do jego noszenia!",
+            "Skasuję ci konto w banku i kupię za wszystko zupki chińskie!",
+            "Zwiążę ci sznurowadła tak, że co drugi krok będziesz lądować w wannie z budyniem!",
+            "Zaraz wcisnę cię do butelki po keczupie i wstrząsnę!",
+            "Wyślę cię pocztą do Timbuktu bez znaczka zwrotnego!",
+            "Zablokuję ci dostęp do memów na 10 lat!",
+            "Zjem ci cały zapas chipsów, mlaszcząc ci przy tym nad uchem!",
+            "Wsadzę ci kostkę lodu za kołnierz, kiedy się tego najmniej spodziewasz!",
+            "Przerobię cię na breloczek do kluczy, który ciągle będzie gubił się w torebce!",
+            "Zmuszę cię do słuchania disco polo przez 48 godzin non stop!",
+            "Pomaluję ci paznokcie na kolor wściekłej musztardy!",
+            "Zmienię ci hasło do wifi na 100-znakowe zdanie z błędami ortograficznymi!",
+            "Podłożę ci jeża do kapci!",
+            "Kupię ci bilet na bezludną wyspę, ale zapomnę dołączyć mapę powrotną!",
+            "Wypiję ci całą zimną wodę w upalny dzień!",
+            "Zamienię ci dzwonek w telefonie na wycie wilkołaka!",
+            "Zawrócę rzekę tak, by zalała ci trawnik!",
+            "Podmieniam sól na cukier, a cukier na sól w twojej kuchni!",
+            "Sprawię, że każda rurka, przez którą spróbujesz pić, będzie dziurawa!",
+            "Ustawiam wszystkie twoje zegarki na 17 minut do tyłu!",
+            "Zarządzę, by twoje skarpetki na zawsze straciły parę w praniu!",
+            "Sprawię, że poduszka będzie ciepła z obydwu stron!"
+        ]
+        
+        target = f"**{member.name}**" if member else "**wprost w eter**"
+        embed = discord.Embed(
+            description=f"**{ctx.author.name}** grozi {target}:\n\n> *\"{random.choice(grozby)}\"* 💥",
+            color=KAWAII_RED
+        )
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(Social(bot))
