@@ -87,13 +87,22 @@ class HelpSelect(discord.ui.Select):
                 embed.description = (
                     "**Moderacja:**\n"
                     "`!kick`, `!ban`, `!unban`\n"
-                    "`!mute`, `!lock`, `!unlock`\n"
-                    "`!nuke` (czyści kanał), `!slowmode`\n\n"
-                    "**Ekonomia Admin:**\n"
+                    "`!mute`, `!unmute`, `!lock`, `!unlock`\n"
+                    "`!clear_user`, `!purge <ilość>`\n"
+                    "`!nuke`, `!slowmode <s.>`, `!domena`\n\n"
+                    "**Zarządzanie:**\n"
+                    "`!ogloszenie <tekst>`\n"
+                    "`!ankieta <pytanie|opcja1|opcja2...>`\n"
+                    "`!say`, `!dm`, `!sudo`, `!chname`\n\n"
+                    "**Ekonomia i Eventy:**\n"
+                    "`!qte <kwota> <min.> <max_osob>`\n"
                     "`!daj_kase <user> <kwota>`\n"
                     "`!zabierz_kase <user> <kwota>`\n\n"
-                    "**Inne:**\n"
-                    "`!say`, `!dm`, `!sudo`"
+                    "**Społeczność & Trolle:**\n"
+                    "`!wyroznij <user> <powód>`\n"
+                    "`!impreza`, `!temat`, `!pochwal`\n"
+                    "`!fake_mute`, `!scam_nitro`, `!duch`\n"
+                    "`!rosyjska_ruletka`, `!timeout_ruletka`, `!impostor`"
                 )
 
         await interaction.response.edit_message(embed=embed)

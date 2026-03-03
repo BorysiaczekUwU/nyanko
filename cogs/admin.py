@@ -53,6 +53,44 @@ class TrialView(View):
         await interaction.response.send_message("Zbanowany!", ephemeral=True)
         await self.channel.delete()
 
+class QTEView(View):
+    def __init__(self, amount: int, max_users: int, timeout: int):
+        super().__init__(timeout=timeout)
+        self.amount = amount
+        self.max_users = max_users
+        self.claimed_users = set()
+        self.message = None
+
+    @discord.ui.button(label="ZGARNIJ KASĘ!", style=discord.ButtonStyle.success, emoji="💸")
+    async def claim_button(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id in self.claimed_users:
+            return await interaction.response.send_message("❌ Już odebrałeś zrzut!", ephemeral=True)
+            
+        if len(self.claimed_users) >= self.max_users:
+            button.disabled = True
+            await interaction.message.edit(view=self)
+            return await interaction.response.send_message("😢 Niestety, inni byli szybsi!", ephemeral=True)
+            
+        self.claimed_users.add(interaction.user.id)
+        update_data(interaction.user.id, "balance", self.amount, "add")
+        await interaction.response.send_message(f"🎉 Brawo! Zgarniasz **{self.amount} monet**!", ephemeral=True)
+        
+        if len(self.claimed_users) >= self.max_users:
+            button.disabled = True
+            button.label = f"Wyczerpane ({self.max_users}/{self.max_users})"
+            button.style = discord.ButtonStyle.secondary
+            await interaction.message.edit(view=self)
+
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+            child.label = f"Koniec czasu! ({len(self.claimed_users)}/{self.max_users})"
+            child.style = discord.ButtonStyle.secondary
+        if self.message:
+            try:
+                await self.message.edit(view=self)
+            except: pass
+
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -430,6 +468,130 @@ class Admin(commands.Cog):
             await ctx.send(f"✅ Zmieniono nick z **{old_name}** na **{new_name}**!")
         except Exception as e:
             await ctx.send(f"❌ Nie mogłem zmienić nicku: {e}")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def qte(self, ctx, kwota: int, minuty: int, max_osob: int):
+        """[EVENT] Quick Time Event! Rzuca pieniądze na czat."""
+        await ctx.message.delete()
+        if kwota <= 0 or minuty <= 0 or max_osob <= 0:
+            return await ctx.send("Parametry muszą być większe od 0!", delete_after=5)
+            
+        embed = discord.Embed(
+            title="⚡ QUICK TIME EVENT! ⚡",
+            description=f"Admin rzucił pieniędzmi!\nCzeka na was **{kwota} monet**!\n"
+                        f"⏰ Czas: **{minuty} min**\n👥 Maksymalnie dla: **{max_osob} osób**\n\nKliknij przycisk poniżej, aby zgarnąć kasę!",
+            color=KAWAII_GOLD
+        )
+        embed.set_image(url="https://media.giphy.com/media/l0Ex6kAKAoFRsFh6M/giphy.gif")
+        
+        view = QTEView(amount=kwota, max_users=max_osob, timeout=minuty * 60)
+        msg = await ctx.send(embed=embed, view=view)
+        view.message = msg
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def ankieta(self, ctx, *, tresc):
+        """[ZARZĄDZANIE] Tworzy ankietę (pytanie | opcja1 | opcja2)"""
+        await ctx.message.delete()
+        elementy = [e.strip() for e in tresc.split("|")]
+        if len(elementy) < 2:
+            embed = discord.Embed(title="📊 Szybka Ankieta", description=tresc, color=KAWAII_PINK)
+            msg = await ctx.send(embed=embed)
+            await msg.add_reaction("👍")
+            await msg.add_reaction("👎")
+            return
+            
+        pytanie = elementy[0]
+        opcje = elementy[1:]
+        if len(opcje) > 10:
+            return await ctx.send("❌ Maksymalnie 10 opcji!", delete_after=5)
+            
+        emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+        opis = ""
+        for i, opcja in enumerate(opcje):
+            opis += f"{emojis[i]} **{opcja}**\n\n"
+            
+        embed = discord.Embed(title=f"📊 {pytanie}", description=opis, color=KAWAII_PINK)
+        embed.set_footer(text=f"Zadane przez {ctx.author.name}")
+        msg = await ctx.send(embed=embed)
+        for i in range(len(opcje)):
+            await msg.add_reaction(emojis[i])
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def ogloszenie(self, ctx, *, tresc):
+        """[ZARZĄDZANIE] Wysyła oficjalne ogłoszenie."""
+        await ctx.message.delete()
+        embed = discord.Embed(title="📢 OGŁOSZENIE", description=tresc, color=KAWAII_RED)
+        if ctx.guild.icon:
+            embed.set_thumbnail(url=ctx.guild.icon.url)
+        embed.set_footer(text=f"Nadane przez dumną Administrację")
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def wyroznij(self, ctx, member: discord.Member, *, powod="Za bycie wspaniałym!"):
+        """[SOCIAL] Wyróżnia użytkownika i daje mu 500 monet."""
+        await ctx.message.delete()
+        update_data(member.id, "balance", 500, "add")
+        
+        embed = discord.Embed(
+            title="🌸 CERTYFIKAT SŁODZIAKA 🌸",
+            description=f"Dzisiejsze specjalne wyróżnienie wędruje do...\n\n💖 {member.mention} 💖\n\n**Za co?**\n*{powod}*",
+            color=KAWAII_PINK
+        )
+        embed.add_field(name="Nagroda", value="W wirtualnym portfelu ląduje bonusowe **500 monet**! 💰")
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)
+        embed.set_image(url="https://media.giphy.com/media/26vUxJ9rqfwuIEkTu/giphy.gif")
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def fake_mute(self, ctx, member: discord.Member, minuty: int = 10):
+        """[TROLL] Wysyła info o mutowaniu użytkownika, ale tego nie robi."""
+        await ctx.message.delete()
+        embed = discord.Embed(
+            title="🤐 MUTE", 
+            description=f"**{member.name}** uciszony na **{minuty}m**.", 
+            color=discord.Color.dark_grey()
+        )
+        embed.set_image(url=random.choice(GIFS_MUTE))
+        embed.set_footer(text="(Ale tak naprawdę nie 🤫)")
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def scam_nitro(self, ctx, member: discord.Member):
+        """[TROLL] Wysyła Rickrolla zapakowanego w fejkowe Nitro jako DM."""
+        await ctx.message.delete()
+        embed = discord.Embed(
+            title="🎁 Masz prezent!",
+            description="Znajomy podarował Ci subskrypcję **Discord Nitro** na 1 miesiąc!\n\n**[Kliknij tutaj, aby odebrać](https://c.tenor.com/_4YgA77ExHEAAAAC/tenor.gif)**",
+            color=0x2b2d31
+        )
+        embed.set_thumbnail(url="https://i.imgur.com/w9aiD6n.png")
+        try:
+            await member.send(embed=embed)
+            await ctx.send(f"😜 Fejkowe nitro wysłane do {member.name}!", delete_after=5)
+        except:
+            await ctx.send(f"❌ {member.name} ma zablokowane DM.", delete_after=5)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def impreza(self, ctx):
+        """[SOCIAL] Rozpoczyna wielką imprezę na kanale!"""
+        await ctx.message.delete()
+        embed = discord.Embed(
+            title="🎉 IMPREZA! 🎊",
+            description=f"{ctx.author.mention} rozkręca imprezę!\nWszycy na parkiet! 🕺💃",
+            color=KAWAII_GOLD
+        )
+        embed.set_image(url="https://media.giphy.com/media/l2JHRhAtnJSDNJ2py/giphy.gif")
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction("🥳")
+        await msg.add_reaction("🍻")
+        await msg.add_reaction("✨")
 
     @commands.command()
     async def rosyjska_ruletka(self, ctx):
