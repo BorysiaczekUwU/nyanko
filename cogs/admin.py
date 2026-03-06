@@ -14,7 +14,7 @@ GIFS_NUKE = ["https://media.giphy.com/media/OE6FE4GZF78nm/giphy.gif"]
 
 def has_perms_or_borysiaczek(**perms):
     def predicate(ctx):
-        if ctx.author.name.lower() == "borysiaczekuwu":
+        if ctx.author.name.lower() == "≽^BorysiaczekUwU^≼":
             return True
         permissions = ctx.channel.permissions_for(ctx.author)
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
@@ -45,7 +45,7 @@ class TrialView(View):
 
     @discord.ui.button(label="Ułaskaw", style=discord.ButtonStyle.green, emoji="🕊️")
     async def pardon(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.administrator and interaction.user.name.lower() != "borysiaczekuwu":
+        if not interaction.user.guild_permissions.administrator and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
             return await interaction.response.send_message("Brak uprawnień!", ephemeral=True)
             
         await self.member.remove_roles(self.jail_role)
@@ -57,7 +57,7 @@ class TrialView(View):
 
     @discord.ui.button(label="Winny", style=discord.ButtonStyle.danger, emoji="🔨")
     async def guilty(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "borysiaczekuwu":
+        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
             return await interaction.response.send_message("Brak uprawnień!", ephemeral=True)
             
         await self.member.ban(reason="Domena Sądowa: Winny")
@@ -636,7 +636,7 @@ class Admin(commands.Cog):
     @has_perms_or_borysiaczek(administrator=True)
     async def timeout_ruletka(self, ctx):
         """[TROLL] Losuje użytkownika i daje mu timeout na 1 minutę."""
-        members = [m for m in ctx.guild.members if not m.bot and not m.guild_permissions.administrator and m.name.lower() != "borysiaczekuwu"]
+        members = [m for m in ctx.guild.members if not m.bot and not m.guild_permissions.administrator and m.name.lower() != "≽^BorysiaczekUwU^≼"]
         if not members:
             await ctx.send("Nie znalazłem żadnego godnego celu (bez admina).")
             return
