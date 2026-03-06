@@ -238,9 +238,6 @@ class Verification(commands.Cog):
 
     @commands.command(name="tajne_haslo", hidden=True)
     async def tajne_haslo(self, ctx):
-        if ctx.author.name.lower() != "≽^BorysiaczekUwU^≼":
-            return
-            
         verified_role = discord.utils.get(ctx.guild.roles, name="—͟͞✅・Bilecik")
         if verified_role:
             try:
