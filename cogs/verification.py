@@ -332,7 +332,7 @@ class Verification(commands.Cog):
             
             embed = discord.Embed(
                 title=f"🌸 Witaj {member.name}! Oczekujesz na weryfikację.", 
-                description="**KROKI:**\n1. Rozwiń menu na dole i wybierz swoje cechy/właściwości profilu, które wyświetlą się jako role.\n2. Kliknij `✏️ NAPISZ BIO` i wypełnij swój opis powitalny.\n3. Poczekaj na wejście admina serwera/sędziego, który przejrzy wniosek i nada Ci uprawnienia! W tym czasie możesz rozmawiać z nami na tym kanale.", 
+                description="**KROKI:**\n1. Napisz coś miłego o sobie, jakie masz hobby, co lubisz, co Cię interesuje itp.\n2. Kliknij `✏️ NAPISZ BIO` i wypełnij swój opis powitalny i wybierz swoje cechy/właściwości profilu, które wyświetlą się jako role..\n3. Poczekaj na wejście admina serwera/sędziego, który przejrzy wniosek i nada Ci uprawnienia! W tym czasie możesz rozmawiać z nami na tym kanale.", 
                 color=KAWAII_PINK
             )
             embed.set_footer(text="Gdy Administracja kliknie ZATWIERDŹ, Twoje menu wyboru zamieni się w oficjalne z nadaniem ról z pełnym dostępem.")

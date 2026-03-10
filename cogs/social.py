@@ -40,6 +40,30 @@ GIFS_BONK = [
     "https://media.giphy.com/media/HxMhuDg7O4pKOhhcRC/giphy.gif",
     "https://media.giphy.com/media/qs4ll1FSxKnNHeSmom/giphy.gif"
 ]
+GIFS_WOREK = [
+    "https://media.giphy.com/media/xT1XGYVvVNNxqBMEJG/giphy.gif",
+    "https://media.giphy.com/media/26FPCXdkvDbKBbgOI/giphy.gif"
+]
+GIFS_MIZIAJ = [
+    "https://media.giphy.com/media/LmqDkEaB1R7h2bTuhE/giphy.gif",
+    "https://media.giphy.com/media/k5qEoy7wK2r4d8tYw6/giphy.gif"
+]
+GIFS_KUKSANIEC = [
+    "https://media.giphy.com/media/1wXdllYvJqECN8l1f9/giphy.gif",
+    "https://media.giphy.com/media/26BRuXn1O009B0Z2g/giphy.gif"
+]
+GIFS_ZACZEP = [
+    "https://media.giphy.com/media/3o7TKSx0B7ZWeAozxS/giphy.gif",
+    "https://media.giphy.com/media/l41lc5kUKJ45I5b0Y/giphy.gif"
+]
+GIFS_UKRYJ = [
+    "https://media.giphy.com/media/d9T4sCj3K3X9kG1c2L/giphy.gif",
+    "https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif"
+]
+GIFS_PISTOLET = [
+    "https://media.giphy.com/media/xT9KVteixWgVlXckQE/giphy.gif",
+    "https://media.giphy.com/media/26ufncG0N0nE6Z2lq/giphy.gif"
+]
 
 class Social(commands.Cog):
     def __init__(self, bot):
@@ -307,6 +331,60 @@ class Social(commands.Cog):
             description=f"**{ctx.author.name}** grozi {target}:\n\n> *\"{random.choice(grozby)}\"* 💥",
             color=KAWAII_RED
         )
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def worek(self, ctx, member: discord.Member):
+        """Pakuje kogoś do worka i porywa! 🎒"""
+        if member == ctx.author:
+            return await ctx.send("Jak zamierzasz wpakować się sam we własny worek? 🤔")
+        embed = discord.Embed(description=f"🎒 **{ctx.author.name}** pakuje **{member.name}** do worka i ucieka! Wrrrruuum! 🏃‍♂️💨", color=KAWAII_RED)
+        embed.set_image(url=random.choice(GIFS_WOREK))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def miziaj(self, ctx, member: discord.Member):
+        """Mizia kogoś czule! 🥰"""
+        if member == ctx.author:
+            return await ctx.send("Mizianie samego siebie jest smutne... (qwq)")
+        embed = discord.Embed(description=f"🥰 **{ctx.author.name}** słodko mizia **{member.name}**... purr purr! 🐾", color=KAWAII_PINK)
+        embed.set_image(url=random.choice(GIFS_MIZIAJ))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def kuksaniec(self, ctx, member: discord.Member):
+        """Daje komuś kuksanińca! 👉"""
+        if member == ctx.author:
+            return await ctx.send("Kuksasz się sam w żebro? Auć... 😳")
+        embed = discord.Embed(description=f"👉 **{ctx.author.name}** daje wkurzającego kuksanińca w żebro **{member.name}**! Hehe! 😆", color=KAWAII_GOLD)
+        embed.set_image(url=random.choice(GIFS_KUKSANIEC))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def zaczep(self, ctx, member: discord.Member):
+        """Zaczepia kogoś! 👋"""
+        if member == ctx.author:
+            return await ctx.send("Zaczepiasz lustro? (O_o)")
+        embed = discord.Embed(description=f"👋 **{ctx.author.name}** zaczepia **{member.name}**! Hej, popatrz na mnie! 👀", color=KAWAII_PINK)
+        embed.set_image(url=random.choice(GIFS_ZACZEP))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def ukryj(self, ctx, member: discord.Member):
+        """Ukryj się za kimś ze strachu! 🙈"""
+        if member == ctx.author:
+            return await ctx.send("Nie możesz schować się za sobą!")
+        embed = discord.Embed(description=f"🙈 **{ctx.author.name}** przerażony(a) chowa się za plecami **{member.name}**! Ratunku! 😱", color=discord.Color.blue())
+        embed.set_image(url=random.choice(GIFS_UKRYJ))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def pistolet(self, ctx, member: discord.Member):
+        """Wyciąga pistolet dla zabawy! 🔫"""
+        if member == ctx.author:
+            return await ctx.send("Ej, ej! Spokojnie, odłóż tę broń! 😨")
+        embed = discord.Embed(description=f"🔫 **{ctx.author.name}** wyciąga znikąd pistolet na wodę i celuje w **{member.name}**! Ręce do góry! 💦", color=KAWAII_RED)
+        embed.set_image(url=random.choice(GIFS_PISTOLET))
         await ctx.send(embed=embed)
 
 async def setup(bot):
