@@ -25,16 +25,29 @@ class NSFW(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def fetch_image(self, subreddit: str) -> str:
-        url = f"https://meme-api.com/gimme/{subreddit}"
+    async def fetch_image(self, category_type="waifu") -> str:
+        """
+        Pomocnicza funkcja pobierająca obrazy NSFW.
+        Domyślnie korzysta z api.waifu.pics.
+        """
+        urls = {
+            "waifu": "https://api.waifu.pics/nsfw/waifu",
+            "neko": "https://api.waifu.pics/nsfw/neko",
+            "trap": "https://api.waifu.pics/nsfw/trap",
+            "blowjob": "https://api.waifu.pics/nsfw/blowjob",
+        }
+        
+        target_url = urls.get(category_type, urls["waifu"])
+        
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
+                headers = {'User-Agent': 'Mozilla/5.0'}
+                async with session.get(target_url, headers=headers) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return data.get('url', None)
         except Exception as e:
-            print(f"Error fetching from {url}: {e}")
+            print(f"Error fetching from {target_url}: {e}")
         return None
 
     @commands.group(invoke_without_command=True)
@@ -43,11 +56,10 @@ class NSFW(commands.Cog):
         if not ctx.channel.is_nsfw():
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
-        subs = ["porn", "nsfw", "gonewild", "NSFW_GIF"]
-        image = await self.fetch_image(random.choice(subs))
+        image = await self.fetch_image("waifu")
         
         if image:
-            embed = discord.Embed(title="😏🔞", color=KAWAII_RED)
+            embed = discord.Embed(title="😏🔞 PORN / Waifu", color=KAWAII_RED)
             embed.set_image(url=image)
             await ctx.send(embed=embed)
         else:
@@ -59,11 +71,10 @@ class NSFW(commands.Cog):
         if not ctx.channel.is_nsfw():
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
-        subs = ["yuri", "wholesomeyuri", "nsfwyuri"]
-        image = await self.fetch_image(random.choice(subs))
+        image = await self.fetch_image("waifu")
         
         if image:
-            embed = discord.Embed(title="👩‍❤️‍💋‍👩 Yuri", color=KAWAII_PINK)
+            embed = discord.Embed(title="👩‍❤️‍💋‍👩 Yuri / Dziewczyny", color=KAWAII_PINK)
             embed.set_image(url=image)
             await ctx.send(embed=embed)
         else:
@@ -75,11 +86,10 @@ class NSFW(commands.Cog):
         if not ctx.channel.is_nsfw():
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
-        subs = ["yaoi", "nsfwyaoi"]
-        image = await self.fetch_image(random.choice(subs))
+        image = await self.fetch_image("trap")
         
         if image:
-            embed = discord.Embed(title="👨‍❤️‍💋‍👨 Yaoi", color=KAWAII_PINK)
+            embed = discord.Embed(title="👨‍❤️‍💋‍👨 Yaoi / Boys", color=KAWAII_PINK)
             embed.set_image(url=image)
             await ctx.send(embed=embed)
         else:
@@ -87,15 +97,14 @@ class NSFW(commands.Cog):
 
     @commands.command()
     async def femboy(self, ctx):
-        """Femboy 18+"""
+        """Femboy / Trap 18+"""
         if not ctx.channel.is_nsfw():
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
-        subs = ["femboyporn", "FemBoys", "TrapHentai"]
-        image = await self.fetch_image(random.choice(subs))
+        image = await self.fetch_image("trap")
         
         if image:
-            embed = discord.Embed(title="🎀 Femboy", color=KAWAII_PINK)
+            embed = discord.Embed(title="🎀 Femboy / Trap", color=KAWAII_PINK)
             embed.set_image(url=image)
             await ctx.send(embed=embed)
         else:
@@ -107,11 +116,10 @@ class NSFW(commands.Cog):
         if not ctx.channel.is_nsfw():
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
-        subs = ["hentai", "HENTAI_GIF", "rule34"]
-        image = await self.fetch_image(random.choice(subs))
+        image = await self.fetch_image(random.choice(["waifu", "neko"]))
         
         if image:
-            embed = discord.Embed(title="🔞 Hentai", color=KAWAII_RED)
+            embed = discord.Embed(title="🔞 Hentai / Neko / Waifu", color=KAWAII_RED)
             embed.set_image(url=image)
             await ctx.send(embed=embed)
         else:
@@ -123,8 +131,7 @@ class NSFW(commands.Cog):
         if not ctx.channel.is_nsfw():
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
-        subs = ["boobs", "BustyPetite", "hugeboobs", "TittyDrop"]
-        image = await self.fetch_image(random.choice(subs))
+        image = await self.fetch_image("waifu")
         
         if image:
             embed = discord.Embed(title="🍒 Piersi", color=KAWAII_RED)
@@ -139,8 +146,7 @@ class NSFW(commands.Cog):
         if not ctx.channel.is_nsfw():
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
-        subs = ["ass", "pawg", "booty", "ThickThighs"]
-        image = await self.fetch_image(random.choice(subs))
+        image = await self.fetch_image("waifu")
         
         if image:
             embed = discord.Embed(title="🍑 Tyłeczki", color=KAWAII_RED)
@@ -155,11 +161,40 @@ class NSFW(commands.Cog):
         if not ctx.channel.is_nsfw():
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
-        subs = ["rule34", "Rule34LoL", "Overwatch_Porn"]
-        image = await self.fetch_image(random.choice(subs))
+        image = await self.fetch_image("waifu")
         
         if image:
-            embed = discord.Embed(title="🎨 Rule 34", color=KAWAII_RED)
+            embed = discord.Embed(title="� Rule 34", color=KAWAII_RED)
+            embed.set_image(url=image)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("❌ Nie udało mi się znaleźć odpowiedniego zdjęcia, spróbuj ponownie.")
+
+    @commands.command()
+    async def bj(self, ctx):
+        """Zdjęcia BJ (Blowjob) 18+"""
+        if not ctx.channel.is_nsfw():
+            return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
+        
+        image = await self.fetch_image("blowjob")
+        
+        if image:
+            embed = discord.Embed(title="💦 Blowjob", color=KAWAII_RED)
+            embed.set_image(url=image)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("❌ Nie udało mi się znaleźć odpowiedniego zdjęcia, spróbuj ponownie.")
+
+    @commands.command()
+    async def neko18(self, ctx):
+        """Nekogirls (Kocie Dziewczyny) 18+"""
+        if not ctx.channel.is_nsfw():
+            return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
+        
+        image = await self.fetch_image("neko")
+        
+        if image:
+            embed = discord.Embed(title="🐱 Neko 18+", color=KAWAII_RED)
             embed.set_image(url=image)
             await ctx.send(embed=embed)
         else:

@@ -4,7 +4,7 @@ from discord.ui import Button, View
 import random
 import asyncio
 from datetime import datetime, timedelta, timezone
-from utils import KAWAII_RED, KAWAII_PINK, KAWAII_GOLD, update_data
+from utils import KAWAII_RED, KAWAII_PINK, KAWAII_GOLD, update_data, get_profile_data, update_profile
 
 # Gify
 GIFS_BAN = ["https://media.giphy.com/media/fe4dDMD2cAU5RfEaCU/giphy.gif", "https://media.giphy.com/media/AC1HrkBir3bzq/giphy.gif"]
@@ -647,6 +647,88 @@ class Admin(commands.Cog):
             await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(f"❌ Ktoś uniknął pocisku... (błąd: {e})")
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def force_slub(self, ctx, user1: discord.Member, user2: discord.Member):
+        """[ZARZĄDZANIE] Wymusza ślub dwóch użytkowników."""
+        await ctx.message.delete()
+        if user1 == user2:
+            return await ctx.send("❌ Użytkownicy muszą być różni!", delete_after=5)
+
+        p1 = get_profile_data(user1.id)
+        p2 = get_profile_data(user2.id)
+
+        # Wyczyść starych partnerów
+        if p1.get("partner"): update_profile(p1["partner"], "partner", None)
+        if p2.get("partner"): update_profile(p2["partner"], "partner", None)
+
+        # Powiąż
+        update_profile(user1.id, "partner", user2.id)
+        update_profile(user2.id, "partner", user1.id)
+
+        embed = discord.Embed(
+            title="💍 Wymuszony Ślub",
+            description=f"Administracja złączyła **{user1.name}** i **{user2.name}** węzłem małżeńskim!\n*Ich poprzednie związki zostały anulowane bez zwłoki.*",
+            color=KAWAII_GOLD
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def force_rozwod(self, ctx, user: discord.Member):
+        """[ZARZĄDZANIE] Wymusza rozwód wskazanej osoby."""
+        await ctx.message.delete()
+        p = get_profile_data(user.id)
+        partner_id = p.get("partner")
+
+        if not partner_id:
+            return await ctx.send(f"❌ **{user.name}** nie jest w żadnym związku.", delete_after=5)
+
+        update_profile(user.id, "partner", None)
+        update_profile(partner_id, "partner", None)
+
+        try:
+            partner = await self.bot.fetch_user(partner_id)
+            p_name = partner.name
+        except:
+            p_name = "Nieznany"
+
+        embed = discord.Embed(
+            title="💔 Wymuszony Rozwód",
+            description=f"Administracja prawnie rozdzieliła **{user.name}** oraz **{p_name}**.",
+            color=KAWAII_RED
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def force_adoptuj(self, ctx, parent: discord.Member, child: discord.Member):
+        """[ZARZĄDZANIE] Wymusza adopcję między użytkownikami."""
+        await ctx.message.delete()
+        if parent == child:
+            return await ctx.send("❌ Użytkownicy muszą być różni!", delete_after=5)
+
+        parent_p = get_profile_data(parent.id)
+        child_p = get_profile_data(child.id)
+
+        parent_children = parent_p.get("children", [])
+        if child.id in parent_children:
+            return await ctx.send(f"❌ **{child.name}** jest już przypisanym dzieckiem **{parent.name}**.", delete_after=5)
+
+        if child_p.get("parent"):
+            return await ctx.send(f"❌ **{child.name}** ma już prawowitego opiekuna! Najpierw odłącz starego (jeśli dodasz mechanizm).", delete_after=5)
+
+        parent_children.append(child.id)
+        update_profile(parent.id, "children", parent_children)
+        update_profile(child.id, "parent", parent.id)
+
+        embed = discord.Embed(
+            title="🍼 Papiery Adopcyjne Podpisane",
+            description=f"Decyzją sądu najwyższego, **{parent.name}** został opiekunem **{child.name}**!",
+            color=KAWAII_PINK
+        )
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))
