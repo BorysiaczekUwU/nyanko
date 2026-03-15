@@ -28,7 +28,7 @@ class NSFW(commands.Cog):
     async def fetch_image(self, category_type="waifu") -> str:
         """
         Pomocnicza funkcja pobierająca obrazy NSFW.
-        Domyślnie korzysta z api.waifu.pics.
+        Domyślnie korzysta z api.waifu.pics, z zapasem na waifu.im.
         """
         urls = {
             "waifu": "https://api.waifu.pics/nsfw/waifu",
@@ -37,17 +37,36 @@ class NSFW(commands.Cog):
             "blowjob": "https://api.waifu.pics/nsfw/blowjob",
         }
         
+        fallbacks = {
+            "waifu": "https://api.waifu.im/search?included_tags=waifu&is_nsfw=true",
+            "neko": "https://api.waifu.im/search?included_tags=hentai&is_nsfw=true",
+            "trap": "https://api.waifu.im/search?included_tags=ero&is_nsfw=true",
+            "blowjob": "https://api.waifu.im/search?included_tags=oral&is_nsfw=true",
+        }
+        
         target_url = urls.get(category_type, urls["waifu"])
+        fallback_url = fallbacks.get(category_type, fallbacks["waifu"])
         
         try:
-            async with aiohttp.ClientSession() as session:
+            timeout = aiohttp.ClientTimeout(total=5)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 headers = {'User-Agent': 'Mozilla/5.0'}
+                # Proba glowna (waifu.pics)
                 async with session.get(target_url, headers=headers) as resp:
                     if resp.status == 200:
                         data = await resp.json()
-                        return data.get('url', None)
+                        if data and 'url' in data:
+                            return data.get('url')
+                
+                # Zapas (waifu.im) - w przypadku blokady Cloudflare na IP serwera
+                async with session.get(fallback_url, headers=headers) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        if data and 'images' in data and len(data['images']) > 0:
+                            return data['images'][0].get('url')
+                            
         except Exception as e:
-            print(f"Error fetching from {target_url}: {e}")
+            print(f"Error fetching from {target_url} or fallback: {e}")
         return None
 
     @commands.group(invoke_without_command=True)

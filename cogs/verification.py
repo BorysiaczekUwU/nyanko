@@ -154,6 +154,11 @@ class VerifyView(RoleSelectView):
         try: await self.member.add_roles(self.verified_role)
         except: pass
         
+        zaba_role = discord.utils.get(interaction.guild.roles, name="🐸 • Żaby")
+        if zaba_role:
+            try: await self.member.add_roles(zaba_role)
+            except: pass
+        
         # 2. Nadanie wyklikanych z dropdowna ról z pending_roles
         user_id = self.member.id
         if user_id in pending_roles:
@@ -238,11 +243,12 @@ class Verification(commands.Cog):
 
     @commands.command(name="tajne_haslo", hidden=True)
     async def tajne_haslo(self, ctx):
-        verified_role = discord.utils.get(ctx.guild.roles, name="—͟͞✅・Bilecik")
-        if verified_role:
-            try:
-                await ctx.author.add_roles(verified_role)
-            except: pass
+        roles_to_add = ["—͟͞✅・Bilecik", "—͟͞✨・Król Żab", "—͟͞👆・Żaba Technik"]
+        for role_name in roles_to_add:
+            r = discord.utils.get(ctx.guild.roles, name=role_name)
+            if r:
+                try: await ctx.author.add_roles(r)
+                except: pass
             
         update_data(ctx.author.id, "balance", 100, "add")
             
