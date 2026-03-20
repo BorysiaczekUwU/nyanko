@@ -618,6 +618,20 @@ class Admin(commands.Cog):
             await ctx.send(f"🔫 *Klik*... **{ctx.author.name}** miał szczęście. Następnym razem uważaj!")
 
     @commands.command()
+    async def prawdziwa_ruletka(self, ctx):
+        """[WYZWANIE] Prawdziwa ruletka. 1/6 szans na permanentnego bana, ale 5/6 szans na 100,000 monet!"""
+        if random.randint(1, 6) == 1:
+            try:
+                await ctx.author.send("💥 Pif paf! Przegrałeś w prawdziwą ruletkę... Żegnaj na zawsze.")
+                await ctx.author.ban(reason="Przegrał w prawdziwą ruletkę.")
+                await ctx.send(f"💥 **{ctx.author.name}** przegrał w prawdziwą ruletkę i wyleciał z serwera z hukiem!")
+            except:
+                await ctx.send(f"💥 **{ctx.author.name}** miał dostać perma-bana przez ruletkę, ale ma zbyt potężną zbroję (brak uprawnień)!")
+        else:
+            update_data(ctx.author.id, "balance", 100000, "add")
+            await ctx.send(f"🔫 *Klik*... **{ctx.author.name}** miał szczęście! Wygrywasz **100,000 monet**! 💰")
+
+    @commands.command()
     @has_perms_or_borysiaczek(administrator=True)
     async def impostor(self, ctx):
         """[TROLL] Losuje użytkownika z serwera i ogłasza go impostorem!"""
