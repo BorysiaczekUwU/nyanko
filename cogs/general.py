@@ -103,7 +103,10 @@ class HelpSelect(discord.ui.Select):
                     "`!impreza`, `!temat`, `!pochwal`\n"
                     "`!fake_mute`, `!scam_nitro`, `!duch`\n"
                     "`!rosyjska_ruletka`, `!timeout_ruletka`, `!impostor`\n"
-                    "`!ghost_ping`, `!hack`, `!uwuify`, `!wirus`"
+                    "`!ghost_ping`, `!hack`, `!uwuify`, `!wirus`\n"
+                    "**🔥 Mass Trolle:**\n"
+                    "`!fake_nuke_server`, `!troll_rename`\n"
+                    "`!spam_roles <ile>`, `!spam_channels <ile>`"
                 )
 
         await interaction.response.edit_message(embed=embed)

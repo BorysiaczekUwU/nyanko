@@ -25,6 +25,14 @@ class NSFW(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    def check_nsfw(self, ctx):
+        if hasattr(ctx.channel, 'is_nsfw'):
+            try:
+                return ctx.channel.is_nsfw()
+            except TypeError:
+                return ctx.channel.is_nsfw
+        return getattr(ctx.channel, 'nsfw', False)
+
     async def fetch_image(self, category_type="waifu") -> str:
         """
         Pomocnicza funkcja pobierająca obrazy NSFW.
@@ -72,7 +80,7 @@ class NSFW(commands.Cog):
     @commands.group(invoke_without_command=True)
     async def porn(self, ctx):
         """Normalne zdjęcia 18+"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("waifu")
@@ -87,7 +95,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def yuri(self, ctx):
         """Yuri (Dziewczyna x Dziewczyna) NSFW"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("waifu")
@@ -102,7 +110,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def yaoi(self, ctx):
         """Yaoi (Chłopak x Chłopak) NSFW"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("trap")
@@ -117,7 +125,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def femboy(self, ctx):
         """Femboy / Trap 18+"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("trap")
@@ -132,7 +140,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def hentai(self, ctx):
         """Hentai 18+"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image(random.choice(["waifu", "neko"]))
@@ -147,7 +155,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def boobs(self, ctx):
         """Piersi 18+"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("waifu")
@@ -162,7 +170,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def ass(self, ctx):
         """Tyłeczki 18+"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("waifu")
@@ -177,13 +185,13 @@ class NSFW(commands.Cog):
     @commands.command()
     async def rule34(self, ctx):
         """Rule 34 zdjęcia 18+"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("waifu")
         
         if image:
-            embed = discord.Embed(title="� Rule 34", color=KAWAII_RED)
+            embed = discord.Embed(title="🔞 Rule 34", color=KAWAII_RED)
             embed.set_image(url=image)
             await ctx.send(embed=embed)
         else:
@@ -192,7 +200,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def bj(self, ctx):
         """Zdjęcia BJ (Blowjob) 18+"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("blowjob")
@@ -207,7 +215,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def neko18(self, ctx):
         """Nekogirls (Kocie Dziewczyny) 18+"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         image = await self.fetch_image("neko")
@@ -222,7 +230,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def nsfw_hug(self, ctx, member: discord.Member):
         """Gorące przytulenie obok osoby (NSFW)"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
         
         if member == ctx.author:
@@ -238,7 +246,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def nsfw_kiss(self, ctx, member: discord.Member):
         """Gorący pocałunek (NSFW)"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
             
         if member == ctx.author:
@@ -254,7 +262,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def spank(self, ctx, member: discord.Member):
         """Daj komuś klapsa (NSFW)"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
             
         if member == ctx.author:
@@ -270,7 +278,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def strip(self, ctx, member: discord.Member = None):
         """Zdejmij z siebie (lub z kogoś) ubrania (NSFW)"""
-        if not ctx.channel.is_nsfw():
+        if not self.check_nsfw(ctx):
             return await ctx.send("❌ Użyj tego na kanale NSFW! (Bonk!)")
             
         if member is None or member == ctx.author:
