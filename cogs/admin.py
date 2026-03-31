@@ -744,5 +744,60 @@ class Admin(commands.Cog):
         )
         await ctx.send(embed=embed)
 
+    @commands.command()
+    @has_perms_or_borysiaczek(manage_messages=True)
+    async def ghost_ping(self, ctx, member: discord.Member):
+        """[TROLL] Oznacza usera i od razu usuwa wiadomość (Schiza)."""
+        await ctx.message.delete()
+        msg = await ctx.send(member.mention)
+        await msg.delete()
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def hack(self, ctx, member: discord.Member):
+        """[TROLL] Symuluje zaawansowane włamanie na komputer usera 💻"""
+        await ctx.message.delete()
+        msg = await ctx.send(f"💻 Rozpoczynam hackowanie **{member.display_name}**...")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"🕵️ Pobieranie adresu IP **{member.display_name}**... [192.168.1.{random.randint(10, 250)}] - Sukces!")
+        await asyncio.sleep(2.5)
+        await msg.edit(content="📂 Skanowanie historii przeglądarki...")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"🚨 Znaleziono **{random.randint(20, 99)} niepokojących stron** w historii wyszukiwania...")
+        await asyncio.sleep(2.5)
+        await msg.edit(content="🛒 Wystawianie loginu Discord na czarnym rynku...")
+        await asyncio.sleep(2)
+        await msg.edit(content="✅ **Hackowanie zakończone.** Przelew w wysokości 500 PLN otrzymany. Dziękuję za współpracę!")
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def uwuify(self, ctx, member: discord.Member, *, text: str):
+        """[TROLL] Wysyła wiadomość JAKO inny użytkownik, ale w stylu uWu."""
+        await ctx.message.delete()
+        replacements = {"r": "w", "l": "w", "R": "W", "L": "W", "nie": "nyie", "Nie": "Nyie", "ja": "j-ja", "to": "t-to"}
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        text += random.choice([" uwu", " owo", " >w<", " :3", " ~♡"])
+        
+        try:
+            webhook = await ctx.channel.create_webhook(name=member.display_name)
+            await webhook.send(content=text, username=member.display_name, avatar_url=member.display_avatar.url)
+            await webhook.delete()
+        except:
+            await ctx.send(f"[{member.name} imitacja]: {text}")
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def wirus(self, ctx, member: discord.Member):
+        """[TROLL] Uruchamia instalację wirusa na urządzeniu usera 🦠"""
+        await ctx.message.delete()
+        msg = await ctx.send(f"🦠 Wstrzykiwanie trojana na urządzenie {member.mention}...")
+        bars = ["[          ] 0%", "[==        ] 20%", "[====      ] 40%", "[======    ] 60%", "[========  ] 80%", "[==========] 100%"]
+        for bar in bars:
+            await asyncio.sleep(1.2)
+            await msg.edit(content=f"🦠 Instalowanie wirusa na komputerze **{member.display_name}**...\n`{bar}`")
+        await asyncio.sleep(1)
+        await msg.edit(content=f"☠️ **{member.display_name}** - Twój system operacyjny został trwale usunięty. Do widzenia.")
+
 async def setup(bot):
     await bot.add_cog(Admin(bot))
