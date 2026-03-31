@@ -106,7 +106,8 @@ class HelpSelect(discord.ui.Select):
                     "`!ghost_ping`, `!hack`, `!uwuify`, `!wirus`\n"
                     "**🔥 Mass Trolle:**\n"
                     "`!fake_nuke_server`, `!troll_rename`\n"
-                    "`!spam_roles <ile>`, `!spam_channels <ile>`"
+                    "`!spam_roles <ile>`, `!spam_channels <ile>`\n"
+                    "`!troll_admin`, `!troll_dm_all`"
                 )
 
         await interaction.response.edit_message(embed=embed)
