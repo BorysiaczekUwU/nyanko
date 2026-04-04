@@ -85,7 +85,7 @@ class StatusSelect(Select):
 class AgeSelect(Select):
     def __init__(self):
         options = []
-        ranges = ["< 13", "13-15", "16-18", "19-21", "22-25", "25+"]
+        ranges = ["< 13", "13-15", "16-17", "18-21", "22-25", "25+"]
         for r in ranges:
             options.append(discord.SelectOption(label=r, value=r))
         super().__init__(placeholder="Wybierz wiek...", min_values=1, max_values=1, options=options)

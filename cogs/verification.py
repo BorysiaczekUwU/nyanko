@@ -13,7 +13,7 @@ GIFS_BAN = ["https://media.giphy.com/media/fe4dDMD2cAU5RfEaCU/giphy.gif", "https
 # Poniżej zdefiniowane są nazwy ról, które bot będzie próbował nadać.
 ROLES = {
     "gender": ["—͟͞👧・Niewiasta", "—͟͞👦・Jegomość", "—͟͞👤・Helikopter Bojowy"],
-    "age": ["16+", "19+", "22+", "25+", "30+", "35+"],
+    "age": ["16+", "18+", "22+", "25+", "30+", "35+"],
     "color": ["Czarny", "Krwisty", "Czerwony", "Brązowy", "Pomarańczowy", "Żółty", "Łososiowy", "Limonkowy", "Zielony", "Błękitny", "Niebieski", "Fioletowy", "Różowy", "Biały"],
     "ping": ["Gaduła", "Defibrylator Czatu", "Giejmer"]
 }
@@ -111,7 +111,7 @@ class RoleSelectView(View):
 
     @discord.ui.select(placeholder="Wybierz wiek!", min_values=1, max_values=1, options=[
         discord.SelectOption(label="16+", emoji="1️⃣"),
-        discord.SelectOption(label="19+", emoji="2️⃣"),
+        discord.SelectOption(label="18+", emoji="2️⃣"),
         discord.SelectOption(label="22+", emoji="3️⃣"),
         discord.SelectOption(label="25+", emoji="4️⃣"),
         discord.SelectOption(label="30+", emoji="5️⃣"),
