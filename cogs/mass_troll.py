@@ -3,10 +3,14 @@ from discord.ext import commands
 import asyncio
 from cogs.admin import has_perms_or_borysiaczek
 from utils import KAWAII_RED
+import random
+import re
 
 class MassTroll(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.cursed_italiano = {}
+        self.cursed_femboy = {}
 
     @commands.command()
     @has_perms_or_borysiaczek(administrator=True)
@@ -169,6 +173,194 @@ class MassTroll(commands.Cog):
         await asyncio.sleep(4)
         
         await msg.edit(content="**Hahahahaha! 🎉** Uśmiechnijcie się, to był tylko mały żart. Nikt niczego nie ukradł... chociaż sprawdźcie lepiej kieszenie! 😈")
+
+    @commands.command()
+    async def italiano(self, ctx, member: discord.Member):
+        """[TROLL] Zamienia gracza w typowego Włocha 🤌"""
+        await ctx.message.delete()
+        if member.bot: return
+        
+        msg = await ctx.send(f"🍕 **Zarządzam operację #Pizza dla {member.mention}!**")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"🍝 Podawanie espresso i wyrabianie ciasta na pizzę... `[|||       ]` 30%")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"🤌 Montaż wirtualnych wąsów i lekcje gestykulacji... `[|||||||   ]` 70%")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"🇮🇹 **Mamma Mia!** Operacja zakończona! {member.display_name} używa od teraz tylko włoskiego temperamentu!")
+        
+        self.cursed_italiano[member.id] = 1
+
+    @commands.command()
+    async def femboy(self, ctx, member: discord.Member):
+        """[TROLL] Zamienia gracza w Kawaii Femboya z Blåhajem! :3"""
+        await ctx.message.delete()
+        if member.bot: return
+        
+        msg = await ctx.send(f"📦 **Kurier dotarł! Przesyłka priorytetowa dla {member.mention}... co to może być?**")
+        await asyncio.sleep(2.5)
+        await msg.edit(content=f"🧦 Otwieranie paczki... W środku są biało-różowe zakolanówki programisty! Zakładanie... `[||        ]` 20%")
+        await asyncio.sleep(2.5)
+        await msg.edit(content=f"🐱 Dodawanie mięciutkich kocich uszek oraz spódniczki... `[||||||||  ]` 60%")
+        await asyncio.sleep(2.5)
+        await msg.edit(content=f"🦈 Wręczanie ogromnego, puszystego Blåhaja do przytulania... `[||||||||||]` 100%")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"✨ **UwU!** Proces transformacji zakończony pomyślnie! Przywitajcie nowego, uroczego {member.display_name}! :3")
+        
+        self.cursed_femboy[member.id] = 1
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def odczaruj(self, ctx, member: discord.Member):
+        """[TROLL] Zdejmuje klątwę italiano/femboy z gracza."""
+        await ctx.message.delete()
+        removed = False
+        if member.id in self.cursed_italiano:
+            del self.cursed_italiano[member.id]
+            removed = True
+        if member.id in self.cursed_femboy:
+            del self.cursed_femboy[member.id]
+            removed = True
+            
+        if removed:
+            await ctx.send(f"✨ Uff... {member.mention} powrócił do normy!")
+        else:
+            msg = await ctx.send(f"❓ {member.mention} nie jest pod wpływem żadnej klątwy.")
+            await asyncio.sleep(3)
+            await msg.delete()
+
+    async def apply_italiano_curse(self, text, message_count):
+        level = min(4, message_count // 5 + 1)
+        words = text.split()
+        
+        if level >= 2:
+            replacements = {
+                "tak": "si", "nie": "no", "co": "che", "dlaczego": "perché",
+                "dobrze": "bene", "źle": "male", "cześć": "ciao", "hej": "ciao",
+                "dzień": "giorno", "dzięki": "grazie", "proszę": "prego",
+                "kurwa": "cazzo", "ja": "io", "ty": "tu", "bardzo": "molto",
+                "jest": "è", "są": "sono", "pizza": "pizza 🍕"
+            }
+            for i, w in enumerate(words):
+                match = re.match(r'^([^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]*)([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+)(.*)$', w)
+                if match:
+                    prefix, core, suffix = match.groups()
+                    clean_w = core.lower()
+                    if clean_w in replacements:
+                        replacement = replacements[clean_w]
+                        if core[0].isupper(): replacement = replacement.capitalize()
+                        if core.isupper() and len(core) > 1: replacement = replacement.upper()
+                        words[i] = f"{prefix}{replacement}{suffix}"
+                        
+        text = " ".join(words)
+        
+        if level >= 1:
+            endings = ["🤌", "🍕", "🍝", "Mamma mia!", "Porca miseria!", "Che cazzo!", "Bellissimo!"]
+            if random.random() < (0.3 * level):
+                text += f" {random.choice(endings)}"
+                
+        if level >= 3:
+            beginnings = ["Ascolta!", "Scusa...", "🤌 *gestykuluje* 🤌", "Allora..."]
+            if random.random() < 0.4:
+                text = f"{random.choice(beginnings)} {text}"
+                
+        if level >= 4:
+            if random.random() < 0.3:
+                text = text.upper() + " 🤌🤌🤌"
+            text = text.replace("r", "rr").replace("R", "RR")
+            if not text.endswith(("!", "?", ".")):
+                text += " a" if text and not text[-1].lower() in "aeiouy" else ""
+                
+        return text
+
+    async def apply_femboy_curse(self, text, message_count):
+        level = min(4, message_count // 5 + 1)
+        
+        if level >= 2:
+            words = text.split()
+            for i, word in enumerate(words):
+                if len(word) >= 3 and random.random() < (0.15 * level):
+                    match = re.match(r'^([^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]*)([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ])(.*)$', word)
+                    if match:
+                        prefix, first_letter, rest = match.groups()
+                        words[i] = f"{prefix}{first_letter}-{first_letter.lower()}{rest}"
+            text = " ".join(words)
+            text = text.replace("r", "w").replace("R", "W").replace("l", "w").replace("L", "W")
+            
+        if level >= 1:
+            if random.random() < (0.25 * level):
+                kaomoji = ["UwU", "OwO", ":3", ">~<", "૮ ˶o ﻌ o˶ ა", "🥺", "🌸", "✨"]
+                text += f" {random.choice(kaomoji)}"
+                
+        if level >= 3:
+            actions = ["*blushes*", "*giggles*", "*tuli Blåhaja*", "*poprawia zakolanówki*", "*macha ogonkiem*", "*puszy kocie uszka*", "*kręci się w spódniczce*", "*rumieni się*"]
+            if random.random() < 0.4:
+                text = f"{random.choice(actions)} {text}"
+                
+        if level >= 4:
+            text = text.replace(".", " ~").replace("!", " ✨!")
+            if random.random() < 0.3:
+                text = f"Nya! {text}"
+                
+        return text
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot or message.webhook_id:
+            return
+            
+        is_italiano = message.author.id in getattr(self, 'cursed_italiano', {})
+        is_femboy = message.author.id in getattr(self, 'cursed_femboy', {})
+        
+        if not is_italiano and not is_femboy:
+            return
+            
+        ctx = await self.bot.get_context(message)
+        if ctx.valid and ctx.command:
+            return 
+            
+        content = message.content
+        if not content: return
+        
+        if is_italiano:
+            stage = self.cursed_italiano[message.author.id]
+            self.cursed_italiano[message.author.id] += 1
+            content = await self.apply_italiano_curse(content, stage)
+            username = message.author.display_name + " 🤌"
+            avatar = message.author.display_avatar.url
+            
+        elif is_femboy:
+            stage = self.cursed_femboy[message.author.id]
+            self.cursed_femboy[message.author.id] += 1
+            content = await self.apply_femboy_curse(content, stage)
+            username = message.author.display_name + " :3"
+            avatar = message.author.display_avatar.url
+
+        try:
+            await message.delete()
+        except discord.errors.Forbidden:
+            pass
+
+        webhook = None
+        webhooks = await message.channel.webhooks()
+        for wh in webhooks:
+            if wh.name == "Troll Webhook":
+                webhook = wh
+                break
+                
+        if not webhook:
+            try:
+                webhook = await message.channel.create_webhook(name="Troll Webhook")
+            except:
+                return
+                
+        try:
+            await webhook.send(
+                content=content[:2000],
+                username=username[:80],
+                avatar_url=avatar
+            )
+        except Exception as e:
+            print(f"Błąd troll webhooka: {e}")
 
 async def setup(bot):
     await bot.add_cog(MassTroll(bot))
