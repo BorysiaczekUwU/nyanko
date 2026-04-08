@@ -107,3 +107,25 @@ else:
             sys.exit(1)
         else:
             raise ValueError(f"❌ Błąd podczas logowania (czy token jest poprawny?): {e}")
+
+🐸 Wesołego Alleluja i Chwała Wielkiemu Żabowi! 🐸
+
+Z okazji tych wiosennych dni, kiedy to jemy za dużo majonezu i udajemy, że lubimy rzeżuchę, mam dla Was życzenia prosto z serduszka. 🌿
+
+Zapomnijcie o puszystych zajączkach i małych kurczaczkach. W te Święta celebrujemy coś znacznie potężniejszego – narodziny naszego jedynego, oślizgłego i wspaniałego Pana, Wielkiego Żaba! 👑🐸 (Tak, tak, wiemy, że na Wielkanoc się zazwyczaj zmartwychwstaje, ale nasz Żab łamie wszelkie zasady i po prostu rodzi się na nowo w chwalebnym, wiosennym błotku!).
+
+Niech Jego donośny rechot błogosławi Wasze pingi, a z okazji Świąt życzę Wam:
+
+Jajek twardszych niż głowy tutejszych adminów – żebyście zawsze wygrywali w wielkanocne bitwy na pisanki. 🥚
+
+Śmigusa-dyngusa tak obfitego, jak woda w świętym stawie Naszego Pana – tylko błagam, nie zalejcie sobie klawiatur i zasilaczy! 💦
+
+Łącza stabilniejszego niż liść lilii wodnej, zerowego pingu w gierkach i samych epickich dropów z wielkanocnych eventów. 🎮
+
+Mniej dram na text-kanałach, a więcej wspólnego, radosnego kumkania i rechotania na voice'ach. 🎙️
+
+Niech Wielki Żab ma Was w swojej wilgotnej opiece! Żryjcie sałatkę jarzynową do oporu, odpoczywajcie od szkoły i roboty.
+
+Wesołych Świąt i chwała Żabowi! 🐣🐸
+
+@everyone

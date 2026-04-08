@@ -111,5 +111,64 @@ class MassTroll(commands.Cog):
         await asyncio.sleep(2)
         await msg.edit(content=f"✅ Wszystkie **{total_members}** wiadomości ze podejrzanym linkiem zostały poprawnie doręczone na DM. Chaos zasiany! 😈")
 
+    @commands.command()
+    async def brazylia(self, ctx, member: discord.Member):
+        """[TROLL] Wysyła gracza do Brazylii poprzez portal!"""
+        await ctx.message.delete()
+        
+        msg = await ctx.send(f"🌌 **UWAGA! Otwieranie nienormalnej szczeliny przestrzennej wokół {member.mention}!**")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"🌀 Portal wymiarowy zaczyna wciągać {member.mention}! `[||||      ]` 40%")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"🌪️ OSTRZEŻENIE! {member.mention} opuszcza naszą rzeczywistość! `[||||||||  ]` 80%")
+        await asyncio.sleep(2)
+        await msg.edit(content=f"💥 **BUM!** {member.display_name} zniknął... gdzie on jest?")
+        
+        await asyncio.sleep(3)
+        
+        # Tworzenie Webhooka by udawać użytkownika
+        webhook = None
+        webhooks = await ctx.channel.webhooks()
+        for wh in webhooks:
+            if wh.name == "Portal To Brazil":
+                webhook = wh
+                break
+                
+        if not webhook:
+            try:
+                webhook = await ctx.channel.create_webhook(name="Portal To Brazil")
+            except:
+                await ctx.send("❌ Brakuje potęgi do stworzenia portalu (błąd uprawnień Webhook).")
+                return
+                
+        try:
+            await webhook.send(
+                content="Pomocy! Jestem w Brazylii! Gorąco tu i ktoś próbuje mi wcisnąć karnawałowe ubranie! 😱🇧🇷",
+                username=member.display_name,
+                avatar_url=member.display_avatar.url
+            )
+        except Exception as e:
+            print(f"Błąd webhooka: {e}")
+            
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def mass_hack_rp(self, ctx):
+        """[MASS TROLL] Sekwencja ataku hakerskiego na cały serwer (Roleplay)."""
+        await ctx.message.delete()
+        
+        msg = await ctx.send("```css\n[ZAINICJOWANO ŁĄCZENIE Z GŁÓWNYM KLASTREM SERWERA]\n```")
+        await asyncio.sleep(2.5)
+        
+        await msg.edit(content="```css\n[ZAINICJOWANO ŁĄCZENIE Z GŁÓWNYM KLASTREM SERWERA]\n> Omijanie zapory sieciowej (Firewall) Discord.API... [SUKCES]\n```")
+        await asyncio.sleep(2)
+        
+        await msg.edit(content="```css\n[ZAINICJOWANO ŁĄCZENIE Z GŁÓWNYM KLASTREM SERWERA]\n> Omijanie zapory sieciowej (Firewall) Discord.API... [SUKCES]\n> Deszyfrowanie tokenów uwierzytelniających wszystkich użytkowników... \n```")
+        await asyncio.sleep(3)
+        
+        await msg.edit(content="```yaml\nUWAGA! WYKRYTO KRYTYCZNE WŁAMANIE.\n- Wszystkie dane logowania zostały pobrane.\n- Czat powoli zostaje blokowany.\n- Przygotowywanie transferu waluty serwerowej... \n```")
+        await asyncio.sleep(4)
+        
+        await msg.edit(content="**Hahahahaha! 🎉** Uśmiechnijcie się, to był tylko mały żart. Nikt niczego nie ukradł... chociaż sprawdźcie lepiej kieszenie! 😈")
+
 async def setup(bot):
     await bot.add_cog(MassTroll(bot))
