@@ -2,52 +2,8 @@ import discord
 from discord.ext import commands
 import asyncio
 from discord.ui import Modal, TextInput, View, Select
-from utils import get_profile_data, update_profile, get_level_data, get_data, KAWAII_PINK, KAWAII_BLUE
+from utils import get_profile_data, update_profile, get_level_data, get_data, KAWAII_PINK, KAWAII_BLUE, ORIENTATIONS
 from cogs.verification import RoleSelectView
-
-ORIENTATIONS = {
-    "bi": {"flag": "💖💜💙", "name": "Biseksualna", "color": KAWAII_PINK},
-    "gej": {"flag": "🏳️‍🌈", "name": "Gejowska", "color": 0x00FF00}, 
-    "les": {"flag": "🧡🤍💖", "name": "Lesbijska", "color": 0xFF8C00},
-    "trans": {"flag": "🏳️‍⚧️", "name": "Transpłciowa", "color": KAWAII_BLUE},
-    "pan": {"flag": "💖💛💙", "name": "Panseksualna", "color": 0xFFD700},
-    "ace": {"flag": "🖤🩶🤍💜", "name": "Aseksualna", "color": 0x800080},
-    "enby": {"flag": "💛🤍💜🖤", "name": "Niebinarna", "color": 0xFFFF00},
-    "aro": {"flag": "💚🤍🩶🖤", "name": "Aromantyczna", "color": 0x008000},
-    "fluid": {"flag": "🩷🤍💜🖤💙", "name": "Genderfluid", "color": KAWAII_PINK},
-    "femboy": {"flag": "🎀", "name": "Femboy", "color": KAWAII_PINK},
-    "polska": {"flag": "🇵🇱", "name": "Polska", "color": 0xFF0000},
-    "pionowa": {"flag": "🇮🇩", "name": "Pionowa", "color": 0xFFFFFF},
-    "pozioma": {"flag": "🇲🇨", "name": "Pozioma", "color": 0xFF0000},
-    "dinozaur": {"flag": "🦖", "name": "Dinozaur", "color": 0x00FF00},
-    "helikopter": {"flag": "🚁", "name": "Helikopter Bojowy", "color": 0x808080},
-    "kot": {"flag": "🐱", "name": "Kot", "color": 0xFFA500}
-}
-
-async def manage_orientation_role(user: discord.Member, guild: discord.Guild, key: str):
-    if not getattr(user, "roles", None) or not guild:
-        return
-    old_role_names = [v["name"] for k,v in ORIENTATIONS.items() if k != key]
-    roles_to_remove = [r for r in user.roles if r.name in old_role_names]
-    if roles_to_remove:
-        try:
-            await user.remove_roles(*roles_to_remove)
-        except:
-            pass
-    if key == "remove":
-        return
-    orient = ORIENTATIONS[key]
-    role = discord.utils.get(guild.roles, name=orient["name"])
-    if not role:
-        try:
-            role = await guild.create_role(name=orient["name"], color=discord.Color(orient["color"]), reason="Auto-rola orientacji")
-        except:
-            role = None
-    if role:
-        try:
-            await user.add_roles(role)
-        except:
-            pass
 
 # --- MODAL DO WPISYWANIA URODZIN ---
 class BirthdayModal(Modal, title="Kiedy masz urodziny? 🎂"):
@@ -145,62 +101,6 @@ class AddonsSelectView(View):
         self.add_item(PronounsSelect()) # Row 0
         self.add_item(StatusSelect())   # Row 1
 
-# --- MENU DLA ORIENTACJI ---
-class OrientSelect(Select):
-    def __init__(self):
-        options = []
-        for key, val in list(ORIENTATIONS.items())[:24]:
-            options.append(discord.SelectOption(label=val["name"], emoji=val["flag"], value=key))
-        options.append(discord.SelectOption(label="Brak (Usuń flagę)", emoji="🧹", value="remove"))
-        
-        super().__init__(placeholder="Wybierz swoją flagę/tożsamość...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        key = self.values[0]
-        data = set([v["flag"] for v in ORIENTATIONS.values()])
-        nick = interaction.user.display_name
-        
-        for flag in data:
-            nick = nick.replace(f"{flag} ", "")
-            nick = nick.replace(flag, "")
-        nick = nick.strip()
-        if len(nick) == 0: nick = interaction.user.name
-
-        if key == "remove":
-            update_profile(interaction.user.id, "orientation", None)
-            try:
-                await interaction.user.edit(nick=nick)
-            except:
-                pass
-            await manage_orientation_role(interaction.user, interaction.guild, "remove")
-            await interaction.response.send_message("🧹 Oczyszczono twój profil, nick i rangi z flag!", ephemeral=True)
-            return
-
-        orient = ORIENTATIONS[key]
-        new_nick = f"{orient['flag']} {nick}"
-        if len(new_nick) > 32: new_nick = new_nick[:32]
-        
-        try:
-            await interaction.user.edit(nick=new_nick)
-        except:
-            pass
-            
-        orient_db_str = f"{orient['flag']} {orient['name']}"
-        update_profile(interaction.user.id, "orientation", orient_db_str)
-        
-        await manage_orientation_role(interaction.user, interaction.guild, key)
-        
-        embed = discord.Embed(
-            description=f"✨ Ustawiłeś/aś flagę na **{orient['name']}** ({orient['flag']}) i nadano Ci rólkę na serwerze! 💖", 
-            color=orient["color"]
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-class OrientSelectView(View):
-    def __init__(self):
-        super().__init__(timeout=None)
-        self.add_item(OrientSelect())
-
 # --- LAUNCHER DLA SETBIO ---
 class BioLauncher(View):
     def __init__(self, bot):
@@ -223,9 +123,9 @@ class CombinedBioHub(View):
         super().__init__(timeout=None)
         self.bot = bot
 
-    @discord.ui.button(label="🎭 Role Serwerowe", style=discord.ButtonStyle.primary, emoji="🎭", row=0)
+    @discord.ui.button(label="🎭 Role & Tożsamość", style=discord.ButtonStyle.primary, emoji="🎭", row=0)
     async def roles_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Wysyła widok z pliku verification.py (Płeć, Wiek, Pingi)
+        # Wysyła widok z pliku verification.py (Płeć, Wiek, Pingi, Orientacja)
         view = RoleSelectView(self.bot, interaction.user, is_setup=True)
         await interaction.response.send_message("Wybierz swoje serwerowe role z poniższego menu:", view=view, ephemeral=True)
 
@@ -242,12 +142,6 @@ class CombinedBioHub(View):
     @discord.ui.button(label="🎂 Ustaw Urodziny", style=discord.ButtonStyle.secondary, emoji="📅", row=1)
     async def bday_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(BirthdayModal())
-
-    @discord.ui.button(label="🏳️‍🌈 Tożsamość / Ranga", style=discord.ButtonStyle.secondary, emoji="💖", row=2)
-    async def orient_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Wysyła opcje wyboru orientacji
-        view = OrientSelectView()
-        await interaction.response.send_message("Wybierz swoją tożsamość/flagę z menu poniżej (automatycznie nadana zostanie ranga na serwerze!):", view=view, ephemeral=True)
 
 # --- MODAL DO WPISYWANIA BIO ---
 class BioModal(Modal, title="Opisz siebie ✨"):
@@ -267,109 +161,6 @@ class BioModal(Modal, title="Opisz siebie ✨"):
 class Profile(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    async def _set_identity_flag(self, ctx, key: str):
-        data = set([v["flag"] for v in ORIENTATIONS.values()])
-        nick = ctx.author.display_name
-        
-        # Usuwamy wszystkie poprzednie flagi orientacji
-        for flag in data:
-            nick = nick.replace(f"{flag} ", "")
-            nick = nick.replace(flag, "")
-        
-        nick = nick.strip()
-        if len(nick) == 0:
-            nick = ctx.author.name
-            
-        new_flag = ORIENTATIONS[key]["flag"]
-        new_nick = f"{new_flag} {nick}"
-        
-        # Limit długości nicku na discordzie to 32
-        if len(new_nick) > 32:
-            new_nick = new_nick[:32]
-            
-        orient_db_str = f"{ORIENTATIONS[key]['flag']} {ORIENTATIONS[key]['name']}"
-        update_profile(ctx.author.id, "orientation", orient_db_str)
-        await manage_orientation_role(ctx.author, ctx.guild, key)
-
-        try:
-            await ctx.author.edit(nick=new_nick)
-            embed = discord.Embed(
-                description=f"✨ **{ctx.author.name}**, twój pseudonim otrzymał flagę **{ORIENTATIONS[key]['name']}** ({new_flag}) i dostałeś/aś odpowiednią rangę na serwerze! 💖", 
-                color=ORIENTATIONS[key]["color"]
-            )
-            await ctx.send(embed=embed)
-        except discord.Forbidden:
-            await ctx.send(f"❌ Wybacz {ctx.author.mention}, ale nie mam uprawnień do zmiany twojego pseudonimu! (Może jesteś właścicielem serwera lub masz wyższą rolę?)\nAle nie martw się, rola serwerowa została wprowadzona i jesteś ważny/a! {new_flag} 💖")
-
-    @commands.command()
-    async def setbi(self, ctx):
-        """Dodaje biseksualną flagę do nicku! 💖💜💙"""
-        await self._set_identity_flag(ctx, "bi")
-
-    @commands.command()
-    async def setgej(self, ctx):
-        """Dodaje gejowską flagę do nicku! 🏳️‍🌈"""
-        await self._set_identity_flag(ctx, "gej")
-
-    @commands.command()
-    async def setles(self, ctx):
-        """Dodaje lesbijską flagę do nicku! 🧡🤍💖"""
-        await self._set_identity_flag(ctx, "les")
-
-    @commands.command()
-    async def settrans(self, ctx):
-        """Dodaje transpłciową flagę do nicku! 🏳️‍⚧️"""
-        await self._set_identity_flag(ctx, "trans")
-
-    @commands.command()
-    async def setpan(self, ctx):
-        """Dodaje panseksualną flagę do nicku! 💖💛💙"""
-        await self._set_identity_flag(ctx, "pan")
-
-    @commands.command()
-    async def setace(self, ctx):
-        """Dodaje aseksualną flagę do nicku! 🖤🩶🤍💜"""
-        await self._set_identity_flag(ctx, "ace")
-
-    @commands.command()
-    async def setenby(self, ctx):
-        """Dodaje niebinarną flagę do nicku! 💛🤍💜🖤"""
-        await self._set_identity_flag(ctx, "enby")
-        
-    @commands.command()
-    async def setaro(self, ctx):
-        """Dodaje aromantyczną flagę do nicku! 💚🤍🩶🖤"""
-        await self._set_identity_flag(ctx, "aro")
-
-    @commands.command()
-    async def setfluid(self, ctx):
-        """Dodaje flagę genderfluid do nicku! 🩷🤍💜🖤💙"""
-        await self._set_identity_flag(ctx, "fluid")
-        
-    @commands.command()
-    async def removeflaga(self, ctx):
-        """Usuwa flagi orientacji z nicku."""
-        data = set([v["flag"] for v in ORIENTATIONS.values()])
-        nick = ctx.author.display_name
-        
-        for flag in data:
-            nick = nick.replace(f"{flag} ", "")
-            nick = nick.replace(flag, "")
-        
-        nick = nick.strip()
-        if len(nick) == 0:
-            nick = ctx.author.name
-            
-        try:
-            await ctx.author.edit(nick=nick)
-            update_profile(ctx.author.id, "orientation", None)
-            await manage_orientation_role(ctx.author, ctx.guild, "remove")
-            await ctx.send("🧹 Oczyszczono twój nick, profil i role z flag!")
-        except discord.Forbidden:
-            update_profile(ctx.author.id, "orientation", None)
-            await manage_orientation_role(ctx.author, ctx.guild, "remove")
-            await ctx.send("❌ Nie mam uprawnień do zmiany twojego pseudonimu, ale wyczyściłam role i tożsamość z twojego profilu! (qwq)")
 
     @commands.command()
     async def setbio(self, ctx):

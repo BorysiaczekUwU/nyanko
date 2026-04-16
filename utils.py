@@ -30,6 +30,23 @@ KAWAII_RED = 0xFF0000
 KAWAII_GOLD = 0xFFD700
 KAWAII_BLUE = 0x87CEEB
 
+# --- TOŻSAMOŚCI I ORIENTACJE ---
+ORIENTATIONS = {
+    "bi": {"flag": "💖💜💙", "name": "Biseksualna", "color": KAWAII_PINK},
+    "gej": {"flag": "🏳️‍🌈", "name": "Gejowska", "color": 0x00FF00}, 
+    "les": {"flag": "🧡🤍💖", "name": "Lesbijska", "color": 0xFF8C00},
+    "trans": {"flag": "🏳️‍⚧️", "name": "Transpłciowa", "color": KAWAII_BLUE},
+    "pan": {"flag": "💖💛💙", "name": "Panseksualna", "color": 0xFFD700},
+    "ace": {"flag": "🖤🩶🤍💜", "name": "Aseksualna", "color": 0x800080},
+    "enby": {"flag": "💛🤍💜🖤", "name": "Niebinarna", "color": 0xFFFF00},
+    "aro": {"flag": "💚🤍🩶🖤", "name": "Aromantyczna", "color": 0x008000},
+    "fluid": {"flag": "🩷🤍💜🖤💙", "name": "Genderfluid", "color": KAWAII_PINK},
+    "femboy": {"flag": "🎀", "name": "Femboy", "color": KAWAII_PINK},
+    "mazowsze": {"flag": "🇵🇱", "name": "Mazowiecka", "color": 0xFF0000},
+    "pionowa": {"flag": "🇮🇩", "name": "Pionowa", "color": 0xFFFFFF},
+    "pozioma": {"flag": "🇲🇨", "name": "Pozioma", "color": 0xFF0000},
+}
+
 # --- POMOCNICZE FUNKCJE DLA MONGODB ---
 # Jeśli bazy brak, używamy słownika w RAM (dla bezpieczeństwa przed crashem)
 ram_storage = {"economy": {}, "levels": {}, "profiles": {}, "tickets": {}}

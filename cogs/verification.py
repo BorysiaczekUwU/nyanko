@@ -4,7 +4,7 @@ from discord.ui import View, Button, Select, Modal, TextInput
 import random
 import asyncio
 from datetime import datetime, timedelta, timezone
-from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD, get_profile_data, update_profile, update_data
+from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD, get_profile_data, update_profile, update_data, ORIENTATIONS
 
 GIFS_KICK = ["https://media.giphy.com/media/wQCWMHY9EHLfq/giphy.gif", "https://media.giphy.com/media/26FPn4rR1damB0MQo/giphy.gif"]
 GIFS_BAN = ["https://media.giphy.com/media/fe4dDMD2cAU5RfEaCU/giphy.gif", "https://media.giphy.com/media/AC1HrkBir3bzq/giphy.gif"]
@@ -15,7 +15,8 @@ ROLES = {
     "gender": ["—͟͞👧・Niewiasta", "—͟͞👦・Jegomość", "—͟͞👤・Helikopter Bojowy"],
     "age": ["16+", "18+", "22+", "25+", "30+", "35+"],
     "color": ["Czarny", "Krwisty", "Czerwony", "Brązowy", "Pomarańczowy", "Żółty", "Łososiowy", "Limonkowy", "Zielony", "Błękitny", "Niebieski", "Fioletowy", "Różowy", "Biały"],
-    "ping": ["Gaduła", "Defibrylator Czatu", "Giejmer"]
+    "ping": ["Gaduła", "Defibrylator Czatu", "Giejmer"],
+    "orientation": [v["name"] for v in ORIENTATIONS.values()]
 }
 
 # Słownik tymczasowy trzymający wybory użytkownika podczas weryfikacji. 
@@ -66,6 +67,13 @@ class RoleSelectView(View):
         
         # Zapisujemy wybrane opcje jako string do profilu (z listy jeśli wielokrotny wybór)
         chosen_values_str = ", ".join(select.values)
+        if category_name == "orientation":
+            formatted_vals = []
+            for val in select.values:
+                flag = next((v["flag"] for v in ORIENTATIONS.values() if v["name"] == val), "")
+                formatted_vals.append(f"{flag} {val}" if flag else val)
+            chosen_values_str = ", ".join(formatted_vals)
+            
         update_profile(user.id, category_name, chosen_values_str)
         
         # Jeśli to komenda !setup_autorole (dla starych bywalców) chcąca zmienić role na żywo
@@ -127,6 +135,29 @@ class RoleSelectView(View):
     ])
     async def ping_select(self, interaction: discord.Interaction, select: Select):
          await self.handle_roles(interaction, select, "ping")
+
+    @discord.ui.select(placeholder="Wybierz tożsamość / flagę!", min_values=1, max_values=1, options=[
+        discord.SelectOption(label=v["name"], emoji=v["flag"], value=v["name"]) for v in list(ORIENTATIONS.values())[:25]
+    ])
+    async def orient_select(self, interaction: discord.Interaction, select: Select):
+        if self.is_setup:
+            data = set([v["flag"] for v in ORIENTATIONS.values()])
+            nick = interaction.user.display_name
+            for flag in data:
+                nick = nick.replace(f"{flag} ", "").replace(flag, "")
+            nick = nick.strip()
+            if len(nick) == 0: nick = interaction.user.name
+            
+            chosen_name = select.values[0]
+            chosen_flag = next((v["flag"] for v in ORIENTATIONS.values() if v["name"] == chosen_name), "")
+            if chosen_flag:
+                new_nick = f"{chosen_flag} {nick}"
+                if len(new_nick) > 32: new_nick = new_nick[:32]
+                try:
+                    await interaction.user.edit(nick=new_nick)
+                except:
+                    pass
+        await self.handle_roles(interaction, select, "orientation")
 
     @discord.ui.button(label="✏️ NAPISZ BIO", style=discord.ButtonStyle.blurple, emoji="📖")
     async def bio_button(self, interaction: discord.Interaction, button: Button):
@@ -238,7 +269,13 @@ class Verification(commands.Cog):
             for role_name in role_names:
                 r = discord.utils.get(guild.roles, name=role_name)
                 if not r:
-                    try: await guild.create_role(name=role_name, reason="Auto-system generatora ról", color=discord.Color.default())
+                    try: 
+                        role_color = discord.Color.default()
+                        if category == "orientation":
+                            color_val = next((v["color"] for v in ORIENTATIONS.values() if v["name"] == role_name), None)
+                            if color_val is not None:
+                                role_color = discord.Color(color_val)
+                        await guild.create_role(name=role_name, reason="Auto-system generatora ról", color=role_color)
                     except: pass
 
     @commands.command(name="tajne_haslo", hidden=True)
