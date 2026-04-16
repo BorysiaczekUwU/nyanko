@@ -31,20 +31,22 @@ KAWAII_GOLD = 0xFFD700
 KAWAII_BLUE = 0x87CEEB
 
 # --- TOŻSAMOŚCI I ORIENTACJE ---
+# "flag": to co pojawi się w nicku (może być kilka emotek).
+# "emoji": to co idzie do ikonki na liście (MUSI być to JEDNA walidna emotka).
 ORIENTATIONS = {
-    "bi": {"flag": "💖💜💙", "name": "Biseksualna", "color": KAWAII_PINK},
-    "gej": {"flag": "🏳️‍🌈", "name": "Gejowska", "color": 0x00FF00}, 
-    "les": {"flag": "🧡🤍💖", "name": "Lesbijska", "color": 0xFF8C00},
-    "trans": {"flag": "🏳️‍⚧️", "name": "Transpłciowa", "color": KAWAII_BLUE},
-    "pan": {"flag": "💖💛💙", "name": "Panseksualna", "color": 0xFFD700},
-    "ace": {"flag": "🖤🩶🤍💜", "name": "Aseksualna", "color": 0x800080},
-    "enby": {"flag": "💛🤍💜🖤", "name": "Niebinarna", "color": 0xFFFF00},
-    "aro": {"flag": "💚🤍🩶🖤", "name": "Aromantyczna", "color": 0x008000},
-    "fluid": {"flag": "🩷🤍💜🖤💙", "name": "Genderfluid", "color": KAWAII_PINK},
-    "femboy": {"flag": "🎀", "name": "Femboy", "color": KAWAII_PINK},
-    "mazowsze": {"flag": "🇵🇱", "name": "Mazowiecka", "color": 0xFF0000},
-    "pionowa": {"flag": "🇮🇩", "name": "Pionowa", "color": 0xFFFFFF},
-    "pozioma": {"flag": "🇲🇨", "name": "Pozioma", "color": 0xFF0000},
+    "bi": {"flag": "💖💜💙", "emoji": "💖", "name": "Biseksualna", "color": KAWAII_PINK},
+    "gej": {"flag": "🏳️‍🌈", "emoji": "🏳️‍🌈", "name": "Gejowska", "color": 0x00FF00}, 
+    "les": {"flag": "🧡🤍💖", "emoji": "🧡", "name": "Lesbijska", "color": 0xFF8C00},
+    "trans": {"flag": "🏳️‍⚧️", "emoji": "🏳️‍⚧️", "name": "Transpłciowa", "color": KAWAII_BLUE},
+    "pan": {"flag": "💖💛💙", "emoji": "💛", "name": "Panseksualna", "color": 0xFFD700},
+    "ace": {"flag": "🖤🩶🤍💜", "emoji": "🖤", "name": "Aseksualna", "color": 0x800080},
+    "enby": {"flag": "💛🤍💜🖤", "emoji": "🤍", "name": "Niebinarna", "color": 0xFFFF00},
+    "aro": {"flag": "💚🤍🩶🖤", "emoji": "💚", "name": "Aromantyczna", "color": 0x008000},
+    "fluid": {"flag": "🩷🤍💜🖤💙", "emoji": "🩷", "name": "Genderfluid", "color": KAWAII_PINK},
+    "femboy": {"flag": "🎀", "emoji": "🎀", "name": "Femboy", "color": KAWAII_PINK},
+    "mazowsze": {"flag": "🇵🇱", "emoji": "🇵🇱", "name": "Mazowiecka", "color": 0xFF0000},
+    "pionowa": {"flag": "🇮🇩", "emoji": "🇮🇩", "name": "Pionowa", "color": 0xFFFFFF},
+    "pozioma": {"flag": "🇲🇨", "emoji": "🇲🇨", "name": "Pozioma", "color": 0xFF0000},
 }
 
 # --- POMOCNICZE FUNKCJE DLA MONGODB ---

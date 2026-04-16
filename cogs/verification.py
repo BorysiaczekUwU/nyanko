@@ -137,7 +137,7 @@ class RoleSelectView(View):
          await self.handle_roles(interaction, select, "ping")
 
     @discord.ui.select(placeholder="Wybierz tożsamość / flagę!", min_values=1, max_values=1, options=[
-        discord.SelectOption(label=v["name"], emoji=v["flag"], value=v["name"]) for v in list(ORIENTATIONS.values())[:25]
+        discord.SelectOption(label=v["name"], emoji=v.get("emoji", "🏳️‍🌈"), value=v["name"]) for v in list(ORIENTATIONS.values())[:25]
     ])
     async def orient_select(self, interaction: discord.Interaction, select: Select):
         if self.is_setup:

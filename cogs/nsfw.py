@@ -119,14 +119,6 @@ class NSFW(commands.Cog):
         else:
             await ctx.send("❌ Błąd pobierania obrazka.")
 
-    @commands.command()
-    async def bj(self, ctx):
-        if not self.is_nsfw(ctx): return await ctx.send("❌ To kanał SFW!")
-        img = await self.get_image("blowjob")
-        if img:
-            await ctx.send(embed=discord.Embed(title="💦 Blowjob", color=KAWAII_RED).set_image(url=img))
-        else:
-            await ctx.send("❌ Błąd pobierania obrazka.")
 
     @commands.command()
     async def neko18(self, ctx):
