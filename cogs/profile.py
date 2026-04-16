@@ -23,6 +23,32 @@ ORIENTATIONS = {
     "helikopter": {"flag": "🚁", "name": "Helikopter Bojowy", "color": 0x808080},
     "kot": {"flag": "🐱", "name": "Kot", "color": 0xFFA500}
 }
+
+async def manage_orientation_role(user: discord.Member, guild: discord.Guild, key: str):
+    if not getattr(user, "roles", None) or not guild:
+        return
+    old_role_names = [v["name"] for k,v in ORIENTATIONS.items() if k != key]
+    roles_to_remove = [r for r in user.roles if r.name in old_role_names]
+    if roles_to_remove:
+        try:
+            await user.remove_roles(*roles_to_remove)
+        except:
+            pass
+    if key == "remove":
+        return
+    orient = ORIENTATIONS[key]
+    role = discord.utils.get(guild.roles, name=orient["name"])
+    if not role:
+        try:
+            role = await guild.create_role(name=orient["name"], color=discord.Color(orient["color"]), reason="Auto-rola orientacji")
+        except:
+            role = None
+    if role:
+        try:
+            await user.add_roles(role)
+        except:
+            pass
+
 # --- MODAL DO WPISYWANIA URODZIN ---
 class BirthdayModal(Modal, title="Kiedy masz urodziny? 🎂"):
     bday_input = TextInput(
@@ -146,7 +172,8 @@ class OrientSelect(Select):
                 await interaction.user.edit(nick=nick)
             except:
                 pass
-            await interaction.response.send_message("🧹 Oczyszczono twój profil i nick z flag!", ephemeral=True)
+            await manage_orientation_role(interaction.user, interaction.guild, "remove")
+            await interaction.response.send_message("🧹 Oczyszczono twój profil, nick i rangi z flag!", ephemeral=True)
             return
 
         orient = ORIENTATIONS[key]
@@ -161,8 +188,10 @@ class OrientSelect(Select):
         orient_db_str = f"{orient['flag']} {orient['name']}"
         update_profile(interaction.user.id, "orientation", orient_db_str)
         
+        await manage_orientation_role(interaction.user, interaction.guild, key)
+        
         embed = discord.Embed(
-            description=f"✨ Ustawiłeś/aś flagę na **{orient['name']}** ({orient['flag']})!", 
+            description=f"✨ Ustawiłeś/aś flagę na **{orient['name']}** ({orient['flag']}) i nadano Ci rólkę na serwerze! 💖", 
             color=orient["color"]
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -171,6 +200,22 @@ class OrientSelectView(View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(OrientSelect())
+
+# --- LAUNCHER DLA SETBIO ---
+class BioLauncher(View):
+    def __init__(self, bot):
+        super().__init__(timeout=None)
+        self.bot = bot
+
+    @discord.ui.button(label="🎨 Otwórz Kreator Profilu", style=discord.ButtonStyle.success, emoji="✨")
+    async def open_bio(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = CombinedBioHub(self.bot)
+        embed = discord.Embed(
+            title="🎨 Kreator Profilu / Tożsamości",
+            description="Użyj menu poniżej, aby edytować różne aspekty swojego profilu, tożsamości oraz darmowych ról na serwerze!",
+            color=KAWAII_BLUE
+        )
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 # --- GŁÓWNY HUB PROFILU ---
 class CombinedBioHub(View):
@@ -197,6 +242,12 @@ class CombinedBioHub(View):
     @discord.ui.button(label="🎂 Ustaw Urodziny", style=discord.ButtonStyle.secondary, emoji="📅", row=1)
     async def bday_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(BirthdayModal())
+
+    @discord.ui.button(label="🏳️‍🌈 Tożsamość / Ranga", style=discord.ButtonStyle.secondary, emoji="💖", row=2)
+    async def orient_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Wysyła opcje wyboru orientacji
+        view = OrientSelectView()
+        await interaction.response.send_message("Wybierz swoją tożsamość/flagę z menu poniżej (automatycznie nadana zostanie ranga na serwerze!):", view=view, ephemeral=True)
 
 # --- MODAL DO WPISYWANIA BIO ---
 class BioModal(Modal, title="Opisz siebie ✨"):
@@ -239,26 +290,17 @@ class Profile(commands.Cog):
             
         orient_db_str = f"{ORIENTATIONS[key]['flag']} {ORIENTATIONS[key]['name']}"
         update_profile(ctx.author.id, "orientation", orient_db_str)
+        await manage_orientation_role(ctx.author, ctx.guild, key)
 
         try:
             await ctx.author.edit(nick=new_nick)
             embed = discord.Embed(
-                description=f"✨ **{ctx.author.name}**, twój pseudonim otrzymał flagę **{ORIENTATIONS[key]['name']}** ({new_flag})! \nBądź zawsze dumny/a z tego kim jesteś, jesteś super! 💖", 
+                description=f"✨ **{ctx.author.name}**, twój pseudonim otrzymał flagę **{ORIENTATIONS[key]['name']}** ({new_flag}) i dostałeś/aś odpowiednią rangę na serwerze! 💖", 
                 color=ORIENTATIONS[key]["color"]
             )
             await ctx.send(embed=embed)
         except discord.Forbidden:
-            await ctx.send(f"❌ Wybacz {ctx.author.mention}, ale nie mam uprawnień do zmiany twojego pseudonimu! (Może jesteś właścicielem serwera lub masz wyższą rolę?)\nAle nie martw się, i tak zapisałam to w twoim profilu i jesteś ważny/a! {new_flag} 💖")
-
-    @commands.command()
-    async def setorient(self, ctx):
-        """Wyświetla listę wszystkich dostępnych tożsamości z możliwością wyboru!"""
-        embed = discord.Embed(
-            title="🏳️‍🌈 Wybierz swoją tożsamość / flagę",
-            description="Użyj menu poniżej, aby wybrać swoją flagę, która zostanie dodana do twojego nicku i wyświetli się w `!bio`!\nMożesz zjechać na sam dół listy, aby usunąć aktualną flagę z profilu.",
-            color=KAWAII_PINK
-        )
-        await ctx.send(embed=embed, view=OrientSelectView())
+            await ctx.send(f"❌ Wybacz {ctx.author.mention}, ale nie mam uprawnień do zmiany twojego pseudonimu! (Może jesteś właścicielem serwera lub masz wyższą rolę?)\nAle nie martw się, rola serwerowa została wprowadzona i jesteś ważny/a! {new_flag} 💖")
 
     @commands.command()
     async def setbi(self, ctx):
@@ -322,36 +364,29 @@ class Profile(commands.Cog):
         try:
             await ctx.author.edit(nick=nick)
             update_profile(ctx.author.id, "orientation", None)
-            await ctx.send("🧹 Oczyszczono twój nick i profil z flag!")
+            await manage_orientation_role(ctx.author, ctx.guild, "remove")
+            await ctx.send("🧹 Oczyszczono twój nick, profil i role z flag!")
         except discord.Forbidden:
             update_profile(ctx.author.id, "orientation", None)
-            await ctx.send("❌ Nie mam uprawnień do zmiany twojego pseudonimu, ale wyczyściłam to z twojego profilu! (qwq)")
+            await manage_orientation_role(ctx.author, ctx.guild, "remove")
+            await ctx.send("❌ Nie mam uprawnień do zmiany twojego pseudonimu, ale wyczyściłam role i tożsamość z twojego profilu! (qwq)")
 
     @commands.command()
     async def setbio(self, ctx):
-        """Otwiera panel ustawiania profilu (Prywatnie)"""
+        """Otwiera panel ustawiania profilu w bezpieczny, prywatny sposób (ephemeral)"""
         try:
             await ctx.message.delete()
         except:
             pass
 
         embed = discord.Embed(
-            title="🎨 Kreator Profilu",
-            description="Użyj menu poniżej, aby wybrać swoją płeć, wiek i notyfikacje serwerowe.\nMożesz też użyć przycisku Bio aby błyskawicznie edytować okienko informacyjne!",
+            title="🎨 Edytor Profilu",
+            description=f"{ctx.author.mention}, kliknij przycisk poniżej, aby otworzyć bezpieczny, **w pełni prywatny (niewidoczny dla innych)** panel ustawiania profilu i opcji tożsamości! 👇",
             color=KAWAII_BLUE
         )
-        embed.set_footer(text="Bot stworzony przez BorysiaczekUwU 💖")
+        embed.set_footer(text="Gwarancja prywatności! ✨")
 
-        try:
-            # Używamy CombinedBioHub, który łączy stare menusy z auto-role
-            view = CombinedBioHub(self.bot)
-            await ctx.author.send(embed=embed, view=view)
-            # Opcjonalne potwierdzenie na kanale (znika po 5s)
-            temp_msg = await ctx.send(f"{ctx.author.mention}, wysłałam Ci panel ustawień w wiadomości prywatnej! 📩")
-            await asyncio.sleep(5)
-            await temp_msg.delete()
-        except discord.Forbidden:
-            await ctx.send(f"❌ {ctx.author.mention}, nie mogę wysłać Ci wiadomości prywatnej! Odblokuj DM.")
+        await ctx.send(embed=embed, view=BioLauncher(self.bot))
 
     @commands.command()
     async def bio(self, ctx, member: discord.Member = None):
