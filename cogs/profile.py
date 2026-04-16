@@ -14,7 +14,14 @@ ORIENTATIONS = {
     "ace": {"flag": "🖤🩶🤍💜", "name": "Aseksualna", "color": 0x800080},
     "enby": {"flag": "💛🤍💜🖤", "name": "Niebinarna", "color": 0xFFFF00},
     "aro": {"flag": "💚🤍🩶🖤", "name": "Aromantyczna", "color": 0x008000},
-    "fluid": {"flag": "🩷🤍💜🖤💙", "name": "Genderfluid", "color": KAWAII_PINK}
+    "fluid": {"flag": "🩷🤍💜🖤💙", "name": "Genderfluid", "color": KAWAII_PINK},
+    "femboy": {"flag": "🎀", "name": "Femboy", "color": KAWAII_PINK},
+    "polska": {"flag": "🇵🇱", "name": "Polska", "color": 0xFF0000},
+    "pionowa": {"flag": "🇮🇩", "name": "Pionowa", "color": 0xFFFFFF},
+    "pozioma": {"flag": "🇲🇨", "name": "Pozioma", "color": 0xFF0000},
+    "dinozaur": {"flag": "🦖", "name": "Dinozaur", "color": 0x00FF00},
+    "helikopter": {"flag": "🚁", "name": "Helikopter Bojowy", "color": 0x808080},
+    "kot": {"flag": "🐱", "name": "Kot", "color": 0xFFA500}
 }
 # --- MODAL DO WPISYWANIA URODZIN ---
 class BirthdayModal(Modal, title="Kiedy masz urodziny? 🎂"):
@@ -112,6 +119,59 @@ class AddonsSelectView(View):
         self.add_item(PronounsSelect()) # Row 0
         self.add_item(StatusSelect())   # Row 1
 
+# --- MENU DLA ORIENTACJI ---
+class OrientSelect(Select):
+    def __init__(self):
+        options = []
+        for key, val in list(ORIENTATIONS.items())[:24]:
+            options.append(discord.SelectOption(label=val["name"], emoji=val["flag"], value=key))
+        options.append(discord.SelectOption(label="Brak (Usuń flagę)", emoji="🧹", value="remove"))
+        
+        super().__init__(placeholder="Wybierz swoją flagę/tożsamość...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        key = self.values[0]
+        data = set([v["flag"] for v in ORIENTATIONS.values()])
+        nick = interaction.user.display_name
+        
+        for flag in data:
+            nick = nick.replace(f"{flag} ", "")
+            nick = nick.replace(flag, "")
+        nick = nick.strip()
+        if len(nick) == 0: nick = interaction.user.name
+
+        if key == "remove":
+            update_profile(interaction.user.id, "orientation", None)
+            try:
+                await interaction.user.edit(nick=nick)
+            except:
+                pass
+            await interaction.response.send_message("🧹 Oczyszczono twój profil i nick z flag!", ephemeral=True)
+            return
+
+        orient = ORIENTATIONS[key]
+        new_nick = f"{orient['flag']} {nick}"
+        if len(new_nick) > 32: new_nick = new_nick[:32]
+        
+        try:
+            await interaction.user.edit(nick=new_nick)
+        except:
+            pass
+            
+        orient_db_str = f"{orient['flag']} {orient['name']}"
+        update_profile(interaction.user.id, "orientation", orient_db_str)
+        
+        embed = discord.Embed(
+            description=f"✨ Ustawiłeś/aś flagę na **{orient['name']}** ({orient['flag']})!", 
+            color=orient["color"]
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+class OrientSelectView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(OrientSelect())
+
 # --- GŁÓWNY HUB PROFILU ---
 class CombinedBioHub(View):
     def __init__(self, bot):
@@ -177,6 +237,9 @@ class Profile(commands.Cog):
         if len(new_nick) > 32:
             new_nick = new_nick[:32]
             
+        orient_db_str = f"{ORIENTATIONS[key]['flag']} {ORIENTATIONS[key]['name']}"
+        update_profile(ctx.author.id, "orientation", orient_db_str)
+
         try:
             await ctx.author.edit(nick=new_nick)
             embed = discord.Embed(
@@ -185,7 +248,17 @@ class Profile(commands.Cog):
             )
             await ctx.send(embed=embed)
         except discord.Forbidden:
-            await ctx.send(f"❌ Wybacz {ctx.author.mention}, ale nie mam uprawnień do zmiany twojego pseudonimu! (Może jesteś właścicielem serwera lub masz wyższą rolę?)\nAle nie martw się, i tak jesteś ważny/a i wielbiony/a! {new_flag} 💖")
+            await ctx.send(f"❌ Wybacz {ctx.author.mention}, ale nie mam uprawnień do zmiany twojego pseudonimu! (Może jesteś właścicielem serwera lub masz wyższą rolę?)\nAle nie martw się, i tak zapisałam to w twoim profilu i jesteś ważny/a! {new_flag} 💖")
+
+    @commands.command()
+    async def setorient(self, ctx):
+        """Wyświetla listę wszystkich dostępnych tożsamości z możliwością wyboru!"""
+        embed = discord.Embed(
+            title="🏳️‍🌈 Wybierz swoją tożsamość / flagę",
+            description="Użyj menu poniżej, aby wybrać swoją flagę, która zostanie dodana do twojego nicku i wyświetli się w `!bio`!\nMożesz zjechać na sam dół listy, aby usunąć aktualną flagę z profilu.",
+            color=KAWAII_PINK
+        )
+        await ctx.send(embed=embed, view=OrientSelectView())
 
     @commands.command()
     async def setbi(self, ctx):
@@ -248,9 +321,11 @@ class Profile(commands.Cog):
             
         try:
             await ctx.author.edit(nick=nick)
-            await ctx.send("🧹 Oczyszczono twój nick z flag!")
+            update_profile(ctx.author.id, "orientation", None)
+            await ctx.send("🧹 Oczyszczono twój nick i profil z flag!")
         except discord.Forbidden:
-            await ctx.send("❌ Nie mam uprawnień do zmiany twojego pseudonimu! (qwq)")
+            update_profile(ctx.author.id, "orientation", None)
+            await ctx.send("❌ Nie mam uprawnień do zmiany twojego pseudonimu, ale wyczyściłam to z twojego profilu! (qwq)")
 
     @commands.command()
     async def setbio(self, ctx):
@@ -301,6 +376,7 @@ class Profile(commands.Cog):
         
         embed.add_field(name="⚧ Płeć", value=profile.get('gender', 'Nieznana'), inline=True)
         embed.add_field(name="🗣️ Zaimki", value=profile.get('pronouns', 'Nieznane'), inline=True)
+        embed.add_field(name="🏳️‍🌈 Tożsamość", value=profile.get('orientation', 'Nieustawiona'), inline=True)
         embed.add_field(name="📅 Wiek", value=profile.get('age', 'Nieznany'), inline=True)
         embed.add_field(name="🎂 Urodziny", value=profile.get('birthday', 'Nieznane'), inline=True)
         embed.add_field(name="💞 Status", value=profile.get('status', 'Nieznany'), inline=True)
