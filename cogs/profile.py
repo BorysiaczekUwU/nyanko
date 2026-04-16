@@ -5,6 +5,17 @@ from discord.ui import Modal, TextInput, View, Select
 from utils import get_profile_data, update_profile, get_level_data, get_data, KAWAII_PINK, KAWAII_BLUE
 from cogs.verification import RoleSelectView
 
+ORIENTATIONS = {
+    "bi": {"flag": "💖💜💙", "name": "Biseksualna", "color": KAWAII_PINK},
+    "gej": {"flag": "🏳️‍🌈", "name": "Gejowska", "color": 0x00FF00}, 
+    "les": {"flag": "🧡🤍💖", "name": "Lesbijska", "color": 0xFF8C00},
+    "trans": {"flag": "🏳️‍⚧️", "name": "Transpłciowa", "color": KAWAII_BLUE},
+    "pan": {"flag": "💖💛💙", "name": "Panseksualna", "color": 0xFFD700},
+    "ace": {"flag": "🖤🩶🤍💜", "name": "Aseksualna", "color": 0x800080},
+    "enby": {"flag": "💛🤍💜🖤", "name": "Niebinarna", "color": 0xFFFF00},
+    "aro": {"flag": "💚🤍🩶🖤", "name": "Aromantyczna", "color": 0x008000},
+    "fluid": {"flag": "🩷🤍💜🖤💙", "name": "Genderfluid", "color": KAWAII_PINK}
+}
 # --- MODAL DO WPISYWANIA URODZIN ---
 class BirthdayModal(Modal, title="Kiedy masz urodziny? 🎂"):
     bday_input = TextInput(
@@ -145,6 +156,101 @@ class BioModal(Modal, title="Opisz siebie ✨"):
 class Profile(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    async def _set_identity_flag(self, ctx, key: str):
+        data = set([v["flag"] for v in ORIENTATIONS.values()])
+        nick = ctx.author.display_name
+        
+        # Usuwamy wszystkie poprzednie flagi orientacji
+        for flag in data:
+            nick = nick.replace(f"{flag} ", "")
+            nick = nick.replace(flag, "")
+        
+        nick = nick.strip()
+        if len(nick) == 0:
+            nick = ctx.author.name
+            
+        new_flag = ORIENTATIONS[key]["flag"]
+        new_nick = f"{new_flag} {nick}"
+        
+        # Limit długości nicku na discordzie to 32
+        if len(new_nick) > 32:
+            new_nick = new_nick[:32]
+            
+        try:
+            await ctx.author.edit(nick=new_nick)
+            embed = discord.Embed(
+                description=f"✨ **{ctx.author.name}**, twój pseudonim otrzymał flagę **{ORIENTATIONS[key]['name']}** ({new_flag})! \nBądź zawsze dumny/a z tego kim jesteś, jesteś super! 💖", 
+                color=ORIENTATIONS[key]["color"]
+            )
+            await ctx.send(embed=embed)
+        except discord.Forbidden:
+            await ctx.send(f"❌ Wybacz {ctx.author.mention}, ale nie mam uprawnień do zmiany twojego pseudonimu! (Może jesteś właścicielem serwera lub masz wyższą rolę?)\nAle nie martw się, i tak jesteś ważny/a i wielbiony/a! {new_flag} 💖")
+
+    @commands.command()
+    async def setbi(self, ctx):
+        """Dodaje biseksualną flagę do nicku! 💖💜💙"""
+        await self._set_identity_flag(ctx, "bi")
+
+    @commands.command()
+    async def setgej(self, ctx):
+        """Dodaje gejowską flagę do nicku! 🏳️‍🌈"""
+        await self._set_identity_flag(ctx, "gej")
+
+    @commands.command()
+    async def setles(self, ctx):
+        """Dodaje lesbijską flagę do nicku! 🧡🤍💖"""
+        await self._set_identity_flag(ctx, "les")
+
+    @commands.command()
+    async def settrans(self, ctx):
+        """Dodaje transpłciową flagę do nicku! 🏳️‍⚧️"""
+        await self._set_identity_flag(ctx, "trans")
+
+    @commands.command()
+    async def setpan(self, ctx):
+        """Dodaje panseksualną flagę do nicku! 💖💛💙"""
+        await self._set_identity_flag(ctx, "pan")
+
+    @commands.command()
+    async def setace(self, ctx):
+        """Dodaje aseksualną flagę do nicku! 🖤🩶🤍💜"""
+        await self._set_identity_flag(ctx, "ace")
+
+    @commands.command()
+    async def setenby(self, ctx):
+        """Dodaje niebinarną flagę do nicku! 💛🤍💜🖤"""
+        await self._set_identity_flag(ctx, "enby")
+        
+    @commands.command()
+    async def setaro(self, ctx):
+        """Dodaje aromantyczną flagę do nicku! 💚🤍🩶🖤"""
+        await self._set_identity_flag(ctx, "aro")
+
+    @commands.command()
+    async def setfluid(self, ctx):
+        """Dodaje flagę genderfluid do nicku! 🩷🤍💜🖤💙"""
+        await self._set_identity_flag(ctx, "fluid")
+        
+    @commands.command()
+    async def removeflaga(self, ctx):
+        """Usuwa flagi orientacji z nicku."""
+        data = set([v["flag"] for v in ORIENTATIONS.values()])
+        nick = ctx.author.display_name
+        
+        for flag in data:
+            nick = nick.replace(f"{flag} ", "")
+            nick = nick.replace(flag, "")
+        
+        nick = nick.strip()
+        if len(nick) == 0:
+            nick = ctx.author.name
+            
+        try:
+            await ctx.author.edit(nick=nick)
+            await ctx.send("🧹 Oczyszczono twój nick z flag!")
+        except discord.Forbidden:
+            await ctx.send("❌ Nie mam uprawnień do zmiany twojego pseudonimu! (qwq)")
 
     @commands.command()
     async def setbio(self, ctx):

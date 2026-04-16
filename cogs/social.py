@@ -64,6 +64,18 @@ GIFS_PISTOLET = [
     "https://media.giphy.com/media/xT9KVteixWgVlXckQE/giphy.gif",
     "https://media.giphy.com/media/26ufncG0N0nE6Z2lq/giphy.gif"
 ]
+GIFS_CHWAL = [
+    "https://media.giphy.com/media/26ufncG0N0nE6Z2lq/giphy.gif", # placeholder, using existing ones, let's use some custom generic ones or just random kawaii gifs
+    "https://media.giphy.com/media/l41YkxvU8c7J7Bba0/giphy.gif"
+]
+GIFS_KOCYK = [
+    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjM1ZTJiMTBhZTVhMWM0MmFmOTMzNjlmZWEwMGE0ZTM0MGMxZTRmZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o85xwxr06YNoFdSbm/giphy.gif",
+    "https://media.giphy.com/media/3o7TKSx0B7ZWeAozxS/giphy.gif"
+]
+GIFS_HERBATA = [
+    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWM5ODFhZjZmY2U2OTI1Y2ZkODc4MjJlYjc1OGNmNjY1MmI2YmE0NyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3pZipqyo1sqHDfTmV8/giphy.gif",
+    "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExNzVmN2QzZTVmZmNlNTRlNjZkYzNlMTBkZWFiNGRmMzBhMGY5NmZlNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/82okbqBnuDIfT7oUS3/giphy.gif"
+]
 
 class Social(commands.Cog):
     def __init__(self, bot):
@@ -385,6 +397,56 @@ class Social(commands.Cog):
             return await ctx.send("Ej, ej! Spokojnie, odłóż tę broń! 😨")
         embed = discord.Embed(description=f"🔫 **{ctx.author.name}** wyciąga znikąd pistolet na wodę i celuje w **{member.name}**! Ręce do góry! 💦", color=KAWAII_RED)
         embed.set_image(url=random.choice(GIFS_PISTOLET))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def chwal(self, ctx, member: discord.Member = None):
+        """Pochwal kogoś, bo na to zasługuje! ✨"""
+        pochwaly = [
+            "jesteś absolutnie niesamowity/a! 🌟",
+            "robisz świetną robotę, tak trzymaj! 💖",
+            "masz cudowny uśmiech (nawet jeśli teraz go nie widać)! ✨",
+            "świat jest lepszy, bo na nim jesteś! 🌸",
+            "twoja obecność sprawia, że ten dzień jest lepszy! ☀️",
+            "jesteś mądrzejszy/a i silniejszy/a niż myślisz! 💪"
+        ]
+        target = f"**{member.name}**, " if member else "**wprost w eter:**\n\n> "
+        embed = discord.Embed(
+            description=f"✨ **{ctx.author.name}** chwali: {target}{random.choice(pochwaly)}",
+            color=KAWAII_GOLD
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def kocyk(self, ctx, member: discord.Member):
+        """Owija kogoś ciepłym kocykiem jak burrito! 🌯💖"""
+        if member == ctx.author:
+            embed = discord.Embed(description=f"🌯 **{ctx.author.name}** zawija się w ciepły kocyk i robi z siebie urocze burrito! 🥰", color=KAWAII_PINK)
+        else:
+            embed = discord.Embed(description=f"🌯 **{ctx.author.name}** troskliwie owija **{member.name}** ciepłym, niezwykle puszystym kocykiem! Śpij słodko! 💖", color=KAWAII_PINK)
+        embed.set_image(url=random.choice(GIFS_KOCYK))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def herbata(self, ctx, member: discord.Member = None):
+        """Podaje cieplutką herbatę! 🍵"""
+        if not member or member == ctx.author:
+            embed = discord.Embed(description=f"🍵 **{ctx.author.name}** parzy dla siebie pyszną, rozgrzewającą herbatę z miodem! Mniam! ✨", color=KAWAII_GOLD)
+        else:
+            embed = discord.Embed(description=f"🍵 **{ctx.author.name}** przyrządza z miłością herbatę i wręcza ją **{member.name}**! Uważaj, jeszcze gorąca! 💖", color=KAWAII_GOLD)
+        embed.set_image(url=random.choice(GIFS_HERBATA))
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def pociesz(self, ctx, member: discord.Member):
+        """Pociesza kogoś smutnego 🥺"""
+        if member == ctx.author:
+            return await ctx.send("Wiem, że czasem bywa ciężko... Zrób sobie odpoczynek, zasługujesz na to! Przytulasz sam(a) siebie 💖🥺")
+        embed = discord.Embed(
+            description=f"🥺 **{ctx.author.name}** gładzi **{member.name}** po plecach i mówi: *\"Ciii... wszystko będzie dobrze. Jestem tu dla ciebie.\"* 💖", 
+            color=KAWAII_PINK
+        )
+        embed.set_image(url=random.choice(GIFS_PAT))
         await ctx.send(embed=embed)
 
 async def setup(bot):
