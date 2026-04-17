@@ -35,8 +35,8 @@ intents.voice_states = True # WAŻNE: Potrzebne do śledzenia VC!
 
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-# Lista plików do załadowania - DODANO cogs.profile, cogs.games, cogs.nsfw, cogs.daily_greetings, cogs.mass_troll
-COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general', 'cogs.levels', 'cogs.profile', 'cogs.games', 'cogs.tickets', 'cogs.events', 'cogs.verification', 'cogs.nsfw', 'cogs.daily_greetings', 'cogs.mass_troll']
+# Lista plików do załadowania
+COGS = ['cogs.admin', 'cogs.economy', 'cogs.social', 'cogs.general', 'cogs.levels', 'cogs.profile', 'cogs.games', 'cogs.tickets', 'cogs.events', 'cogs.verification', 'cogs.nsfw', 'cogs.daily_greetings', 'cogs.mass_troll', 'cogs.clans']
 
 @tasks.loop(seconds=30)
 async def status_loop():

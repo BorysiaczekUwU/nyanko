@@ -23,6 +23,7 @@ economy_col = db["economy"] if db is not None else None
 levels_col = db["levels"] if db is not None else None
 profiles_col = db["profiles"] if db is not None else None
 tickets_col = db["tickets"] if db is not None else None
+clans_col = db["clans"] if db is not None else None
 
 # --- LISTY KOLORÓW ---
 KAWAII_PINK = 0xFF69B4
@@ -52,7 +53,7 @@ ORIENTATIONS = {
 
 # --- POMOCNICZE FUNKCJE DLA MONGODB ---
 # Jeśli bazy brak, używamy słownika w RAM (dla bezpieczeństwa przed crashem)
-ram_storage = {"economy": {}, "levels": {}, "profiles": {}, "tickets": {}}
+ram_storage = {"economy": {}, "levels": {}, "profiles": {}, "tickets": {}, "clans": {}}
 
 def _get_doc(collection, col_name, user_id, default_doc):
     str_id = str(user_id)
@@ -203,7 +204,8 @@ def get_profile_data(user_id):
         "birthday": "Nie ustawiono",
         "partner": None,
         "pronouns": "Nieznane",
-        "status": "Nieznany"
+        "status": "Nieznany",
+        "clan": None
     }
     return _get_doc(profiles_col, "profiles", user_id, default)
 
@@ -219,3 +221,37 @@ def get_ticket_user(user_id):
 
 def update_ticket_user(user_id, key, value):
     _update_doc(tickets_col, "tickets", user_id, {key: value})
+
+# --- SYSTEM KLANÓW ---
+def get_clan_data(clan_name):
+    default = {
+        "name": clan_name,
+        "owner_id": None,
+        "members": [],
+        "level": 1,
+        "xp": 0,
+        "description": "Brak opisu klanu.",
+        "channel_id": None,
+        "role_id": None
+    }
+    return _get_doc(clans_col, "clans", clan_name, default)
+
+def update_clan_data(clan_name, key, value, mode="set"):
+    if mode == "set":
+        _update_doc(clans_col, "clans", clan_name, {key: value})
+    elif mode == "add":
+        get_clan_data(clan_name)  # Upewnij się, że dokument istnieje
+        _inc_doc(clans_col, "clans", clan_name, key, value)
+    elif mode == "push":
+        # Hack dla mongodb $push
+        data = get_clan_data(clan_name)
+        if isinstance(data.get(key), list):
+            if value not in data[key]:
+                data[key].append(value)
+                _update_doc(clans_col, "clans", clan_name, {key: data[key]})
+    elif mode == "pull":
+        data = get_clan_data(clan_name)
+        if isinstance(data.get(key), list):
+            if value in data[key]:
+                data[key].remove(value)
+                _update_doc(clans_col, "clans", clan_name, {key: data[key]})

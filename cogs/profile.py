@@ -206,6 +206,9 @@ class Profile(commands.Cog):
         embed.add_field(name="📅 Wiek", value=profile.get('age', 'Nieznany'), inline=True)
         embed.add_field(name="🎂 Urodziny", value=profile.get('birthday', 'Nieznane'), inline=True)
         embed.add_field(name="💞 Status", value=profile.get('status', 'Nieznany'), inline=True)
+        
+        clan_name = profile.get('clan')
+        embed.add_field(name="🛡️ Klan", value=clan_name if clan_name else 'Brak', inline=True)
 
         partner_id = profile.get('partner')
         partner_txt = "Brak"
