@@ -303,5 +303,128 @@ class Clans(commands.Cog):
                 try: await ch.send(f"🎉 **Gratulacje!** Nasz klan wbił **{current_lvl} poziom**!")
                 except: pass
 
+    @commands.command()
+    async def powiadom_klan(self, ctx, *, wiadomosc: str):
+        """Wysyła ping do wszystkich członków klanu (Tylko dowódca/zarząd)."""
+        profile = get_profile_data(ctx.author.id)
+        clan_name = profile.get('clan')
+        if not clan_name: return await ctx.send("❌ Nie jesteś w żadnym klanie!")
+        clan = get_clan_data(clan_name)
+        if clan["owner_id"] != ctx.author.id:
+            return await ctx.send("❌ Tylko Dowódca może używać grupowego pingu!")
+        role = ctx.guild.get_role(clan["role_id"])
+        if role:
+            await ctx.send(f"{role.mention}\n**Ogłoszenie od {ctx.author.name}:**\n{wiadomosc}")
+        else:
+            await ctx.send("❌ Nie znaleziono roli klanowej.")
+            
+    @commands.command()
+    async def sklad_klanu(self, ctx):
+        """Wyświetla listę członków klanu."""
+        profile = get_profile_data(ctx.author.id)
+        clan_name = profile.get('clan')
+        if not clan_name: return await ctx.send("❌ Nie jesteś w żadnym klanie!")
+        clan = get_clan_data(clan_name)
+        
+        opis = ""
+        for member_id in clan["members"]:
+            user = ctx.guild.get_member(member_id)
+            if user:
+                opis += f"• {user.mention} (Lvl: {get_level_data(user.id)['level']})\n"
+            else:
+                opis += f"• `{member_id}` (Brak na serwerze)\n"
+                
+        embed = discord.Embed(title=f"👥 Skład klanu: {clan_name}", description=opis, color=KAWAII_PINK)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def usun_klan(self, ctx):
+        """Usuwa klan (Tylko dowódca)."""
+        profile = get_profile_data(ctx.author.id)
+        clan_name = profile.get('clan')
+        if not clan_name: return await ctx.send("❌ Nie jesteś w żadnym klanie!")
+        clan = get_clan_data(clan_name)
+        if clan["owner_id"] != ctx.author.id:
+            return await ctx.send("❌ Tylko Dowódca może usunąć klan!")
+            
+        # 1. Usuwanie ze wszystkich profili
+        for member_id in clan["members"]:
+            update_profile(member_id, "clan", None)
+            
+        # 2. Usuwanie ról i kanału
+        channel = ctx.guild.get_channel(clan["channel_id"])
+        if channel:
+            try: await channel.delete(reason="Usunięcie klanu")
+            except: pass
+            
+        role = ctx.guild.get_role(clan["role_id"])
+        if role:
+            try: await role.delete(reason="Usunięcie klanu")
+            except: pass
+            
+        # 3. Usunięcie z bazy
+        from utils import delete_clan
+        delete_clan(clan_name)
+        
+        embed = discord.Embed(title="💥 Klan usunięty", description=f"Klan **{clan_name}** został pomyślnie i bezpowrotnie usunięty.", color=KAWAII_RED)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def wyrzuc_klan(self, ctx, member: discord.Member):
+        """Wyrzuca członka z klanu (Tylko dowódca)."""
+        profile = get_profile_data(ctx.author.id)
+        clan_name = profile.get('clan')
+        if not clan_name: return await ctx.send("❌ Nie jesteś w żadnym klanie!")
+        clan = get_clan_data(clan_name)
+        
+        if clan["owner_id"] != ctx.author.id:
+            return await ctx.send("❌ Tylko Dowódca może wyrzucać członków!")
+            
+        if member.id not in clan["members"]:
+            return await ctx.send(f"❌ **{member.name}** nie jest w Twoim klanie!")
+            
+        if member.id == ctx.author.id:
+            return await ctx.send("❌ Nie możesz wyrzucić samego siebie! Użyj `!usun_klan` lub podaj dowództwo innej osobie.")
+            
+        # Wyrzucenie
+        update_profile(member.id, "clan", None)
+        update_clan_data(clan_name, "members", member.id, "pull")
+        role = ctx.guild.get_role(clan["role_id"])
+        if role:
+            try: await member.remove_roles(role)
+            except: pass
+            
+        await ctx.send(f"👢 Wyrzucono **{member.name}** z klanu **{clan_name}**.")
+
+    @commands.command(aliases=["wplywy", "top_klany", "zestawienie"])
+    async def zestawienie_klanow(self, ctx):
+        """Pokazuje procentowy udział klanów w całkowitym XP na serwerze (Top 10)."""
+        from utils import get_all_clans
+        clans = get_all_clans()
+        if not clans:
+            return await ctx.send("❌ Brak klanów na serwerze.")
+            
+        total_xp = sum(c.get("xp", 0) for c in clans)
+        if total_xp == 0:
+            return await ctx.send("❌ Żaden klan nie wygenerował jeszcze XP! Zacznijcie pisać.")
+            
+        sorted_clans = sorted(clans, key=lambda x: x.get("xp", 0), reverse=True)[:10]
+        
+        opis = ""
+        emojis = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+        for i, clan in enumerate(sorted_clans):
+            xp = clan.get("xp", 0)
+            percent = (xp / total_xp) * 100
+            
+            bar_len = 15
+            filled = int((percent / 100) * bar_len)
+            bar = "🟦" * filled + "⬜" * (bar_len - filled)
+            
+            opis += f"{emojis[i]} **{clan.get('name')}** - {percent:.1f}% ({xp} XP)\n{bar}\n\n"
+            
+        embed = discord.Embed(title="📊 Wpływy Klanów na Serwerze", description=opis, color=discord.Color.gold())
+        embed.set_footer(text=f"Łączne zyski z czatu wszystkich klanów: {total_xp} XP")
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(Clans(bot))

@@ -255,3 +255,24 @@ def update_clan_data(clan_name, key, value, mode="set"):
             if value in data[key]:
                 data[key].remove(value)
                 _update_doc(clans_col, "clans", clan_name, {key: data[key]})
+
+def delete_clan(clan_name):
+    if clans_col is not None:
+        try:
+            clans_col.delete_one({"_id": clan_name})
+        except: pass
+    if clan_name in ram_storage["clans"]:
+        del ram_storage["clans"][clan_name]
+
+def get_all_clans():
+    clans = []
+    if clans_col is not None:
+        try:
+            for doc in clans_col.find({}):
+                clans.append(doc)
+        except Exception as e:
+            print(f"Błąd db: {e}")
+    else:
+        for clan_data in ram_storage["clans"].values():
+            clans.append(clan_data)
+    return clans

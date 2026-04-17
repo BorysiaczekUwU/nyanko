@@ -370,8 +370,15 @@ class Verification(commands.Cog):
                 overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True)
 
         channel_name = f"weryfikacja-{member.name}".lower().replace("#", "")
+        
+        category_name = "╒═══════╡Weryfikacja╞═══════╕"
+        category = discord.utils.get(guild.categories, name=category_name)
+        if not category:
+            try: category = await guild.create_category(category_name)
+            except: category = None
+            
         try:
-            channel = await guild.create_text_channel(channel_name, overwrites=overwrites)
+            channel = await guild.create_text_channel(channel_name, category=category, overwrites=overwrites)
             
             embed = discord.Embed(
                 title=f"🌸 Witaj {member.name}! Oczekujesz na weryfikację.", 

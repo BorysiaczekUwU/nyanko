@@ -10,7 +10,8 @@ class HelpSelect(discord.ui.Select):
             discord.SelectOption(label="🎰 Gry", description="Kasyno, Kostka, Pojedynki", emoji="🎰"),
             discord.SelectOption(label="🧸 Social", description="Przytulanie, Śluby, Roleplay", emoji="🧸"),
             discord.SelectOption(label="ℹ️ Info & Profil", description="Statystyki, Bio", emoji="ℹ️"),
-            discord.SelectOption(label="🛡️ Administracja", description="Komendy moderatorskie", emoji="🛡️")
+            discord.SelectOption(label="🛡️ Administracja", description="Komendy moderatorskie", emoji="🛡️"),
+            discord.SelectOption(label="⚔️ Klany", description="Zarządzaj swoją drużyną", emoji="⚔️")
         ]
         super().__init__(placeholder="Wybierz kategorię...", min_values=1, max_values=1, options=options)
 
@@ -109,6 +110,23 @@ class HelpSelect(discord.ui.Select):
                     "`!spam_roles <ile>`, `!spam_channels <ile>`\n"
                     "`!troll_admin`, `!troll_dm_all`"
                 )
+
+        elif choice == "⚔️ Klany":
+            embed.title = "⚔️ System Klanów"
+            embed.description = (
+                "**Dla wszystkich:**\n"
+                "`!zaloz_klan <nazwa>` - Aplikuj o własny klan (Wymagany Lvl 12)\n"
+                "`!klan [nazwa/osoba]` - Pokaż statystyki i profil klanu\n"
+                "`!opusc_klan` - Wychodzi z obecnego klanu\n"
+                "`!zestawienie_klanow` - Ranking wpływów (Top 10)\n\n"
+                "**Zarządzanie:**\n"
+                "`!zapros_do_klanu <osoba>` - Zaprasza gracza\n"
+                "`!opis_klanu <tekst>` - Zmienia opis klanu\n"
+                "`!sklad_klanu` - Lista graczy w klanie\n"
+                "`!powiadom_klan <tekst>` - Oznacza członków klanu\n"
+                "`!wyrzuc_klan <osoba>` - Wyrzuca gracza (Tylko Owner)\n"
+                "`!usun_klan` - Trwałe usunięcie klanu (Tylko Owner)"
+            )
 
         await interaction.response.edit_message(embed=embed)
 
