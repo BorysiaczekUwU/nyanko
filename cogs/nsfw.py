@@ -30,22 +30,49 @@ class NSFW(commands.Cog):
         return False
 
     async def get_image(self, type_str):
-        urls = {
-            "waifu": "https://api.waifu.pics/nsfw/waifu",
-            "neko": "https://api.waifu.pics/nsfw/neko",
-            "trap": "https://api.waifu.pics/nsfw/trap",
-            "blowjob": "https://api.waifu.pics/nsfw/blowjob"
-        }
-        url = urls.get(type_str, urls["waifu"])
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=5) as r:
-                    if r.status == 200:
-                        data = await r.json()
-                        return data.get("url")
-        except:
-            pass
-        return None
+        if type_str in ["yaoi", "yuri"]:
+            urls = {
+                "yaoi": ["https://purrbot.site/api/img/nsfw/yaoi/gif", "https://purrbot.site/api/img/nsfw/yaoi/img"],
+                "yuri": ["https://purrbot.site/api/img/nsfw/yuri/gif", "https://purrbot.site/api/img/nsfw/yuri/img"]
+            }
+            url = random.choice(urls[type_str])
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, timeout=5) as r:
+                        if r.status == 200:
+                            data = await r.json()
+                            return data.get("link")
+            except:
+                pass
+            return None
+        elif type_str in ["hentai", "boobs", "ass", "pgif", "anal"]:
+            url = f"https://nekobot.xyz/api/image?type={type_str}"
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, timeout=5) as r:
+                        if r.status == 200:
+                            data = await r.json()
+                            return data.get("message")
+            except:
+                pass
+            return None
+        else:
+            urls = {
+                "waifu": "https://api.waifu.pics/nsfw/waifu",
+                "neko": "https://api.waifu.pics/nsfw/neko",
+                "trap": "https://api.waifu.pics/nsfw/trap",
+                "blowjob": "https://api.waifu.pics/nsfw/blowjob"
+            }
+            url = urls.get(type_str, urls["waifu"])
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, timeout=5) as r:
+                        if r.status == 200:
+                            data = await r.json()
+                            return data.get("url")
+            except:
+                pass
+            return None
 
     @commands.command()
     async def porn(self, ctx):
@@ -59,7 +86,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def yuri(self, ctx):
         if not self.is_nsfw(ctx): return await ctx.send("❌ To kanał SFW!")
-        img = await self.get_image("waifu")
+        img = await self.get_image("yuri")
         if img:
             await ctx.send(embed=discord.Embed(title="👩‍❤️‍💋‍👩 Yuri", color=KAWAII_PINK).set_image(url=img))
         else:
@@ -68,7 +95,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def yaoi(self, ctx):
         if not self.is_nsfw(ctx): return await ctx.send("❌ To kanał SFW!")
-        img = await self.get_image("trap")
+        img = await self.get_image("yaoi")
         if img:
             await ctx.send(embed=discord.Embed(title="👨‍❤️‍💋‍👨 Yaoi", color=KAWAII_PINK).set_image(url=img))
         else:
@@ -86,7 +113,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def hnt(self, ctx):
         if not self.is_nsfw(ctx): return await ctx.send("❌ To kanał SFW!")
-        img = await self.get_image(random.choice(["waifu", "neko"]))
+        img = await self.get_image("hentai")
         if img:
             await ctx.send(embed=discord.Embed(title="🔞 Hentai", color=KAWAII_RED).set_image(url=img))
         else:
@@ -95,7 +122,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def boobs(self, ctx):
         if not self.is_nsfw(ctx): return await ctx.send("❌ To kanał SFW!")
-        img = await self.get_image("waifu")
+        img = await self.get_image("boobs")
         if img:
             await ctx.send(embed=discord.Embed(title="🍒 Piersi", color=KAWAII_RED).set_image(url=img))
         else:
@@ -104,7 +131,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def ass(self, ctx):
         if not self.is_nsfw(ctx): return await ctx.send("❌ To kanał SFW!")
-        img = await self.get_image("waifu")
+        img = await self.get_image("ass")
         if img:
             await ctx.send(embed=discord.Embed(title="🍑 Tyłeczki", color=KAWAII_RED).set_image(url=img))
         else:
@@ -113,7 +140,7 @@ class NSFW(commands.Cog):
     @commands.command()
     async def rule34(self, ctx):
         if not self.is_nsfw(ctx): return await ctx.send("❌ To kanał SFW!")
-        img = await self.get_image("waifu")
+        img = await self.get_image(random.choice(["hentai", "pgif", "anal"]))
         if img:
             await ctx.send(embed=discord.Embed(title="🔞 Rule 34", color=KAWAII_RED).set_image(url=img))
         else:

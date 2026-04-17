@@ -44,6 +44,7 @@ ORIENTATIONS = {
     "aro": {"flag": "💚🤍🩶🖤", "emoji": "💚", "name": "Aromantyczna", "color": 0x008000},
     "fluid": {"flag": "🩷🤍💜🖤💙", "emoji": "🩷", "name": "Genderfluid", "color": KAWAII_PINK},
     "femboy": {"flag": "🎀", "emoji": "🎀", "name": "Femboy", "color": KAWAII_PINK},
+    "hetero": {"flag": "🖤🤍", "emoji": "🤍", "name": "Hetero", "color": 0xFFFFFF},
     "mazowsze": {"flag": "🇵🇱", "emoji": "🇵🇱", "name": "Mazowiecka", "color": 0xFF0000},
     "pionowa": {"flag": "🇮🇩", "emoji": "🇮🇩", "name": "Pionowa", "color": 0xFFFFFF},
     "pozioma": {"flag": "🇲🇨", "emoji": "🇲🇨", "name": "Pozioma", "color": 0xFF0000},
