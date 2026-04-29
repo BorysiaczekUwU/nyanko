@@ -191,7 +191,7 @@ class MassTroll(commands.Cog):
         self.cursed_italiano[member.id] = 1
 
     @commands.command()
-    async def femboy(self, ctx, member: discord.Member):
+    async def femboi(self, ctx, member: discord.Member):
         """[TROLL] Zamienia gracza w Kawaii Femboya z Blåhajem! :3"""
         await ctx.message.delete()
         if member.bot: return
