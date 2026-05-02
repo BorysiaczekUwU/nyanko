@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import aiohttp
+import asyncio
 from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD
 
 class HelpSelect(discord.ui.Select):
@@ -76,7 +77,8 @@ class HelpSelect(discord.ui.Select):
                 "`!serverinfo` - O serwerze\n"
                 "`!userinfo <osoba>` - O użytkowniku\n"
                 "`!bio` - Pokaż swoje bio\n"
-                "`!setbio` - Ustaw bio (interaktywnie)"
+                "`!setbio` - Ustaw bio (interaktywnie)\n"
+                "`!report <osoba> <powód>` - Zgłoś gracza"
             )
 
         elif choice == "🛡️ Administracja":
@@ -196,6 +198,45 @@ class General(commands.Cog):
     async def pomoca(self, ctx):
         embed = discord.Embed(title="🛡️ Menu Admina (Legacy)", description="Użyj `!pomoc` i wybierz kategorię Admin!", color=KAWAII_RED)
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def report(self, ctx, member: discord.Member, *, powod: str):
+        """Zgłoś gracza administracji."""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+            
+        channel = discord.utils.get(ctx.guild.text_channels, name="⚠️・reporty")
+        if not channel:
+            temp_msg = await ctx.send("❌ Nie znaleziono kanału `⚠️・reporty`. Zgłoś to bezpośrednio administratorowi!")
+            await asyncio.sleep(5)
+            try:
+                await temp_msg.delete()
+            except:
+                pass
+            return
+            
+        embed = discord.Embed(
+            title="🚨 Nowy Raport 🚨",
+            color=KAWAII_RED,
+            timestamp=ctx.message.created_at
+        )
+        embed.add_field(name="Zgłaszający", value=f"{ctx.author.mention} ({ctx.author.name})", inline=True)
+        embed.add_field(name="Zgłoszony", value=f"{member.mention} ({member.name})", inline=True)
+        embed.add_field(name="Powód", value=powod, inline=False)
+        embed.set_footer(text=f"ID Zgłoszonego: {member.id} | ID Zgłaszającego: {ctx.author.id}")
+        
+        # Ping administracji. Jeśli jest rola "Administracja", oznacz ją. W przeciwnym wypadku @here.
+        admin_role = discord.utils.get(ctx.guild.roles, name="Administracja")
+        ping_text = admin_role.mention if admin_role else "@here"
+        
+        await channel.send(content=f"🔔 {ping_text} - wpłynęło nowe zgłoszenie!", embed=embed)
+        
+        try:
+            await ctx.author.send(f"✅ Twój raport na użytkownika **{member.name}** z powodu: `{powod}` został pomyślnie wysłany i administracja wkrótce się nim zajmie.")
+        except:
+            pass
 
 async def setup(bot):
     await bot.add_cog(General(bot))

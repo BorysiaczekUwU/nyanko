@@ -932,6 +932,120 @@ class Games(commands.Cog):
         final_embed.set_thumbnail(url=winner.display_avatar.url)
         await msg.edit(embed=final_embed)
 
+    @commands.command()
+    @commands.has_permissions(kick_members=True)
+    async def mafia(self, ctx, member: discord.Member):
+        """[MOD] Włoska mafia wymierza sprawiedliwość (Kickuje gracza z serwera w epicki sposób)!"""
+        if member == ctx.author:
+            return await ctx.send("🚬 Donie, nie możesz wyeliminować samego siebie.")
+        if member.bot:
+            return await ctx.send("🤖 Maszyny nie potrafią sypać... Wybierz człowieka z krwi i kości.")
+        if ctx.guild.me.top_role <= member.top_role:
+            return await ctx.send("❌ Nie mam wystarczającej potęgi (roli), żeby zająć się tym 'problemem'.")
+            
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+            
+        webhook = None
+        webhooks = await ctx.channel.webhooks()
+        for wh in webhooks:
+            if wh.name in ["Troll Webhook", "Pojedynek Webhook", "Samuraj Webhook", "Mafia Webhook"]:
+                webhook = wh
+                break
+                
+        if not webhook:
+            try:
+                webhook = await ctx.channel.create_webhook(name="Mafia Webhook")
+            except:
+                return await ctx.send("❌ Rodzina potrzebuje uprawnień do zarządzania webhookami!")
+
+        # Blokowanie kanału
+        overwrite = ctx.channel.overwrites_for(ctx.guild.default_role)
+        original_send = overwrite.send_messages
+        
+        overwrite.send_messages = False
+        await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=overwrite, reason="Mafia wykonuje egzekucję (blokada)")
+        
+        try:
+            # Wstęp bota
+            embed = discord.Embed(
+                title="🥃 W zadymionym pokoju...", 
+                description=f"Światło lampy z trudem przebija się przez gęsty dym z cygar. W kącie pokoju cicho gra stary gramofon. Za wielkim, dębowym biurkiem siedzi Don, a przed nim, z rękami związanymi na plecach, klęczy {member.mention}. Przed drzwiami stoi dwóch barczystych ochroniarzy.",
+                color=0x2b2b2b
+            )
+            msg = await ctx.send(embed=embed)
+            await asyncio.sleep(6)
+
+            # Don (Challenger)
+            await webhook.send(
+                content=f"Ufałem ci, {member.mention}. Przyjąłem cię pod swój dach. Karmiłem cię, traktowałem jak rodzinę... a ty? Poszedłeś z tym do policji.",
+                username=ctx.author.display_name + " (Il Don)",
+                avatar_url=ctx.author.display_avatar.url
+            )
+            await asyncio.sleep(6)
+
+            # Ofiara (Challenged)
+            await webhook.send(
+                content=f"Donie, przysięgam! To nie tak jak myślisz! Oni mnie zmusili, grozili mojej rodzinie! Proszę, daj mi jeszcze jedną szansę!",
+                username=member.display_name + " (Zdrajca)",
+                avatar_url=member.display_avatar.url
+            )
+            await asyncio.sleep(6)
+
+            # Bot - Decyzja
+            await msg.edit(embed=discord.Embed(
+                title="💼 Wyrok zapadł...",
+                description="Don wzdycha ciężko, gasząc cygaro w szklanej popielniczce. Poprawia mankiety swojego drogiego garnituru i wstaje powoli z fotela, odwracając się w stronę okna, przez które widać nocne miasto.",
+                color=0x1a1a1a
+            ))
+            await asyncio.sleep(6)
+            
+            # Don (Challenger)
+            await webhook.send(
+                content=f"W naszej rodzinie nie ma miejsca dla szczurów. Luigi, Antonio... wiecie co z nim zrobić. Niech wykąpie się z betonowymi butami.",
+                username=ctx.author.display_name + " (Il Don)",
+                avatar_url=ctx.author.display_avatar.url
+            )
+            await asyncio.sleep(5)
+            
+            # Bot - Finałowa akcja
+            await msg.edit(embed=discord.Embed(
+                title="🔫 Egzekucja...",
+                description="Ochroniarze chwytają wyrywającego się zdrajcę i wywlekają go z pokoju. Słychać szarpaninę, stłumiony krzyk... a następnie pojedynczy, głośny huk na podwórzu. Pisk opon oddalającego się czarnego wozu rozdziera nocną ciszę.",
+                color=0x5c0000
+            ))
+            await asyncio.sleep(4)
+
+            # Kick
+            try:
+                await member.send(f"Zostałeś wyeliminowany przez Rodzinę na serwerze {ctx.guild.name}. Zdrada nie popłaca. 🚬")
+            except:
+                pass
+                
+            await member.kick(reason="Wyrok Mafii - Zdrada rodziny")
+            
+            # Zakończenie
+            final_embed = discord.Embed(
+                title="🥀 Sprawa Załatwiona",
+                description=f"Zdrajca **{member.display_name}** został pomyślnie i bezpowrotnie usunięty z serwera.\n\n*Niech to będzie przestroga dla każdego, kto myśli o układaniu się z policją...*",
+                color=0x000000
+            )
+            final_embed.set_thumbnail(url=ctx.author.display_avatar.url)
+            await msg.edit(embed=final_embed)
+            
+        except Exception as e:
+            await ctx.send(f"⚠️ Wystąpił błąd podczas egzekucji (Możliwe że bot nie ma uprawnień do wyrzucenia lub użytkownik ma wyższą rolę): {e}")
+            
+        finally:
+            # Odblokowanie kanału
+            overwrite.send_messages = original_send
+            if overwrite.is_empty():
+                await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=None, reason="Koniec egzekucji mafii (odblokowanie)")
+            else:
+                await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=overwrite, reason="Koniec egzekucji mafii (odblokowanie)")
+
 
 async def setup(bot):
     await bot.add_cog(Games(bot))
