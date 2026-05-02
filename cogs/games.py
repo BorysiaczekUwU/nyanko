@@ -728,6 +728,211 @@ class Games(commands.Cog):
             
         await msg.edit(content=None, embed=embed)
 
+    @commands.command()
+    async def pojedynek(self, ctx, member: discord.Member):
+        """Wyzwij kogoś na poetycki pojedynek rewolwerowców!"""
+        if member == ctx.author:
+            return await ctx.send("🤠 Nie możesz wyzwać samego siebie na pojedynek, rewolwerowcu!")
+        if member.bot:
+            return await ctx.send("🤖 Roboty nie mają duszy... ani szybkich rąk. Wybierz żywego przeciwnika!")
+            
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+            
+        webhook = None
+        webhooks = await ctx.channel.webhooks()
+        for wh in webhooks:
+            if wh.name in ["Troll Webhook", "Pojedynek Webhook"]:
+                webhook = wh
+                break
+                
+        if not webhook:
+            try:
+                webhook = await ctx.channel.create_webhook(name="Pojedynek Webhook")
+            except:
+                return await ctx.send("❌ Brakuje uprawnień do zarządzania webhookami, aby rozegrać pojedynek!")
+
+        # Wstęp bota
+        embed = discord.Embed(
+            title="🌵 W Samo Południe...", 
+            description=f"Słońce praży niemiłosiernie, a gorący wiatr niesie tumany kurzu przez opustoszałe ulice miasta. Mieszkańcy pochowali się w domach, zamykając okiennice na głucho. Na środku piaszczystej drogi stają naprzeciwko siebie dwie sylwetki...",
+            color=KAWAII_RED
+        )
+        msg = await ctx.send(embed=embed)
+        await asyncio.sleep(5)
+
+        # Wyzywający (Challenger)
+        await webhook.send(
+            content=f"To miasto jest za małe dla nas dwóch, {member.mention}. Od dawna wiedziałem, że ten dzień w końcu nadejdzie. Wyciągaj broń, tchórzu!",
+            username=ctx.author.display_name,
+            avatar_url=ctx.author.display_avatar.url
+        )
+        await asyncio.sleep(5)
+
+        # Wyzwany (Challenged)
+        await webhook.send(
+            content=f"Mocne słowa jak na kogoś, komu trzęsą się ręce, {ctx.author.mention}. Zobaczymy, czy twoja lufa jest równie szybka co twój język. Niech przemówi ołów!",
+            username=member.display_name,
+            avatar_url=member.display_avatar.url
+        )
+        await asyncio.sleep(5)
+
+        # Bot - Budowanie napięcia
+        await msg.edit(embed=discord.Embed(
+            title="🕰️ Czas zwalnia...",
+            description="Cisza w miasteczku staje się ogłuszająca. Słychać jedynie miarowe tykanie zegara na wieży i skrzypienie starego szyldu pobliskiego saloonu. Dłonie obu rewolwerowców zawisły tuż nad kaburami. Pot spływa po ich skroniach...",
+            color=discord.Color.dark_orange()
+        ))
+        await asyncio.sleep(5)
+
+        # Odliczanie
+        countdown_embed = discord.Embed(title="⏳ Odliczanie...", color=discord.Color.orange())
+        await msg.edit(embed=countdown_embed)
+        
+        for i in range(3, 0, -1):
+            countdown_embed.description = f"**{i}...** Wzrok obu przeciwników spotyka się. Żaden nie mruga."
+            await msg.edit(embed=countdown_embed)
+            await asyncio.sleep(3)
+            
+        countdown_embed.description = "**STRZAŁ!** 💥 Huk wystrzału rozdziera ciszę!"
+        countdown_embed.color = discord.Color.red()
+        await msg.edit(embed=countdown_embed)
+        await asyncio.sleep(3)
+
+        # Bot - Chmura dymu
+        await msg.edit(embed=discord.Embed(
+            title="💨 Gęsty dym...",
+            description="Kłęby szarego dymu z prochu strzelniczego unoszą się nad ulicą, zasłaniając widok. Przez ułamki sekund, które ciągną się w nieskończoność, nie wiadomo, kto padł ofiarą morderczej kuli. Wiatr powoli rozwiewa dym...",
+            color=discord.Color.dark_gray()
+        ))
+        await asyncio.sleep(5)
+
+        # Wynik
+        winner = random.choice([ctx.author, member])
+        loser = member if winner == ctx.author else ctx.author
+
+        # Wiadomość od wygranego
+        await webhook.send(
+            content=f"*Przedmuchuje dymiącą lufę swojego rewolweru* Zawsze byłeś o ułamek sekundy za wolny... Spoczywaj w pokoju.",
+            username=winner.display_name,
+            avatar_url=winner.display_avatar.url
+        )
+        await asyncio.sleep(4)
+        
+        # Zakończenie
+        final_embed = discord.Embed(
+            title="🏆 Zwycięzca Pojedynku!",
+            description=f"Opadający pył ukazuje brutalną prawdę. **{loser.display_name}** osuwa się na kolana, trzymając się za pierś, po czym bezwładnie upada na rozgrzany piach.\n\nZwycięzcą tego legendarnego starcia zostaje **{winner.mention}**! Szybsza ręka na dzikim zachodzie!",
+            color=discord.Color.gold()
+        )
+        final_embed.set_thumbnail(url=winner.display_avatar.url)
+        await msg.edit(embed=final_embed)
+
+    @commands.command()
+    async def samuraj(self, ctx, member: discord.Member):
+        """Wyzwij kogoś na epicki pojedynek samurajów!"""
+        if member == ctx.author:
+            return await ctx.send("🎋 Prawdziwy samuraj nie walczy z własnym cieniem.")
+        if member.bot:
+            return await ctx.send("🤖 Maszyny nie znają drogi Bushido. Wybierz żywego wojownika!")
+            
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+            
+        webhook = None
+        webhooks = await ctx.channel.webhooks()
+        for wh in webhooks:
+            if wh.name in ["Troll Webhook", "Pojedynek Webhook", "Samuraj Webhook"]:
+                webhook = wh
+                break
+                
+        if not webhook:
+            try:
+                webhook = await ctx.channel.create_webhook(name="Samuraj Webhook")
+            except:
+                return await ctx.send("❌ Brakuje uprawnień do zarządzania webhookami, aby rozegrać pojedynek!")
+
+        # Wstęp bota
+        embed = discord.Embed(
+            title="🌸 W Cieniu Kwitnącej Wiśni...", 
+            description=f"Noc jest cicha, a blade światło księżyca oświetla stary japoński ogród. Delikatny wiatr strąca płatki sakury, które wirują w powietrzu. Na drewnianym moście stają naprzeciwko siebie dwaj roninowie, ich dłonie spoczywają na rękojeściach katan...",
+            color=0x8b008b
+        )
+        msg = await ctx.send(embed=embed)
+        await asyncio.sleep(5)
+
+        # Wyzywający (Challenger)
+        await webhook.send(
+            content=f"Twój brak honoru przynosi hańbę naszemu klanowi, {member.mention}. Dziś zmyję ją twoją krwią. Dobądź miecza!",
+            username=ctx.author.display_name,
+            avatar_url=ctx.author.display_avatar.url
+        )
+        await asyncio.sleep(5)
+
+        # Wyzwany (Challenged)
+        await webhook.send(
+            content=f"Mój miecz jest ostrzejszy niż twoje puste słowa, {ctx.author.mention}. Przygotuj się na spotkanie ze swoimi przodkami...",
+            username=member.display_name,
+            avatar_url=member.display_avatar.url
+        )
+        await asyncio.sleep(5)
+
+        # Bot - Budowanie napięcia
+        await msg.edit(embed=discord.Embed(
+            title="🍃 Skupienie...",
+            description="Wojownicy zaczynają krążyć wokół siebie. Cisza jest tak głęboka, że słychać tylko szum wiatru i cichy brzęk wysuwanej z pochwy stali. Pomiędzy nimi z drzewa odrywa się samotny liść, powoli opadając ku ziemi...",
+            color=0x008080
+        ))
+        await asyncio.sleep(5)
+
+        # Odliczanie
+        countdown_embed = discord.Embed(title="⏳ Liść opada...", color=0x1e90ff)
+        await msg.edit(embed=countdown_embed)
+        
+        for i in range(3, 0, -1):
+            countdown_embed.description = f"**{i}...** Napięcie sięga zenitu. Mięśnie są napięte jak struny."
+            await msg.edit(embed=countdown_embed)
+            await asyncio.sleep(3)
+            
+        countdown_embed.description = "**BŁYSK STALI!** ⚡ Obaj wojownicy ruszają z nieprawdopodobną prędkością!"
+        countdown_embed.color = 0xd3d3d3
+        await msg.edit(embed=countdown_embed)
+        await asyncio.sleep(3)
+
+        # Bot - Cisza po starciu
+        await msg.edit(embed=discord.Embed(
+            title="🩸 Zatrzymany Czas...",
+            description="Dwa ostre jak brzytwa ostrza przecięły powietrze w ułamku sekundy. Wojownicy minęli się w pędzie i teraz stoją odwróceni do siebie plecami. Obaj zamarli w bezruchu. Ktoś z nich otrzymał śmiertelny cios...",
+            color=0x8b0000
+        ))
+        await asyncio.sleep(5)
+
+        # Wynik
+        winner = random.choice([ctx.author, member])
+        loser = member if winner == ctx.author else ctx.author
+
+        # Wiadomość od wygranego
+        await webhook.send(
+            content=f"*Strzepuje krew z ostrza jednym płynnym ruchem* Twój styl był przewidywalny... Sayonara.",
+            username=winner.display_name,
+            avatar_url=winner.display_avatar.url
+        )
+        await asyncio.sleep(4)
+        
+        # Zakończenie
+        final_embed = discord.Embed(
+            title="🎌 Zwycięzca: Starcie Samurajów!",
+            description=f"Rozlega się cichy trzask chowanej do pochwy katany. W tym samym momencie **{loser.display_name}** pada na kolana, a z jego rany tryska szkarłat. Ciało osuwa się bez życia na drewniany most.\n\nZwycięzcą i mistrzem miecza zostaje **{winner.mention}**! Jego honor pozostaje nieskalany!",
+            color=0x2f3136
+        )
+        final_embed.set_thumbnail(url=winner.display_avatar.url)
+        await msg.edit(embed=final_embed)
+
 
 async def setup(bot):
     await bot.add_cog(Games(bot))
+
