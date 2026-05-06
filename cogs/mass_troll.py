@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import asyncio
 from cogs.admin import has_perms_or_borysiaczek
-from utils import KAWAII_RED
+from utils import KAWAII_RED, KAWAII_PINK, KAWAII_GOLD
 import random
 import re
 
@@ -227,6 +227,64 @@ class MassTroll(commands.Cog):
             msg = await ctx.send(f"❓ {member.mention} nie jest pod wpływem żadnej klątwy.")
             await asyncio.sleep(3)
             await msg.delete()
+
+    @commands.command()
+    async def fake_join(self, ctx, *, nick: str):
+        """[TROLL] Wyświetla fałszywą wiadomość o dołączeniu nowego gracza."""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        embed = discord.Embed(
+            description=f"Witamy **{nick}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖",
+            color=KAWAII_PINK
+        )
+        embed.add_field(name="Zostawił takie bio:", value="Nowy gracz na streecie!")
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def fake_leave(self, ctx, member: discord.Member):
+        """[TROLL] Wyświetla fałszywą wiadomość o odejściu gracza."""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        embed = discord.Embed(
+            description=f"O nie... **{member.name}** uciekł... Trzymaj się gdziekolwiek tam jesteś! 💔",
+            color=discord.Color.dark_grey()
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def fake_level(self, ctx, member: discord.Member, level: int):
+        """[TROLL] Wyświetla fałszywą wiadomość o awansie na nowy poziom."""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        embed = discord.Embed(
+            title="🎉 LEVEL UP! 🎉",
+            description=f"Brawo **{member.mention}**! Awansowałeś na poziom **{level}**! ✨",
+            color=KAWAII_GOLD
+        )
+        embed.add_field(name="Nowa Ranga", value=f"**LVL {level}**")
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def fake_warn(self, ctx, member: discord.Member, *, powod: str = "Podejrzana aktywność"):
+        """[TROLL] Wyświetla fałszywą wiadomość ostrzeżenia od systemu."""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        embed = discord.Embed(
+            title="⚠️ OSTRZEŻENIE SYSTEMOWE ⚠️",
+            description=f"Użytkownik **{member.mention}** otrzymał ostrzeżenie.",
+            color=KAWAII_RED
+        )
+        embed.add_field(name="Powód:", value=powod)
+        embed.set_footer(text="Wiadomość zautomatyzowana przez system nadzoru.")
+        await ctx.send(embed=embed)
 
     async def apply_italiano_curse(self, text, message_count):
         level = min(4, message_count // 5 + 1)
