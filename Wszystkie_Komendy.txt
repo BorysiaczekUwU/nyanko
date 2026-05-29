@@ -292,6 +292,9 @@ podzielona na poszczególne moduły (kategorie).
 ⭐ !zagroz <@użytkownik>
    └ Losowa, komiczna groźba! 😈
 
+⭐ !pytanie 
+   └ Losowe, absurdalne pytanie na wpół oderwane od rzeczywistości. 🌀
+
 
 --- 📂 MODUŁ: TICKETS ---
 ⭐ !setup_tickets 

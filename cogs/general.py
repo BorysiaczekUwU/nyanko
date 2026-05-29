@@ -65,6 +65,7 @@ class HelpSelect(discord.ui.Select):
                 "`!kill`, `!feed`, `!highfive`\n"
                 "`!ship <osoba>` - Sprawdź miłość\n"
                 "`!kula <pytanie>` - Magiczna kula 8\n"
+                "`!pytanie` - Zadaj losowe absurdalne pytanie 🌀\n"
                 "`!slub <osoba>` - Weź ślub\n"
                 "`!rozwod` - Weź rozwód\n"
                 "`!adoptuj <osoba>` - Adoptuj dziecko do rodziny"

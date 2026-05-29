@@ -449,5 +449,72 @@ class Social(commands.Cog):
         embed.set_image(url=random.choice(GIFS_PAT))
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def pytanie(self, ctx):
+        """Zadaje losowe absurdalne pytanie! 🌀"""
+        pytania = [
+            "Gdyby chmury były zrobione z waty cukrowej, czy płacilibyśmy podatek od lizania szyb podczas deszczu? 🌧️🍭",
+            "Czy jeśli zjesz budyń lewą ręką stojąc na jednej nodze, czas cofnie się o trzy sekundy w lewo? 🍮⏳",
+            "Dlaczego gołębie zawsze wyglądają, jakby miały bardzo ważny plan podboju świata, o którym zapomniały? 🐦🗺️",
+            "Czy mikrofalówka ma sny o kosmicznych podróżach talerzy obiadowych? 🛸🍽️",
+            "Ile arbuzy ważyłyby na Jowiszu, gdyby zamiast pestek miały w środku malutkie dzwoneczki? 🍉🔔",
+            "Czy mrówki uważają nasze buty za spadające komety o zapachu starej skóry? 🐜☄️",
+            "Gdyby ryby umiały grać na puzonie, który gatunek założyłby najlepszy podwodny zespół jazzowy? 🐟🎷",
+            "Czy kiedy zamykasz lodówkę, światło w środku zaczyna tańczyć z dżemem truskawkowym? 🍓🕺",
+            "Jeśli pingwiny założyłyby garnitury, czy mogłyby zostać dyrektorami w banku nasion słonecznika? 🐧💼",
+            "Czy księżyc jest tak naprawdę wielkim żółtym serem, który co miesiąc podgryzają kosmiczne myszy? 🧀🐭",
+            "Co by było, gdyby twoje łóżko nagle postanowiło uciec z domu na spacer do parku? 🛏️🌳",
+            "Czy mydło myje siebie samo, czy potrzebuje innego mydła do pomocy przy kąpieli? 🧼🚿",
+            "Dlaczego klamki nie potrafią mówić, skoro tyle razy witają się z nami uściskiem dłoni? 🚪🤝",
+            "Czy chleb tostowy czuje się bardziej wyjątkowy po tym, jak wyskoczy z tostera na wolność? 🍞✨",
+            "Czy jeśli pomalujesz wiatr na zielono, drzewa zaczną chichotać przy każdym podmuchu? 💨🌳",
+            "Gdyby ziemniaki miały oczy, czy płakałyby razem z nami podczas obierania cebuli? 🥔🧅",
+            "Ile waży cień zadowolonego z życia kota, który przed chwilą zjadł tuńczyka? 🐈‍⬛🐟",
+            "Gdyby drzewa miały darmowe Wi-Fi, sadziłbyś je dla internetu czy dla ich pięknego szumu? 🌳📶",
+            "Czy spanie na poduszce tył na przód sprawia, że twoje sny mają napisy końcowe po chińsku? 🛏️🎬",
+            "Czy dinozaury wyginęły, bo nikt nie chciał z nimi grać w chowanego na serio? 🦖🙈",
+            "Dlaczego woda w basenie nie krzyczy, kiedy wszyscy do niej wskakują bez pytania? 🏊‍♂️💦",
+            "Czy jeśli drzewo spadnie w lesie i nikt tego nie usłyszy, to czy wiewiórki mają z tego darmowe drewno na meble? 🐿️🪑",
+            "Czy twoje skarpetki w pralce organizują tajne spotkania dyplomatyczne, z których połowa nigdy nie wraca? 🧦🌀",
+            "Gdyby kolory miały smaki, czy kolor fioletowy smakowałby jak kosmiczna jagoda czy smutna marchewka? 💜🥕",
+            "Czy można kupić bilet powrotny z krainy zagubionych myśli i ile kosztuje tam kawa? ☕💭",
+            "Dlaczego banany są zakrzywione? Czy to dlatego, że nie chcą dotykać ziemi swoimi końcówkami? 🍌🌾",
+            "Czy jeśli mucha wleci do samolotu, to czy po wylądowaniu w innym kraju potrzebuje paszportu? 🪰✈️",
+            "Co by było, gdyby chmury zamiast deszczu zrzucały na nas miękkie kapcie? ☁️🥿",
+            "Czy pająki denerwują się, kiedy potkną się o własną nogę podczas biegania? 🕷️🏃‍♂️",
+            "Dlaczego budzik krzyczy na nas rano, skoro to my kupiliśmy go za własne pieniądze? ⏰💸",
+            "Czy ryby w oceanie kiedykolwiek czują pragnienie i chcą się napić czegoś innego niż woda? 🐟🍹",
+            "Gdyby komputery miały dusze, czy twój laptop lubiłby cię za to, jak delikatnie klikasz w klawiaturę? 💻❤️",
+            "Czy kamienie rosną bardzo, ale to bardzo powoli, kiedy nikt na nie nie patrzy? 🪨👀",
+            "Czy jeśli kot patrzy na ścianę przez godzinę, to ogląda tam niewidzialny dla nas serial o myszach? 🐱📺",
+            "Czy poduszka zbiera nasze sny i w nocy miesza je ze sobą, żeby stworzyć dziwny koktajl? 🍹💤",
+            "Gdyby rośliny mogły biegać, która z nich wygrałaby maraton – paproć czy kaktus? 🌵🏃‍♂️",
+            "Dlaczego woda gazowana bąbelkuje? Czy te bąbelki próbują uciec przed wypiciem? 🫧🥤",
+            "Czy słońce świeci dlatego, że boi się ciemności panującej w kosmosie? ☀️🌌",
+            "Gdyby cienie żyły własnym życiem, czy twój cień naśladowałby cię z własnej woli czy z przymusu? 👤🎭",
+            "Dlaczego czas leci tak szybko, kiedy dobrze się bawimy? Czy ma wtedy włączony silnik odrzutowy? 🚀⏱️",
+            "Czy klawisz 'Delete' na klawiaturze czuje satysfakcję ze zjadania liter? ⌨️👾",
+            "Gdyby zwierzęta umiały mówić, które z nich byłoby najbardziej sarkastyczne i dlaczego byłby to kot? 🐱💬",
+            "Czy lustro kiedykolwiek odpoczywa, czy cały czas musi idealnie kopiować rzeczywistość? 🪞😴",
+            "Dlaczego herbata smakuje lepiej z ulubionego kubka, nawet jeśli wlejesz do niego dokładnie to samo? ☕🏆",
+            "Czy gdyby księżyc spadł do oceanu, to czy woda zaczęłaby świecić w ciemności? 🌙🌊",
+            "Czy guziki na ubraniach czują się samotne, kiedy nie są zapięte? 👔💔",
+            "Co by było, gdyby grawitacja działała tylko na rzeczy koloru niebieskiego? 💙🎈",
+            "Czy jeśli żółw straci skorupę, to jest bezdomny czy po prostu bardzo nagi? 🐢🏠",
+            "Dlaczego liście na jesień zmieniają kolory? Czy to ich sposób na ubranie piżamy przed zimą? 🍂🛌",
+            "Czy kosmos ma koniec, a jeśli tak, to czy stoi tam budka z hot-dogami i napisem 'Koniec Świata'? 🌭🌌"
+        ]
+        wybrane = random.choice(pytania)
+        embed = discord.Embed(
+            title="🌀 Absurdalne Pytanie 🌀",
+            description=f"**{wybrane}**",
+            color=KAWAII_PINK
+        )
+        embed.set_footer(
+            text=f"Zadane przez: {ctx.author.name} | Nyanko Bot 🌸",
+            icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
+        )
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(Social(bot))
