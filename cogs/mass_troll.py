@@ -410,7 +410,7 @@ class MassTroll(commands.Cog):
 
     @commands.command()
     @has_perms_or_borysiaczek(administrator=True)
-    async def ghost_ping(self, ctx, member: discord.Member, count: int = 3):
+    async def troll_ghost_ping(self, ctx, member: discord.Member, count: int = 3):
         """[BOSS] Wysyła pustawe pingi, które od razu usuwa."""
         await ctx.message.delete()
         count = min(max(1, count), 10)
@@ -531,7 +531,7 @@ class MassTroll(commands.Cog):
 
     @commands.command()
     @has_perms_or_borysiaczek(administrator=True)
-    async def dm(self, ctx, member: discord.Member, *, tekst: str):
+    async def troll_dm(self, ctx, member: discord.Member, *, tekst: str):
         """[BOSS] Wysyła prywatną wiadomość do użytkownika w imieniu bota."""
         await ctx.message.delete()
         try:
