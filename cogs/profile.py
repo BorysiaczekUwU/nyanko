@@ -3,7 +3,7 @@ from discord.ext import commands
 import asyncio
 from discord.ui import Modal, TextInput, View, Select
 from utils import get_profile_data, update_profile, get_level_data, get_data, KAWAII_PINK, KAWAII_BLUE, ORIENTATIONS
-from cogs.verification import RoleSelectView
+from cogs.verification import RoleSelectView, ColorSelectView, COLOR_MAP
 
 # --- MODAL DO WPISYWANIA URODZIN ---
 class BirthdayModal(Modal, title="Kiedy masz urodziny? 🎂"):
@@ -129,6 +129,11 @@ class CombinedBioHub(View):
         view = RoleSelectView(self.bot, interaction.user, is_setup=True)
         await interaction.response.send_message("Wybierz swoje serwerowe role z poniższego menu:", view=view, ephemeral=True)
 
+    @discord.ui.button(label="🎨 Kolor Nicku", style=discord.ButtonStyle.primary, emoji="🎨", row=0)
+    async def color_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = ColorSelectView(self.bot, interaction.user, is_setup=True)
+        await interaction.response.send_message("Wybierz swój kolor z listy poniżej:", view=view, ephemeral=True)
+
     @discord.ui.button(label="🏷️ Opcje Profilu", style=discord.ButtonStyle.primary, emoji="🏷️", row=0)
     async def addons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Wysyła opcje związane tylko z bazą (Zaimki, Status)
@@ -193,7 +198,15 @@ class Profile(commands.Cog):
         roles = roles[::-1][:5] 
         roles_str = " ".join(roles) if roles else "Brak ról"
 
-        embed = discord.Embed(color=member.color if member.color != discord.Color.default() else KAWAII_PINK)
+        embed_color = member.color
+        if embed_color == discord.Color.default():
+            db_color = profile.get("color", "pink")
+            if db_color in COLOR_MAP:
+                embed_color = discord.Color(COLOR_MAP[db_color])
+            else:
+                embed_color = KAWAII_PINK
+
+        embed = discord.Embed(color=embed_color)
         
         embed.set_author(name=f"Profil użytkownika {member.name}", icon_url=member.avatar.url if member.avatar else member.default_avatar.url)
         embed.set_thumbnail(url=member.avatar.url if member.avatar else member.default_avatar.url)

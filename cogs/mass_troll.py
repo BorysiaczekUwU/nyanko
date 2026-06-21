@@ -6,11 +6,30 @@ from utils import KAWAII_RED, KAWAII_PINK, KAWAII_GOLD
 import random
 import re
 
+SCHIZO_RESPONSES = [
+    "Kto pytał? 🤔",
+    "Aha. 👍",
+    "Fascynujące... Opowiedz nam o tym więcej (żartuję, nie mów nic). 🤫",
+    "Nikogo to nie obchodzi 💀",
+    "Przestań mówić do siebie. 🤨",
+    "Czy ktoś tu coś mówił? Bo nic nie słychać. 💨",
+    "Bardzo ciekawe, a teraz wyjdź. 🚪",
+    "Uuu, mocne słowa jak na kogoś bez Nitro. 💅",
+    "Wyłącz komputer, wyjdź na dwór, dotknij trawy. 🌿"
+]
+
 class MassTroll(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.cursed_italiano = {}
         self.cursed_femboy = {}
+        self.reaction_curses = {}
+        self.mocking_users = set()
+        self.ping_shields = set()
+        self.frozen_users = set()
+        self.typo_users = set()
+        self.reversed_users = set()
+        self.schizo_users = set()
 
     @commands.command()
     @has_perms_or_borysiaczek(administrator=True)
@@ -361,15 +380,317 @@ class MassTroll(commands.Cog):
                 
         return text
 
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def frame(self, ctx, member: discord.Member, *, tekst: str):
+        """[BOSS] Wysyła wiadomość w imieniu innego użytkownika za pomocą Webhooka."""
+        await ctx.message.delete()
+        
+        webhook = None
+        webhooks = await ctx.channel.webhooks()
+        for wh in webhooks:
+            if wh.name == "Troll Webhook":
+                webhook = wh
+                break
+        if not webhook:
+            try:
+                webhook = await ctx.channel.create_webhook(name="Troll Webhook")
+            except:
+                await ctx.send("❌ Brakuje uprawnień bota do zarządzania Webhookami.", delete_after=5)
+                return
+                
+        try:
+            await webhook.send(
+                content=tekst,
+                username=member.display_name,
+                avatar_url=member.display_avatar.url
+            )
+        except Exception as e:
+            print(f"Błąd webhooka w komendzie frame: {e}")
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def ghost_ping(self, ctx, member: discord.Member, count: int = 3):
+        """[BOSS] Wysyła pustawe pingi, które od razu usuwa."""
+        await ctx.message.delete()
+        count = min(max(1, count), 10)
+        
+        channels = [ch for ch in ctx.guild.text_channels if ch.permissions_for(ctx.guild.me).send_messages]
+        if not channels:
+            return
+            
+        for _ in range(count):
+            target_channel = random.choice(channels)
+            try:
+                msg = await target_channel.send(member.mention)
+                await msg.delete()
+            except:
+                pass
+            await asyncio.sleep(0.5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def klatwa_reakcji(self, ctx, member: discord.Member, *, emotki: str):
+        """[BOSS] Nakłada klątwę reakcji. Podaj emotki oddzielone spacją."""
+        await ctx.message.delete()
+        if member.bot:
+            return await ctx.send("❌ Nie możesz trollować botów!", delete_after=5)
+            
+        emoji_list = re.findall(r'<a?:[a-zA-Z0-9_]+:[0-9]+>|[\U00010000-\U0010ffff\u2600-\u27ff]', emotki)
+        if not emoji_list:
+            emoji_list = emotki.split()
+            
+        self.reaction_curses[member.id] = emoji_list
+        await ctx.send(f"✅ Nałożono klątwę reakcji na {member.mention}! Emotki: {' '.join(emoji_list)}", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def odczaruj_reakcje(self, ctx, member: discord.Member):
+        """[BOSS] Zdejmuje klątwę reakcji z użytkownika."""
+        await ctx.message.delete()
+        if member.id in self.reaction_curses:
+            del self.reaction_curses[member.id]
+            await ctx.send(f"✨ Zdjęto klątwę reakcji z {member.mention}!", delete_after=5)
+        else:
+            await ctx.send(f"❓ {member.mention} nie ma nałożonej klątwy reakcji.", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def papuga(self, ctx, member: discord.Member):
+        """[BOSS] Włącza klątwę papugi (Alternating caps + 🤡 emoji)."""
+        await ctx.message.delete()
+        if member.bot:
+            return await ctx.send("❌ Nie możesz trollować botów!", delete_after=5)
+            
+        self.mocking_users.add(member.id)
+        await ctx.send(f"🤡 Uruchomiono tryb papugi dla {member.mention}! mOcKiNg sPoNgEbOb iNiTiAtEd!", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def odczaruj_papuge(self, ctx, member: discord.Member):
+        """[BOSS] Wyłącza klątwę papugi."""
+        await ctx.message.delete()
+        if member.id in self.mocking_users:
+            self.mocking_users.remove(member.id)
+            await ctx.send(f"✨ Zdjęto klątwę papugi z {member.mention}!", delete_after=5)
+        else:
+            await ctx.send(f"❓ {member.mention} nie jest papugą.", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def tarcza(self, ctx, member: discord.Member = None):
+        """[BOSS] Aktywuje tarczę anty-pingową (domyślnie dla Ciebie)."""
+        await ctx.message.delete()
+        target = member or ctx.author
+        self.ping_shields.add(target.id)
+        await ctx.send(f"🛡️ **Tarcza Anty-Pingowa aktywowana dla {target.mention}!** Nikt nie może go teraz spingować!", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def zdejmij_tarcze(self, ctx, member: discord.Member = None):
+        """[BOSS] Dezaktywuje tarczę anty-pingową."""
+        await ctx.message.delete()
+        target = member or ctx.author
+        if target.id in self.ping_shields:
+            self.ping_shields.remove(target.id)
+            await ctx.send(f"🛡️ Tarcza Anty-Pingowa dezaktywowana dla {target.mention}.", delete_after=5)
+        else:
+            await ctx.send(f"❓ {target.mention} nie ma aktywnej tarczy.", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def zamroz(self, ctx, member: discord.Member):
+        """[BOSS] Zamraża użytkownika - kasuje każdą jego wiadomość na czacie."""
+        await ctx.message.delete()
+        if member.bot:
+            return await ctx.send("❌ Nie możesz zamrozić bota!", delete_after=5)
+            
+        self.frozen_users.add(member.id)
+        await ctx.send(f"❄️ **Użytkownik {member.mention} został zamrożony!** Jego wiadomości będą kasowane.", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def odmroz(self, ctx, member: discord.Member):
+        """[BOSS] Odmraża użytkownika."""
+        await ctx.message.delete()
+        if member.id in self.frozen_users:
+            self.frozen_users.remove(member.id)
+            await ctx.send(f"🔥 Użytkownik {member.mention} został odmrożony!", delete_after=5)
+        else:
+            await ctx.send(f"❓ {member.mention} nie jest zamrożony.", delete_after=5)
+
+    async def apply_typo_curse(self, text):
+        words = text.split()
+        for i, word in enumerate(words):
+            if len(word) > 3 and random.random() < 0.3:
+                idx = random.randint(1, len(word) - 2)
+                chars = list(word)
+                chars[idx], chars[idx+1] = chars[idx+1], chars[idx]
+                words[i] = "".join(chars)
+        return " ".join(words)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def dm(self, ctx, member: discord.Member, *, tekst: str):
+        """[BOSS] Wysyła prywatną wiadomość do użytkownika w imieniu bota."""
+        await ctx.message.delete()
+        try:
+            await member.send(tekst)
+            await ctx.send(f"✅ Pomyślnie wysłano DM do {member.mention}.", delete_after=3)
+        except:
+            await ctx.send(f"❌ Nie udało się wysłać DM do {member.mention} (zablokowane wiadomości prywatne).", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def target_purge(self, ctx, member: discord.Member, limit: int = 50):
+        """[BOSS] Usuwa wiadomości określonego użytkownika z obecnego kanału."""
+        await ctx.message.delete()
+        def is_target(m):
+            return m.author.id == member.id
+        try:
+            deleted = await ctx.channel.purge(limit=limit, check=is_target)
+            await ctx.send(f"🧹 Usunięto {len(deleted)} wiadomości użytkownika {member.mention}.", delete_after=3)
+        except Exception as e:
+            await ctx.send(f"❌ Wystąpił błąd: {e}", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def audit_roles(self, ctx):
+        """[BOSS] Usuwa z serwera puste role (które mają 0 członków i nie są zarządzane)."""
+        await ctx.message.delete()
+        deleted_roles = []
+        for role in ctx.guild.roles:
+            if role.is_default() or role.managed:
+                continue
+            if len(role.members) == 0:
+                try:
+                    await role.delete(reason="Audyt pustych ról przez administratora")
+                    deleted_roles.append(role.name)
+                except:
+                    pass
+        if deleted_roles:
+            await ctx.send(f"🧹 **Audyt Ról Zakończony!** Usunięto {len(deleted_roles)} pustych ról:\n" + ", ".join(deleted_roles), delete_after=10)
+        else:
+            await ctx.send("🧹 **Audyt Ról Zakończony!** Nie znaleziono żadnych pustych ról do usunięcia.", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def literowki(self, ctx, member: discord.Member):
+        """[BOSS] Nakłada klątwę literówek na użytkownika."""
+        await ctx.message.delete()
+        if member.bot:
+            return await ctx.send("❌ Nie możesz trollować botów!", delete_after=5)
+        self.typo_users.add(member.id)
+        await ctx.send(f"✍️ Nakładanie klątwy literówek na {member.mention}! Jego pisanie stanie się chaotyczne...", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def odczaruj_literowki(self, ctx, member: discord.Member):
+        """[BOSS] Zdejmuje klątwę literówek."""
+        await ctx.message.delete()
+        if member.id in self.typo_users:
+            self.typo_users.remove(member.id)
+            await ctx.send(f"✨ Zdjęto klątwę literówek z {member.mention}!", delete_after=5)
+        else:
+            await ctx.send(f"❓ {member.mention} nie ma klątwy literówek.", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def odwrocenie(self, ctx, member: discord.Member):
+        """[BOSS] Nakłada klątwę odwróconego tekstu."""
+        await ctx.message.delete()
+        if member.bot:
+            return await ctx.send("❌ Nie możesz trollować botów!", delete_after=5)
+        self.reversed_users.add(member.id)
+        await ctx.send(f"🔄 Włączanie klątwy odwróconego tekstu dla {member.mention}! .tekst ynałwrdo tseyZ", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def odczaruj_odwrocenie(self, ctx, member: discord.Member):
+        """[BOSS] Wyłącza klątwę odwrócenia."""
+        await ctx.message.delete()
+        if member.id in self.reversed_users:
+            self.reversed_users.remove(member.id)
+            await ctx.send(f"✨ Zdjęto klątwę odwrócenia z {member.mention}!", delete_after=5)
+        else:
+            await ctx.send(f"❓ {member.mention} nie ma klątwy odwrócenia.", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def schizo(self, ctx, member: discord.Member):
+        """[BOSS] Włącza klątwę schizofrenii (losowe denerwujące odpowiedzi od bota)."""
+        await ctx.message.delete()
+        if member.bot:
+            return await ctx.send("❌ Nie możesz trollować botów!", delete_after=5)
+        self.schizo_users.add(member.id)
+        await ctx.send(f"🧠 Włączono tryb schizofrenii dla {member.mention}! Bot zacznie na niego dziwnie reagować...", delete_after=5)
+
+    @commands.command()
+    @has_perms_or_borysiaczek(administrator=True)
+    async def odczaruj_schizo(self, ctx, member: discord.Member):
+        """[BOSS] Wyłącza klątwę schizofrenii."""
+        await ctx.message.delete()
+        if member.id in self.schizo_users:
+            self.schizo_users.remove(member.id)
+            await ctx.send(f"✨ Zdjęto klątwę schizofrenii z {member.mention}!", delete_after=5)
+        else:
+            await ctx.send(f"❓ {member.mention} nie ma klątwy schizofrenii.", delete_after=5)
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or message.webhook_id:
             return
             
+        # 1. Tarcza anty-pingowa
+        pinged_shielded_users = [m for m in message.mentions if m.id in getattr(self, 'ping_shields', set()) and m.id != message.author.id]
+        if pinged_shielded_users:
+            # Upewnij się, że autor nie jest adminem
+            author_is_admin = False
+            if hasattr(message.author, 'guild_permissions'):
+                author_is_admin = message.author.guild_permissions.administrator
+            
+            if not author_is_admin:
+                try:
+                    await message.delete()
+                except:
+                    pass
+                warn_msg = await message.channel.send(f"⚠️ {message.author.mention} **Nie waż się pingować mojego Pana!** ⚡")
+                await asyncio.sleep(4)
+                try:
+                    await warn_msg.delete()
+                except:
+                    pass
+                return
+
+        # 2. Zamrożenie (Freeze)
+        if message.author.id in getattr(self, 'frozen_users', set()):
+            try:
+                await message.delete()
+            except:
+                pass
+            warn_msg = await message.channel.send(f"❄️ {message.author.mention} **Twój czat został zamrożony przez Boga!**", delete_after=3)
+            return
+
+        # 3. Sprawdzanie innych klątw
         is_italiano = message.author.id in getattr(self, 'cursed_italiano', {})
         is_femboy = message.author.id in getattr(self, 'cursed_femboy', {})
+        is_mocked = message.author.id in getattr(self, 'mocking_users', set())
+        is_typo = message.author.id in getattr(self, 'typo_users', set())
+        is_reversed = message.author.id in getattr(self, 'reversed_users', set())
         
-        if not is_italiano and not is_femboy:
+        if not is_italiano and not is_femboy and not is_mocked and not is_typo and not is_reversed:
+            if message.author.id in getattr(self, 'schizo_users', set()):
+                if random.random() < 0.25:
+                    try:
+                        await message.reply(random.choice(SCHIZO_RESPONSES))
+                    except:
+                        pass
+            if message.author.id in getattr(self, 'reaction_curses', {}):
+                for emo in self.reaction_curses[message.author.id]:
+                    try:
+                        await message.add_reaction(emo)
+                    except:
+                        pass
             return
             
         ctx = await self.bot.get_context(message)
@@ -379,19 +700,33 @@ class MassTroll(commands.Cog):
         content = message.content
         if not content: return
         
+        username = message.author.display_name
+        avatar = message.author.display_avatar.url
+        
         if is_italiano:
             stage = self.cursed_italiano[message.author.id]
             self.cursed_italiano[message.author.id] += 1
             content = await self.apply_italiano_curse(content, stage)
-            username = message.author.display_name + " 🤌"
-            avatar = message.author.display_avatar.url
+            username += " 🤌"
             
         elif is_femboy:
             stage = self.cursed_femboy[message.author.id]
             self.cursed_femboy[message.author.id] += 1
             content = await self.apply_femboy_curse(content, stage)
-            username = message.author.display_name + " :3"
-            avatar = message.author.display_avatar.url
+            username += " :3"
+            
+        elif is_mocked:
+            content = "".join([char.upper() if i % 2 == 0 else char.lower() for i, char in enumerate(content)])
+            content += " 🤡"
+            username += " 🤡"
+
+        elif is_typo:
+            content = await self.apply_typo_curse(content)
+            username += " ✍️"
+
+        elif is_reversed:
+            content = content[::-1]
+            username += " 🔄"
 
         try:
             await message.delete()
@@ -412,11 +747,24 @@ class MassTroll(commands.Cog):
                 return
                 
         try:
-            await webhook.send(
+            sent_msg = await webhook.send(
                 content=content[:2000],
                 username=username[:80],
-                avatar_url=avatar
+                avatar_url=avatar,
+                wait=True
             )
+            if message.author.id in getattr(self, 'reaction_curses', {}):
+                for emo in self.reaction_curses[message.author.id]:
+                    try:
+                        await sent_msg.add_reaction(emo)
+                    except:
+                        pass
+            if message.author.id in getattr(self, 'schizo_users', set()):
+                if random.random() < 0.25:
+                    try:
+                        await sent_msg.reply(random.choice(SCHIZO_RESPONSES))
+                    except:
+                        pass
         except Exception as e:
             print(f"Błąd troll webhooka: {e}")
 

@@ -9,6 +9,23 @@ from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD, get_profile_data, update
 GIFS_KICK = ["https://media.giphy.com/media/wQCWMHY9EHLfq/giphy.gif", "https://media.giphy.com/media/26FPn4rR1damB0MQo/giphy.gif"]
 GIFS_BAN = ["https://media.giphy.com/media/fe4dDMD2cAU5RfEaCU/giphy.gif", "https://media.giphy.com/media/AC1HrkBir3bzq/giphy.gif"]
 
+COLOR_MAP = {
+    "Czarny": 0x111111,
+    "Krwisty": 0x8a0303,
+    "Czerwony": 0xff0000,
+    "Brązowy": 0x8b5a2b,
+    "Pomarańczowy": 0xffa500,
+    "Żółty": 0xffff00,
+    "Łososiowy": 0xfa8072,
+    "Limonkowy": 0x00ff00,
+    "Zielony": 0x008000,
+    "Błękitny": 0x00ffff,
+    "Niebieski": 0x0000ff,
+    "Fioletowy": 0x800080,
+    "Różowy": 0xff69b4,
+    "Biały": 0xffffff
+}
+
 # --- KONFIGURACJA RÓL ---
 # Poniżej zdefiniowane są nazwy ról, które bot będzie próbował nadać.
 ROLES = {
@@ -37,6 +54,77 @@ class BioModal(Modal, title="Stwórz Swój Profil!"):
         # Aktualizacja w naszej bazie punktów/profili setbio
         update_profile(interaction.user.id, "bio", self.bio.value)
         await interaction.response.send_message("✅ Twoje bio zostało zapisane! Poczekaj na wciśnięcie ZATWIERDŹ przez Sędziego.", ephemeral=True)
+
+# --- PANEL WYBORU KOLORU ---
+class ColorSelectView(View):
+    def __init__(self, bot, member, is_setup=False):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.member = member
+        self.is_setup = is_setup
+
+    @discord.ui.select(placeholder="Wybierz swój kolor!", min_values=1, max_values=1, options=[
+        discord.SelectOption(label="Czarny", emoji="⚫"),
+        discord.SelectOption(label="Krwisty", emoji="🩸"),
+        discord.SelectOption(label="Czerwony", emoji="🔴"),
+        discord.SelectOption(label="Brązowy", emoji="🟤"),
+        discord.SelectOption(label="Pomarańczowy", emoji="🟠"),
+        discord.SelectOption(label="Żółty", emoji="🟡"),
+        discord.SelectOption(label="Łososiowy", emoji="🍣"),
+        discord.SelectOption(label="Limonkowy", emoji="🍏"),
+        discord.SelectOption(label="Zielony", emoji="🟢"),
+        discord.SelectOption(label="Błękitny", emoji="🩵"),
+        discord.SelectOption(label="Niebieski", emoji="🔵"),
+        discord.SelectOption(label="Fioletowy", emoji="🟣"),
+        discord.SelectOption(label="Różowy", emoji="🌸"),
+        discord.SelectOption(label="Biały", emoji="⚪")
+    ])
+    async def color_select(self, interaction: discord.Interaction, select: Select):
+        guild = interaction.guild
+        user = interaction.user
+        
+        if guild is None and self.member and hasattr(self.member, "guild"):
+            guild = self.member.guild
+            user = guild.get_member(user.id) or self.member
+            
+        if not guild or not hasattr(user, 'add_roles'):
+            return await interaction.response.send_message("❌ Błąd: Nie znaleziono serwera lub uprawnień (spróbuj z kanału).", ephemeral=True)
+            
+        chosen_value = select.values[0]
+        update_profile(user.id, "color", chosen_value)
+        
+        if self.is_setup:
+            # Usuń wszystkie role z danej kategorii ze starych
+            for role_name in ROLES["color"]:
+                r = discord.utils.get(guild.roles, name=role_name)
+                if r and r in user.roles:
+                    try: await user.remove_roles(r)
+                    except: pass
+            
+            # Próba dodania wybranego koloru
+            r = discord.utils.get(guild.roles, name=chosen_value)
+            if r:
+                try: 
+                    await user.add_roles(r)
+                    await interaction.response.send_message(f"✅ Zaktualizowano kolor nicku na: **{chosen_value}**", ephemeral=True)
+                except:
+                    await interaction.response.send_message(f"❌ Brak uprawnień bota do nadania roli **{chosen_value}**.", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"❌ Nie znaleziono roli **{chosen_value}** na serwerze.", ephemeral=True)
+        else:
+            # System Weryfikacji: Zapamiętaj ID wybrane jako Pending Roles do wręczenia po akceptacji admina
+            r = discord.utils.get(guild.roles, name=chosen_value)
+            role_id = r.id if r else None
+            
+            if role_id:
+                # Filtr stare wejścia dla tej samej kategorii w pending
+                cat_role_ids = [discord.utils.get(guild.roles, name=rn).id for rn in ROLES["color"] if discord.utils.get(guild.roles, name=rn)]
+                pending_roles[user.id] = [rid for rid in pending_roles[user.id] if rid not in cat_role_ids]
+                pending_roles[user.id].append(role_id)
+                
+                await interaction.response.send_message(f"✅ Wybrano kolor nicku: **{chosen_value}**! Dostaniesz go po weryfikacji.", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"❌ Nie znaleziono roli **{chosen_value}** na serwerze.", ephemeral=True)
 
 # --- PANEL WYBORU RÓL (SELECT MENUS) ---
 class RoleSelectView(View):
@@ -159,12 +247,19 @@ class RoleSelectView(View):
                     pass
         await self.handle_roles(interaction, select, "orientation")
 
-    @discord.ui.button(label="✏️ NAPISZ BIO", style=discord.ButtonStyle.blurple, emoji="📖")
+    @discord.ui.button(label="✏️ NAPISZ BIO", style=discord.ButtonStyle.blurple, emoji="📖", row=4)
     async def bio_button(self, interaction: discord.Interaction, button: Button):
         # Tylko uczestnik weryfikacji lub osoby uzywajace komendy live config
         if self.member and interaction.user.id != self.member.id:
             return await interaction.response.send_message("⛔ Ty nie piszesz tu bio!", ephemeral=True)
         await interaction.response.send_modal(BioModal())
+
+    @discord.ui.button(label="🎨 WYBIERZ KOLOR", style=discord.ButtonStyle.secondary, emoji="🎨", row=4)
+    async def color_button(self, interaction: discord.Interaction, button: Button):
+        if self.member and interaction.user.id != self.member.id:
+            return await interaction.response.send_message("⛔ Ty nie wybierasz tu koloru!", ephemeral=True)
+        view = ColorSelectView(self.bot, interaction.user, is_setup=self.is_setup)
+        await interaction.response.send_message("Wybierz swój kolor z listy poniżej:", view=view, ephemeral=True)
 
 
 # --- GŁÓWNY PANEL SĘDZIEGO (WERYFIKACJA KANAŁOWA) ---
@@ -273,6 +368,10 @@ class Verification(commands.Cog):
                         role_color = discord.Color.default()
                         if category == "orientation":
                             color_val = next((v["color"] for v in ORIENTATIONS.values() if v["name"] == role_name), None)
+                            if color_val is not None:
+                                role_color = discord.Color(color_val)
+                        elif category == "color":
+                            color_val = COLOR_MAP.get(role_name)
                             if color_val is not None:
                                 role_color = discord.Color(color_val)
                         await guild.create_role(name=role_name, reason="Auto-system generatora ról", color=role_color)
