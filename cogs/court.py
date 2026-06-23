@@ -7,12 +7,13 @@ from datetime import datetime, timedelta
 from utils import KAWAII_RED, KAWAII_PINK, KAWAII_GOLD, update_data
 
 class TrialView(View):
-    def __init__(self, bot, member, jail_role, channel):
+    def __init__(self, bot, member, jail_role, channel, original_channel=None):
         super().__init__(timeout=None)
         self.bot = bot
         self.member = member
         self.jail_role = jail_role
         self.channel = channel
+        self.original_channel = original_channel
 
     @discord.ui.button(label="Ułaskaw", style=discord.ButtonStyle.green, emoji="🕊️")
     async def pardon(self, interaction: discord.Interaction, button: Button):
@@ -37,6 +38,21 @@ class TrialView(View):
             verified_role = discord.utils.get(interaction.guild.roles, name="—͟͞✅・Bilecik")
             if verified_role:
                 await self.member.add_roles(verified_role)
+                
+            # Ogłoszenie o przetrwaniu i powrocie na oryginalnym kanale
+            if self.original_channel:
+                try:
+                    embed_return = discord.Embed(
+                        title="✨ PRZETRWANIE I POWRÓT Z DOMENY",
+                        description=f"💥 **Bariera domeny rozpada się z głośnym hukiem w drobny pył!**\n\n"
+                                    f"Oskarżony {self.member.mention} stawił czoła sędziemu Judgemanowi, został **UŁASKAWIONY** i w wielkim stylu powraca do świata żywych! 🕊️✨\n\n"
+                                    f"*„Sprawiedliwość zatryumfowała, a przeklęty obszar został całkowicie rozproszony...”*",
+                        color=discord.Color.green()
+                    )
+                    embed_return.set_image(url="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3ZhcjQyN3lxbzB5N3Y5ZWNwcTN4ODdsZGtzcncyNngybndsdnh2OSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3jx7gLw5asg80/giphy.gif")
+                    await self.original_channel.send(content=f"{self.member.mention} powraca!", embed=embed_return)
+                except Exception as e:
+                    print(f"Błąd podczas wysyłania powrotu na oryginalny kanał: {e}")
         except Exception as e:
             await self.channel.send(f"⚠️ Błąd podczas modyfikacji ról: {e}")
             
@@ -134,7 +150,7 @@ class Court(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def domena(self, ctx, member: discord.Member, *, powod="Brak określonego powodu"):
-        """Tworzy salę sądową dla oskarżonego użytkownika."""
+        """Tworzy salę sądową dla oskarżonego użytkownika z cutscenką w stylu Jujutsu Kaisen."""
         guild = ctx.guild
         
         # Przygotowanie roli Sędzia
@@ -176,14 +192,56 @@ class Court(commands.Cog):
         # Zapisujemy ID oskarżonego w temacie kanału (topic)
         trial_ch = await guild.create_text_channel(ch_name, overwrites=overwrites, topic=str(member.id))
         
-        # Prezentacja sali rozpraw
-        embed = discord.Embed(
-            title="⚖️ ROZPOCZĘTO ROZPRAWĘ SĄDOWĄ", 
-            description=f"Wysoki Sąd zebrał się w sprawie obywatela {member.mention}.\n\n"
-                        f"**Powód oskarżenia:**\n`{powod}`", 
+        # --- CUTSCENKA ROZSZERZENIA DOMENY (3 WIADOMOŚCI) ---
+        
+        # Wiadomość 1: Gest i zaklęcie
+        embed1 = discord.Embed(
+            title="💥 ROZPOCZYNANIE AKTYWACJI TECHNIKI...",
+            description=f"{ctx.author.mention} składa dłonie w charakterystycznym geście, a wokół niego gwałtownie eksploduje przeklęta energia!\n\n"
+                        f"# `„Rozszerzenie Domeny...”`\n`(領域展開 - Ryōiki Tenkai)`\n\n"
+                        f"*Czysta wola narzuca strukturę otaczającej rzeczywistości...*",
             color=0x800000
         )
-        embed.add_field(
+        embed1.set_image(url="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNjdqOHg3NnV5eW0ycWlhOGl3cGtlbmQ2Ymd5cjhpNnBmcTV0cWR1NyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/bQ1tqq4RycT3a/giphy.gif")
+        await ctx.send(embed=embed1)
+        
+        await asyncio.sleep(2.5)
+        
+        # Wiadomość 2: Formowanie bariery i ujawnienie nazwy domeny
+        embed2 = discord.Embed(
+            title="🌌 BARIERA GWAŁTOWNIE SIĘ DOMYKA!",
+            description=f"Absolutna ciemność rozlewa się po pomieszczeniu, odcinając oskarżonego {member.mention} od świata zewnętrznego. Przestrzeń trzeszczy pod naporem niesamowitej presji przeklętej energii!\n\n"
+                        f"# `„Śmiertelny Wyrok”`\n`(誅伏賜死 - Shishi Chishi)`\n\n"
+                        f"*Wszelka przemoc i walka fizyczna zostają natychmiastowo zablokowane. Obowiązują tu wyłącznie reguły prawa...*",
+            color=0x2e0854
+        )
+        embed2.set_image(url="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExejE2Nmx6eWp5dG0wdWhhNXpydTVjOTZudnV6MnV5eW4xcmpxdHJqayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ug94GgE5Txc4/giphy.gif")
+        await ctx.send(embed=embed2)
+        
+        await asyncio.sleep(2.5)
+        
+        # Wiadomość 3: Ukończenie domeny, pojawienie się Judgemana i portal
+        embed3 = discord.Embed(
+            title="⚖️ DOMENA ZOSTAŁA CAŁKOWICIE ZAMKNIĘTA!",
+            description=f"Z pustki materializuje się trójoki sędzia **Judgeman** stojący nad monumentalną gilotyną. "
+                        f"Oskarżony {member.mention} staje przed obliczem absolutnego trybunału bez możliwości ucieczki!\n\n"
+                        f"👉 **Wkraczaj do wnętrza Domeny Sądowej:**\n### {trial_ch.mention}",
+            color=0xd4af37
+        )
+        embed3.set_image(url="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnY2Y2gxeDR3MGMydDM3YjRpa2JhZjluZGJ5YWlobnp0YTM2eDc2YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/A3Fe9A2d3bbDXxxR6t/giphy.gif")
+        await ctx.send(embed=embed3)
+        
+        # --- KONFIGURACJA SALI ROZPRAW ---
+        
+        # Prezentacja sali rozpraw wewnątrz stworzonego kanału (z motywem JJK i Judgemana!)
+        embed_court = discord.Embed(
+            title="⚖️ WITAJ W DOMENIE: ŚMIERTELNY WYROK", 
+            description=f"Wysoki Sąd pod przewodnictwem sędziego **Judgemana** rozpoczął proces obywatela {member.mention}.\n\n"
+                        f"**Powód oskarżenia:**\n`{powod}`\n\n"
+                        f"🛡️ *Wszelka przemoc jest tutaj zablokowane przez zasady Domeny. Jedyną bronią są słowa i dowody!*", 
+            color=0x2b2d31
+        )
+        embed_court.add_field(
             name="📋 Dostępne Komendy Roleplay:",
             value="🔹 `!rp oskarzenie <powód>` - Odczytanie zarzutów\n"
                   "🔹 `!rp obrona <argumenty>` - Argumenty obrony\n"
@@ -196,11 +254,11 @@ class Court(commands.Cog):
                   "🔹 `!rp wyrok <sentencja>` - Ustne ogłoszenie wyroku\n",
             inline=False
         )
-        embed.set_image(url="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnY2Y2gxeDR3MGMydDM3YjRpa2JhZjluZGJ5YWlobnp0YTM2eDc2YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/A3Fe9A2d3bbDXxxR6t/giphy.gif")
-        embed.set_footer(text="Sędziowie mogą korzystać z poniższych przycisków szybkiego werdyktu.")
+        embed_court.set_image(url="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnY2Y2gxeDR3MGMydDM3YjRpa2JhZjluZGJ5YWlobnp0YTM2eDc2YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/A3Fe9A2d3bbDXxxR6t/giphy.gif")
+        embed_court.set_footer(text="Sędziowie mogą korzystać z przycisków szybkiego werdyktu znajdujących się poniżej.")
         
-        view = TrialView(self.bot, member, jail_role, trial_ch)
-        await trial_ch.send(f"{member.mention} {judge_role.mention}", embed=embed, view=view)
+        view = TrialView(self.bot, member, jail_role, trial_ch, original_channel=ctx.channel)
+        await trial_ch.send(f"{member.mention} {judge_role.mention}", embed=embed_court, view=view)
         await ctx.send(f"⛓️ **{member.name}** został doprowadzony do sali rozpraw! ({trial_ch.mention})")
 
     # --- GRUPA KOMEND RP ---
