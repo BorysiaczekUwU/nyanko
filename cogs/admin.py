@@ -6,6 +6,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from utils import KAWAII_RED, KAWAII_PINK, KAWAII_GOLD, update_data, get_profile_data, update_profile
 
+
 # Gify
 GIFS_BAN = ["https://media.giphy.com/media/fe4dDMD2cAU5RfEaCU/giphy.gif", "https://media.giphy.com/media/AC1HrkBir3bzq/giphy.gif"]
 GIFS_KICK = ["https://media.giphy.com/media/wQCWMHY9EHLfq/giphy.gif", "https://media.giphy.com/media/26FPn4rR1damB0MQo/giphy.gif"]
@@ -33,36 +34,6 @@ async def send_dm_log(member, guild_name, reason, action_type):
         embed.set_footer(text="Decyzja jest ostateczna (chyba że kupisz unbana UwU)")
         await member.send(embed=embed)
     except: pass
-# --- WIDOK DOMENY ---
-class TrialView(View):
-    def __init__(self, bot, member, jail_role, verified_role, channel):
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.member = member
-        self.jail_role = jail_role
-        self.verified_role = verified_role
-        self.channel = channel
-
-    @discord.ui.button(label="Ułaskaw", style=discord.ButtonStyle.green, emoji="🕊️")
-    async def pardon(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.administrator and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
-            return await interaction.response.send_message("Brak uprawnień!", ephemeral=True)
-            
-        await self.member.remove_roles(self.jail_role)
-        if self.verified_role:
-            await self.member.add_roles(self.verified_role)
-            
-        await interaction.response.send_message("Ułaskawiony!", ephemeral=True)
-        await self.channel.delete()
-
-    @discord.ui.button(label="Winny", style=discord.ButtonStyle.danger, emoji="🔨")
-    async def guilty(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
-            return await interaction.response.send_message("Brak uprawnień!", ephemeral=True)
-            
-        await self.member.ban(reason="Domena Sądowa: Winny")
-        await interaction.response.send_message("Zbanowany!", ephemeral=True)
-        await self.channel.delete()
 
 class QTEView(View):
     def __init__(self, amount: int, max_users: int, timeout: int):
@@ -359,39 +330,6 @@ class Admin(commands.Cog):
             await ctx.send(f"🧹 Pomyślnie wyczyszczono wszystkie ostrzeżenia dla {member.name}!")
         else:
             await ctx.send(f"⚠️ {member.name} nie ma żadnych ostrzeżeń.")
-
-    @commands.command()
-    @has_perms_or_borysiaczek(administrator=True)
-    async def domena(self, ctx, member: discord.Member):
-        guild = ctx.guild
-        judge_role = discord.utils.get(guild.roles, name="Sędzia")
-        if not judge_role: judge_role = await guild.create_role(name="Sędzia", color=discord.Color.gold(), hoist=True)
-        
-        jail_role = discord.utils.get(guild.roles, name="Izolatka")
-        if not jail_role:
-            jail_role = await guild.create_role(name="Izolatka", color=discord.Color.dark_grey())
-            for channel in guild.channels: await channel.set_permissions(jail_role, view_channel=False)
-
-        verified_role = discord.utils.get(guild.roles, name="—͟͞✅・Bilecik")
-        if verified_role and verified_role in member.roles: await member.remove_roles(verified_role)
-        await member.add_roles(jail_role)
-        
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            jail_role: discord.PermissionOverwrite(view_channel=True, send_messages=True),
-            judge_role: discord.PermissionOverwrite(view_channel=True, send_messages=True),
-            self.bot.user: discord.PermissionOverwrite(view_channel=True)
-        }
-        
-        ch_name = f"sąd-nad-{member.name}".lower().replace("#", "")
-        trial_ch = await guild.create_text_channel(ch_name, overwrites=overwrites)
-        
-        embed = discord.Embed(title="⚖️ DOMENA SĄDOWA", description=f"Oskarżony: {member.mention}", color=0x800000)
-        embed.set_image(url="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnY2Y2gxeDR3MGMydDM3YjRpa2JhZjluZGJ5YWlobnp0YTM2eDc2YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/A3Fe9A2d3bbDXxxR6t/giphy.gif")
-        
-        view = TrialView(self.bot, member, jail_role, verified_role, trial_ch)
-        await trial_ch.send(f"{member.mention} {judge_role.mention}", embed=embed, view=view)
-        await ctx.send(f"⛓️ **{member.name}** trafił do Domeny!")
 
     @commands.command()
     async def temat(self, ctx):
@@ -798,6 +736,53 @@ class Admin(commands.Cog):
             await msg.edit(content=f"🦠 Instalowanie wirusa na komputerze **{member.display_name}**...\n`{bar}`")
         await asyncio.sleep(1)
         await msg.edit(content=f"☠️ **{member.display_name}** - Twój system operacyjny został trwale usunięty. Do widzenia.")
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot or message.webhook_id:
+            return
+            
+        ctx = await self.bot.get_context(message)
+        if ctx.valid and ctx.command:
+            return
+
+        content_lower = message.content.lower()
+        if "praca" in content_lower or "zatrudnienie" in content_lower:
+            warns = self.load_warns()
+            user_id = str(message.author.id)
+            if user_id not in warns:
+                warns[user_id] = []
+            
+            reason = "Użycie zakazanego słowa (praca/zatrudnienie)"
+            warns[user_id].append({
+                "reason": reason,
+                "moderator": "System Anty-Pracy",
+                "date": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            })
+            self.save_warns(warns)
+            
+            try:
+                await message.delete()
+            except:
+                pass
+                
+            embed = discord.Embed(
+                title="⚠️ AUTOMATYCZNE OSTRZEŻENIE ⚠️",
+                description=f"Użytkownik {message.author.mention} użył zakazanego słowa związanego z pracą/zatrudnieniem!",
+                color=KAWAII_RED
+            )
+            embed.add_field(name="Powód kary", value="Na tym serwerze panuje zakaz rozmów o pracy i zatrudnieniu! Skupiamy się na rozrywce. 🌸")
+            embed.set_footer(text=f"Aktualna liczba ostrzeżeń tego użytkownika: {len(warns[user_id])}")
+            await message.channel.send(embed=embed)
+            
+            try:
+                await message.author.send(
+                    f"⚠️ Zostałeś automatycznie ostrzeżony na serwerze **{message.guild.name}**!\n"
+                    f"**Powód:** Użycie słowa związanego z pracą/zatrudnieniem.\n"
+                    f"Liczba Twoich ostrzeżeń wynosi teraz: **{len(warns[user_id])}**."
+                )
+            except:
+                pass
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))

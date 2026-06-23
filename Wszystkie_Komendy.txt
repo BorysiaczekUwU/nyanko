@@ -304,3 +304,36 @@ podzielona na poszczególne moduły (kategorie).
 --- 📂 MODUŁ: VERIFICATION ---
 ⭐ !setup_autorole 
    └ Ustawia publiczny kanał Auto-Color / Auto-Role dla Graczy do własnych edycji z poziomu Menu bez udziału administracji.
+
+
+--- 📂 MODUŁ: COURT (SĄDOWNICTWO) ---
+⭐ !domena <@użytkownik> [powód]
+   └ (Admin) Tworzy salę sądową dla oskarżonego i nakłada rolę Izolatka.
+
+⭐ !rp oskarzenie <powód>
+   └ Wnosi oficjalny akt oskarżenia przeciwko oskarżonemu (tylko w Domenie).
+
+⭐ !rp obrona <argumenty>
+   └ Wnosi argumenty obrony dla oskarżonego (tylko w Domenie).
+
+⭐ !rp dowod <szczegóły>
+   └ Wnosi dowód rzeczowy do sprawy, można załączyć plik/obraz (tylko w Domenie).
+
+⭐ !rp swiadek <@użytkownik>
+   └ Wzywa świadka na rozprawę i nadaje mu prawa do pisania (tylko w Domenie).
+
+⭐ !rp usun_swiadka <@użytkownik>
+   └ Odbiera świadkowi dostęp do rozprawy (tylko w Domenie).
+
+⭐ !rp sprzeciw [powód]
+   └ Klasyczny sprzeciw "Objection!" z animacją i cytatem (tylko w Domenie).
+
+⭐ !rp ugoda <treść>
+   └ Proponuje warunki ugody oskarżycielowi/sędziemu (tylko w Domenie).
+
+⭐ !rp mlotek
+   └ Uderzenie młotkiem sędziowskim w celu uciszenia sali (tylko w Domenie).
+
+⭐ !rp wyrok <sentencja>
+   └ (Sędzia/Admin) Ogłoszenie oficjalnego wyroku sądowego (tylko w Domenie).
+
