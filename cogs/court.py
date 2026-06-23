@@ -139,6 +139,12 @@ def is_court_channel():
             )
             await ctx.send(embed=embed, delete_after=5)
             return False
+            
+        # Usuwamy oryginalną wiadomość użytkownika z komendą !rp natychmiast
+        try:
+            await ctx.message.delete()
+        except:
+            pass
         return True
     return commands.check(predicate)
 

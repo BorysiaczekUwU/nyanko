@@ -262,47 +262,113 @@ class RoleSelectView(View):
         await interaction.response.send_message("Wybierz swój kolor z listy poniżej:", view=view, ephemeral=True)
 
 
-# --- GŁÓWNY PANEL SĘDZIEGO (WERYFIKACJA KANAŁOWA) ---
-class VerifyView(RoleSelectView):
+# --- PANEL WERYFIKACYJNY DLA NOWEGO UŻYTKOWNIKA ---
+class VerificationWelcomeView(View):
     def __init__(self, bot, member, verified_role, channel):
-        # Inicjalizuje klasę nadrzędną dla dropdownów (is_setup=False = zapamiętuje role)
-        super().__init__(bot, member, is_setup=False) 
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.member = member
         self.verified_role = verified_role
         self.channel = channel
 
-    @discord.ui.button(label="✅ ZATWIERDŹ", style=discord.ButtonStyle.green, emoji="🎟️", row=4)
+    @discord.ui.button(label="🎨 Otwórz Kreator Profilu", style=discord.ButtonStyle.success, emoji="✨")
+    async def open_bio(self, interaction: discord.Interaction, button: Button):
+        # Tylko osoba weryfikowana może otworzyć swój kreator
+        if interaction.user.id != self.member.id:
+            return await interaction.response.send_message("❌ Tylko osoba weryfikowana może konfigurować swój profil!", ephemeral=True)
+            
+        from cogs.profile import CombinedBioHub
+        view = CombinedBioHub(self.bot)
+        embed = discord.Embed(
+            title="🎨 Kreator Profilu / Tożsamości",
+            description="Użyj menu poniżej, aby edytować różne aspekty swojego profilu, tożsamości oraz darmowych ról na serwerze!",
+            color=KAWAII_PINK
+        )
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+    @discord.ui.button(label="🟢 Oznacz Gotowość", style=discord.ButtonStyle.green, emoji="🟢")
+    async def ready_button(self, interaction: discord.Interaction, button: Button):
+        # Tylko osoba weryfikowana może kliknąć ten przycisk
+        if interaction.user.id != self.member.id:
+            return await interaction.response.send_message("❌ Tylko osoba weryfikowana może oznaczyć swoją gotowość!", ephemeral=True)
+
+        # Pobieramy profil z bazy danych
+        profile = get_profile_data(self.member.id)
+        bio = profile.get("bio", "").strip()
+
+        # Sprawdzamy czy bio zostało uzupełnione
+        if not bio or bio == "Pusto..." or len(bio) < 5:
+            return await interaction.response.send_message(
+                "❌ **Nie uzupełniłeś jeszcze swojego bio!**\n"
+                "Kliknij przycisk **`🎨 Otwórz Kreator Profilu`**, a następnie kliknij **`Napisz Bio`** i opisz siebie przed oznaczeniem gotowości.", 
+                ephemeral=True
+            )
+
+        # Wyłączamy przyciski i edytujemy oryginalną wiadomość
+        for item in self.children:
+            item.disabled = True
+        await interaction.response.edit_message(view=self)
+
+        # Prezentacja profilu dla administracji/sędziów
+        embed_admin = discord.Embed(
+            title="⚖️ ZGŁOSZONO GOTOWOŚĆ DO WERYFIKACJI",
+            description=f"Nowy użytkownik {self.member.mention} ukończył konfigurację profilu i oczekuje na weryfikację.",
+            color=KAWAII_GOLD
+        )
+        embed_admin.set_thumbnail(url=self.member.avatar.url if self.member.avatar else self.member.default_avatar.url)
+        embed_admin.add_field(name="📝 Przedstawione Bio:", value=f"```\n{bio}\n```", inline=False)
+        embed_admin.add_field(name="⚧ Płeć", value=profile.get('gender', 'Nieznana'), inline=True)
+        embed_admin.add_field(name="📅 Wiek", value=profile.get('age', 'Nieznany'), inline=True)
+        embed_admin.add_field(name="🎨 Wybrany Kolor", value=profile.get('color', 'Brak'), inline=True)
+        embed_admin.add_field(name="🏳️‍🌈 Tożsamość", value=profile.get('orientation', 'Nieustawiona'), inline=True)
+        embed_admin.set_footer(text="Administracja może podjąć decyzję za pomocą poniższych przycisków.")
+
+        # Widok decyzji sędziego
+        decision_view = VerifyDecisionView(self.bot, self.member, self.verified_role, self.channel)
+        
+        await self.channel.send(
+            content=f"🔔 **Administracja / Sędziowie** - {self.member.mention} jest gotowy!", 
+            embed=embed_admin, 
+            view=decision_view
+        )
+
+# --- PANEL DECYZYJNY SĘDZIEGO / ADMINA ---
+class VerifyDecisionView(View):
+    def __init__(self, bot, member, verified_role, channel):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.member = member
+        self.verified_role = verified_role
+        self.channel = channel
+
+    @discord.ui.button(label="✅ ZATWIERDŹ", style=discord.ButtonStyle.green, emoji="🎟️")
     async def verify_button(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.manage_roles and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
             await interaction.response.send_message("⛔ Czekamy na administrację!", ephemeral=True)
             return
 
         # 1. Nadanie Bileciku
-        try: await self.member.add_roles(self.verified_role)
-        except: pass
+        try: 
+            await self.member.add_roles(self.verified_role)
+        except: 
+            pass
         
         zaba_role = discord.utils.get(interaction.guild.roles, name="🐸 • Żaby")
         if zaba_role:
-            try: await self.member.add_roles(zaba_role)
-            except: pass
+            try: 
+                await self.member.add_roles(zaba_role)
+            except: 
+                pass
         
-        # 2. Nadanie wyklikanych z dropdowna ról z pending_roles
-        user_id = self.member.id
-        if user_id in pending_roles:
-            for role_id in pending_roles[user_id]:
-                r = interaction.guild.get_role(role_id)
-                if r:
-                    try: await self.member.add_roles(r)
-                    except: pass
-            del pending_roles[user_id] # Usunięcie z cache po użyciu
-
-        # 3. Kasa
+        # 2. Kasa
         update_data(self.member.id, "balance", 100, "add")
 
         await interaction.response.send_message(f"🎉 **{self.member.name}** przepuszczony! Zamykam kanał weryfikacyjny.")
         
-        # 4. Ogłoszenie publiczne powitania
+        # 3. Ogłoszenie publiczne powitania
         general = discord.utils.get(interaction.guild.text_channels, name="💬・pogadanki")
-        if not general: general = discord.utils.get(interaction.guild.text_channels, name="ogólny")
+        if not general: 
+            general = discord.utils.get(interaction.guild.text_channels, name="ogólny")
         
         if general:
             embed = discord.Embed(description=f"Witamy **{self.member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖", color=KAWAII_PINK)
@@ -313,14 +379,13 @@ class VerifyView(RoleSelectView):
         await asyncio.sleep(5)
         await self.channel.delete()
 
-    @discord.ui.button(label="👋 WYRZUĆ", style=discord.ButtonStyle.danger, emoji="👢", row=4)
+    @discord.ui.button(label="👋 WYRZUĆ", style=discord.ButtonStyle.danger, emoji="👢")
     async def kick_button(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
             return await interaction.response.send_message("⛔ Brak uprawnień do wyrzucania!", ephemeral=True)
 
         try:
             await interaction.response.send_message(f"👢 Wyrzucono {self.member.mention}...", ephemeral=True)
-            if self.member.id in pending_roles: del pending_roles[self.member.id]
             await self.member.kick(reason=f"Wyrzucono przy weryfikacji przez {interaction.user.name}")
             
             embed = discord.Embed(title="👋 WYRZUCONO!", description=f"**{self.member.name}** nie przeszedł weryfikacji.", color=discord.Color.orange())
@@ -331,14 +396,13 @@ class VerifyView(RoleSelectView):
         except Exception as e:
             await self.channel.send(f"❌ Nie udało się: {e}")
 
-    @discord.ui.button(label="🔨 ZBANUJ", style=discord.ButtonStyle.danger, emoji="🔨", row=4)
+    @discord.ui.button(label="🔨 ZBANUJ", style=discord.ButtonStyle.danger, emoji="🔨")
     async def ban_button(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
             return await interaction.response.send_message("⛔ Brak uprawnień do banowania!", ephemeral=True)
 
         try:
             await interaction.response.send_message(f"🔨 Zbanowano {self.member.mention}...", ephemeral=True)
-            if self.member.id in pending_roles: del pending_roles[self.member.id]
             await self.member.ban(reason=f"Zbanowano przy weryfikacji przez {interaction.user.name}")
             
             embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{self.member.name}** nie przeszedł weryfikacji.", color=KAWAII_RED)
@@ -480,17 +544,23 @@ class Verification(commands.Cog):
             channel = await guild.create_text_channel(channel_name, category=category, overwrites=overwrites)
             
             embed = discord.Embed(
-                title=f"🌸 Witaj {member.name}! Oczekujesz na weryfikację.", 
-                description="**KROKI:**\n1. Napisz coś miłego o sobie, jakie masz hobby, co lubisz, co Cię interesuje itp.\n2. Kliknij `✏️ NAPISZ BIO` i wypełnij swój opis powitalny i wybierz swoje cechy/właściwości profilu, które wyświetlą się jako role..\n3. Poczekaj na wejście admina serwera/sędziego, który przejrzy wniosek i nada Ci uprawnienia! W tym czasie możesz rozmawiać z nami na tym kanale.", 
+                title=f"🌸 Witaj {member.name}! Rozpocznij weryfikację", 
+                description=(
+                    "Cieszymy się, że jesteś z nami! Aby uzyskać dostęp do serwera, wykonaj poniższe kroki:\n\n"
+                    "1️⃣ Kliknij zielony przycisk **`🎨 Otwórz Kreator Profilu`** poniżej.\n"
+                    "2️⃣ W menu, które się pojawi, uzupełnij swoje **bio, płeć, wiek, kolor oraz role** (wszystko konfigurujesz prywatnie i wygodnie).\n"
+                    "3️⃣ Po zakończeniu konfiguracji kliknij przycisk **`🟢 Oznacz Gotowość`**.\n\n"
+                    "⏳ *Po oznaczeniu gotowości, administracja/sędziowie sprawdzą Twój profil i zatwierdzą Twój dostęp!*"
+                ),
                 color=KAWAII_PINK
             )
-            embed.set_footer(text="Gdy Administracja kliknie ZATWIERDŹ, Twoje menu wyboru zamieni się w oficjalne z nadaniem ról z pełnym dostępem.")
+            embed.set_footer(text="Podczas oczekiwania na weryfikację możesz pisać na tym kanale.")
             
-            # Wstrzykujemy naszego molocha
-            view = VerifyView(self.bot, member, verified_role, channel)
+            view = VerificationWelcomeView(self.bot, member, verified_role, channel)
             
-            await channel.send(f"{member.mention} - panel został wygenerowany!", embed=embed, view=view)
-        except Exception as e: print(f"Błąd tworzenia instancji weryfikacji: {e}")
+            await channel.send(f"{member.mention} - panel weryfikacji został przygotowany!", embed=embed, view=view)
+        except Exception as e: 
+            print(f"Błąd tworzenia instancji weryfikacji: {e}")
 
 async def setup(bot):
     await bot.add_cog(Verification(bot))
