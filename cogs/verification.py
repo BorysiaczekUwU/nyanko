@@ -443,7 +443,7 @@ class VerificationWelcomeView(View):
 
     @discord.ui.button(label="Szybki Kick", style=discord.ButtonStyle.danger, emoji="👢")
     async def quick_kick(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
+        if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do wyrzucania!", ephemeral=True)
 
         try:
@@ -462,7 +462,7 @@ class VerificationWelcomeView(View):
 
     @discord.ui.button(label="Szybki Ban", style=discord.ButtonStyle.danger, emoji="🔨")
     async def quick_ban(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
+        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do banowania!", ephemeral=True)
 
         try:
@@ -491,7 +491,7 @@ class VerifyDecisionView(View):
 
     @discord.ui.button(label="✅ ZATWIERDŹ", style=discord.ButtonStyle.green, emoji="🎟️")
     async def verify_button(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.manage_roles and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
+        if not interaction.user.guild_permissions.manage_roles and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             await interaction.response.send_message("⛔ Czekamy na administrację!", ephemeral=True)
             return
 
@@ -524,7 +524,7 @@ class VerifyDecisionView(View):
 
     @discord.ui.button(label="👋 WYRZUĆ", style=discord.ButtonStyle.danger, emoji="👢")
     async def kick_button(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
+        if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do wyrzucania!", ephemeral=True)
 
         try:
@@ -543,7 +543,7 @@ class VerifyDecisionView(View):
 
     @discord.ui.button(label="🔨 ZBANUJ", style=discord.ButtonStyle.danger, emoji="🔨")
     async def ban_button(self, interaction: discord.Interaction, button: Button):
-        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
+        if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do banowania!", ephemeral=True)
 
         try:
@@ -1050,14 +1050,14 @@ class Verification(commands.Cog):
     def get_verification_member(self, ctx):
         for target in ctx.channel.overwrites:
             if isinstance(target, discord.Member) and target.id != self.bot.user.id:
-                if not target.guild_permissions.manage_roles and target.name.lower() != "≽^BorysiaczekUwU^≼":
+                if not target.guild_permissions.manage_roles and target.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
                     return target
         return None
 
     @commands.command(name="w")
     async def w_command(self, ctx, action: str = None, *, member: discord.Member = None):
         """Komendy administracyjne do weryfikacji. Użycie: !w <wpusc|kick|ban|moneta|ruletka|pytaj|staty> [użytkownik]"""
-        if not ctx.author.guild_permissions.manage_roles and ctx.author.name.lower() != "≽^BorysiaczekUwU^≼":
+        if not ctx.author.guild_permissions.manage_roles and ctx.author.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await ctx.send("⛔ Brak uprawnień do korzystania z komend weryfikacji!")
 
         if not action or action.lower() not in ["wpusc", "akceptuj", "yes", "kick", "no", "ban", "moneta", "ruletka", "pytaj", "pytanie", "staty", "statystyki"]:

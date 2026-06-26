@@ -133,7 +133,7 @@ class HelpSelect(discord.ui.Select):
             )
 
         elif choice == "⚖️ Weryfikacja":
-            if not interaction.user.guild_permissions.manage_roles and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
+            if not interaction.user.guild_permissions.manage_roles and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
                 embed.color = KAWAII_RED
                 embed.description = "⛔ Nie masz uprawnień do przeglądania tej sekcji!"
             else:
@@ -159,6 +159,21 @@ class HelpView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=180)
         self.add_item(HelpSelect())
+
+class HelpLauncher(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="🌸 Otwórz Pomoc", style=discord.ButtonStyle.success, emoji="🌸")
+    async def open_help(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="🌸 Menu Pomocy Nyanko 🌸",
+            description="Wybierz kategorię z menu poniżej, aby zobaczyć komendy! 👇",
+            color=KAWAII_PINK
+        )
+        embed.set_footer(text="Stworzony przez BorysiaczekUwU 💖 v2.5")
+        view = HelpView()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 class General(commands.Cog):
     def __init__(self, bot):
@@ -214,16 +229,12 @@ class General(commands.Cog):
             pass
 
         embed = discord.Embed(
-            title="🌸 Menu Pomocy 🌸",
-            description="Wybierz kategorię z menu poniżej, aby zobaczyć komendy! 👇",
+            title="🌸 Menu Pomocy Nyanko 🌸",
+            description=f"{ctx.author.mention}, kliknij przycisk poniżej, aby otworzyć bezpieczne, **prywatne (niewidoczne dla innych)** Menu Pomocy! 👇",
             color=KAWAII_PINK
         )
-        embed.set_footer(text="Stworzony przez BorysiaczekUwU 💖 v2.5")
-        
-        try:
-            await ctx.author.send(embed=embed, view=HelpView())
-        except discord.Forbidden:
-            await ctx.send(f"❌ {ctx.author.mention}, nie mogę wysłać Ci pomocy w wiadomości prywatnej! Upewnij się, że masz włączone wiadomości prywatne od członków serwera.", delete_after=10)
+        embed.set_footer(text="Gwarancja prywatności! ✨")
+        await ctx.send(embed=embed, view=HelpLauncher())
 
     @commands.command()
     @commands.has_permissions(kick_members=True)

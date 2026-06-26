@@ -19,7 +19,7 @@ class TrialView(View):
     async def pardon(self, interaction: discord.Interaction, button: Button):
         is_judge = any(r.name == "Sędzia" for r in interaction.user.roles)
         is_admin = interaction.user.guild_permissions.administrator
-        is_owner = interaction.user.name.lower() == "≽^BorysiaczekUwU^≼"
+        is_owner = interaction.user.name.lower() in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]
         
         if not (is_judge or is_admin or is_owner):
             return await interaction.response.send_message("❌ Tylko Sędzia lub Administrator może wydać werdykt!", ephemeral=True)
@@ -66,7 +66,7 @@ class TrialView(View):
     async def mute(self, interaction: discord.Interaction, button: Button):
         is_judge = any(r.name == "Sędzia" for r in interaction.user.roles)
         is_admin = interaction.user.guild_permissions.administrator
-        is_owner = interaction.user.name.lower() == "≽^BorysiaczekUwU^≼"
+        is_owner = interaction.user.name.lower() in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]
         
         if not (is_judge or is_admin or is_owner):
             return await interaction.response.send_message("❌ Tylko Sędzia lub Administrator może wydać werdykt!", ephemeral=True)
@@ -99,7 +99,7 @@ class TrialView(View):
     async def guilty(self, interaction: discord.Interaction, button: Button):
         is_judge = any(r.name == "Sędzia" for r in interaction.user.roles)
         is_admin = interaction.user.guild_permissions.ban_members
-        is_owner = interaction.user.name.lower() == "≽^BorysiaczekUwU^≼"
+        is_owner = interaction.user.name.lower() in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]
         
         if not (is_judge or is_admin or is_owner):
             return await interaction.response.send_message("❌ Tylko Sędzia lub Administrator z prawami do banowania może wydać werdykt!", ephemeral=True)
@@ -410,7 +410,7 @@ class Court(commands.Cog):
         """Ogłasza oficjalny wyrok (Tylko Sędzia/Admin)."""
         is_judge = any(r.name == "Sędzia" for r in ctx.author.roles)
         is_admin = ctx.author.guild_permissions.administrator
-        is_owner = ctx.author.name.lower() == "≽^BorysiaczekUwU^≼"
+        is_owner = ctx.author.name.lower() in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]
         
         if not (is_judge or is_admin or is_owner):
             return await ctx.send("❌ Tylko Sędzia lub Administrator może wydać oficjalny wyrok!")

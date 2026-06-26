@@ -15,7 +15,7 @@ GIFS_NUKE = ["https://media.giphy.com/media/OE6FE4GZF78nm/giphy.gif"]
 
 def has_perms_or_borysiaczek(**perms):
     def predicate(ctx):
-        if ctx.author.name.lower() == "≽^BorysiaczekUwU^≼":
+        if ctx.author.name.lower() in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return True
         permissions = ctx.channel.permissions_for(ctx.author)
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
@@ -588,7 +588,7 @@ class Admin(commands.Cog):
     @has_perms_or_borysiaczek(administrator=True)
     async def timeout_ruletka(self, ctx):
         """[TROLL] Losuje użytkownika i daje mu timeout na 1 minutę."""
-        members = [m for m in ctx.guild.members if not m.bot and not m.guild_permissions.administrator and m.name.lower() != "≽^BorysiaczekUwU^≼"]
+        members = [m for m in ctx.guild.members if not m.bot and not m.guild_permissions.administrator and m.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]]
         if not members:
             await ctx.send("Nie znalazłem żadnego godnego celu (bez admina).")
             return
