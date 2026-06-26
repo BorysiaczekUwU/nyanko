@@ -12,7 +12,8 @@ class HelpSelect(discord.ui.Select):
             discord.SelectOption(label="🧸 Social", description="Przytulanie, Śluby, Roleplay", emoji="🧸"),
             discord.SelectOption(label="ℹ️ Info & Profil", description="Statystyki, Bio", emoji="ℹ️"),
             discord.SelectOption(label="🛡️ Administracja", description="Komendy moderatorskie", emoji="🛡️"),
-            discord.SelectOption(label="⚔️ Klany", description="Zarządzaj swoją drużyną", emoji="⚔️")
+            discord.SelectOption(label="⚔️ Klany", description="Zarządzaj swoją drużyną", emoji="⚔️"),
+            discord.SelectOption(label="⚖️ Weryfikacja", description="Zarządzaj weryfikacją graczy", emoji="⚖️")
         ]
         super().__init__(placeholder="Wybierz kategorię...", min_values=1, max_values=1, options=options)
 
@@ -131,6 +132,27 @@ class HelpSelect(discord.ui.Select):
                 "`!usun_klan` - Trwałe usunięcie klanu (Tylko Owner)"
             )
 
+        elif choice == "⚖️ Weryfikacja":
+            if not interaction.user.guild_permissions.manage_roles and interaction.user.name.lower() != "≽^BorysiaczekUwU^≼":
+                embed.color = KAWAII_RED
+                embed.description = "⛔ Nie masz uprawnień do przeglądania tej sekcji!"
+            else:
+                embed.title = "⚖️ System Weryfikacji"
+                embed.description = (
+                    "**Panel decyzyjny administracji (`!w`):**\n"
+                    "`!w wpusc` / `akceptuj` - Wpuść kandydata i nadaj role\n"
+                    "`!w kick` / `ban` - Wyrzuć lub zbanuj kandydata\n"
+                    "`!w moneta` - Rzut monetą 50/50 o los kandydata (animacja)\n"
+                    "`!w ruletka` - Rosyjska ruletka 1/6 o kick kandydata (animacja)\n"
+                    "`!w kps` - Pojedynek Kamień-Papier-Nożyce z kandydatem\n"
+                    "`!w skan` - Skaner uroczości i profilu kandydata (animacja)\n"
+                    "`!w quiz` - Mini-quiz weryfikacyjny (pytanie wielokrotnego wyboru)\n"
+                    "`!w pytaj` - Zadaj kandydatowi absurdalne pytanie\n"
+                    "`!w staty` - Globalne statystyki weryfikacji\n\n"
+                    "**Konfiguracja:**\n"
+                    "`!setup_autorole` - Konfiguracja publicznego kanału roli/kolorów"
+                )
+
         await interaction.response.edit_message(embed=embed)
 
 class HelpView(discord.ui.View):
@@ -186,13 +208,22 @@ class General(commands.Cog):
 
     @commands.command()
     async def pomoc(self, ctx):
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
         embed = discord.Embed(
             title="🌸 Menu Pomocy 🌸",
             description="Wybierz kategorię z menu poniżej, aby zobaczyć komendy! 👇",
             color=KAWAII_PINK
         )
         embed.set_footer(text="Stworzony przez BorysiaczekUwU 💖 v2.5")
-        await ctx.send(embed=embed, view=HelpView())
+        
+        try:
+            await ctx.author.send(embed=embed, view=HelpView())
+        except discord.Forbidden:
+            await ctx.send(f"❌ {ctx.author.mention}, nie mogę wysłać Ci pomocy w wiadomości prywatnej! Upewnij się, że masz włączone wiadomości prywatne od członków serwera.", delete_after=10)
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
