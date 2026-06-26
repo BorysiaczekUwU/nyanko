@@ -105,7 +105,13 @@ def track_verification_stat(stat_name):
             "coin_heads": 0,
             "coin_tails": 0,
             "roulette_live": 0,
-            "roulette_dead": 0
+            "roulette_dead": 0,
+            "kps_played": 0,
+            "kps_wins": 0,
+            "kps_losses": 0,
+            "quiz_wins": 0,
+            "quiz_losses": 0,
+            "scans_run": 0
         }
     
     # Inkrementacja statystyki
@@ -446,16 +452,25 @@ class VerificationWelcomeView(View):
         if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do wyrzucania!", ephemeral=True)
 
+        guild = interaction.guild
         try:
-            await interaction.response.send_message(f"👢 Szybko wyrzucono {self.member.mention}...", ephemeral=True)
-            await self.member.kick(reason=f"Szybki kick przy weryfikacji przez {interaction.user.name}")
+            member = await guild.fetch_member(self.member.id)
+        except discord.NotFound:
+            member = None
+
+        if not member:
+            return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
+
+        try:
+            await interaction.response.send_message(f"👢 Szybko wyrzucono {member.mention}...", ephemeral=True)
+            await member.kick(reason=f"Szybki kick przy weryfikacji przez {interaction.user.name}")
             
             track_verification_stat("kicked")
 
-            embed = discord.Embed(title="👋 WYRZUCONO (SZYBKA DECYZJA)!", description=f"**{self.member.name}** został szybko wyrzucony przez {interaction.user.mention}.", color=discord.Color.orange())
+            embed = discord.Embed(title="👋 WYRZUCONO (SZYBKA DECYZJA)!", description=f"**{member.name}** został szybko wyrzucony przez {interaction.user.mention}.", color=discord.Color.orange())
             embed.set_image(url=random.choice(GIFS_KICK))
             await self.channel.send(embed=embed)
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             await self.channel.delete()
         except Exception as e:
             await self.channel.send(f"❌ Nie udało się: {e}")
@@ -465,16 +480,25 @@ class VerificationWelcomeView(View):
         if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do banowania!", ephemeral=True)
 
+        guild = interaction.guild
         try:
-            await interaction.response.send_message(f"🔨 Szybko zbanowano {self.member.mention}...", ephemeral=True)
-            await self.member.ban(reason=f"Szybki ban przy weryfikacji przez {interaction.user.name}")
+            member = await guild.fetch_member(self.member.id)
+        except discord.NotFound:
+            member = None
+
+        if not member:
+            return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
+
+        try:
+            await interaction.response.send_message(f"🔨 Szybko zbanowano {member.mention}...", ephemeral=True)
+            await member.ban(reason=f"Szybki ban przy weryfikacji przez {interaction.user.name}")
             
             track_verification_stat("banned")
 
-            embed = discord.Embed(title="🔨 ZBANOWANO (SZYBKA DECYZJA)!", description=f"**{self.member.name}** został szybko zbanowany przez {interaction.user.mention}.", color=KAWAII_RED)
+            embed = discord.Embed(title="🔨 ZBANOWANO (SZYBKA DECYZJA)!", description=f"**{member.name}** został szybko zbanowany przez {interaction.user.mention}.", color=KAWAII_RED)
             embed.set_image(url=random.choice(GIFS_BAN))
             await self.channel.send(embed=embed)
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             await self.channel.delete()
         except Exception as e:
             await self.channel.send(f"❌ Nie udało się: {e}")
@@ -500,7 +524,11 @@ class VerifyDecisionView(View):
         if not guild:
             return await interaction.response.send_message("❌ Błąd: Nie można odnaleźć serwera.", ephemeral=True)
 
-        member = guild.get_member(self.member.id)
+        try:
+            member = await guild.fetch_member(self.member.id)
+        except discord.NotFound:
+            member = None
+
         if not member:
             return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
 
@@ -514,7 +542,7 @@ class VerifyDecisionView(View):
         roles_added = []
         try: 
             await member.add_roles(verified_role)
-            roles_added.append("Bilecik")
+            roles_added.append("—͟͞✅・Bilecik")
         except Exception as e: 
             print(f"Błąd nadawania roli Bilecik: {e}")
         
@@ -522,7 +550,7 @@ class VerifyDecisionView(View):
         if zaba_role:
             try: 
                 await member.add_roles(zaba_role)
-                roles_added.append("Żaby")
+                roles_added.append("🐸 • Żaby")
             except Exception as e: 
                 print(f"Błąd nadawania roli Żaby: {e}")
         
@@ -530,10 +558,12 @@ class VerifyDecisionView(View):
         track_verification_stat("verified")
 
         welcome_embed = discord.Embed(
-            title="🎉 WERYFIKACJA ZATWIERDZONA! 🎉",
-            description=f"Witaj serdecznie na naszym serwerze, {member.mention}! 🌸\n"
-                        f"Pomyślnie nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}.\n\n"
-                        f"**Ten kanał zostanie automatycznie usunięty za 10 sekund...** ⏳",
+            title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
+            description=f"Serdecznie witamy i zapraszamy na serwer, {member.mention}! 🥰\n\n"
+                        f"✨ Zostałeś pomyślnie zweryfikowany przez administrację!\n"
+                        f"🌸 Nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}\n"
+                        f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
+                        f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
             color=KAWAII_PINK
         )
         welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
@@ -557,16 +587,25 @@ class VerifyDecisionView(View):
         if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do wyrzucania!", ephemeral=True)
 
+        guild = interaction.guild
         try:
-            await interaction.response.send_message(f"👢 Wyrzucono {self.member.mention}...", ephemeral=True)
-            await self.member.kick(reason=f"Wyrzucono przy weryfikacji przez {interaction.user.name}")
+            member = await guild.fetch_member(self.member.id)
+        except discord.NotFound:
+            member = None
+
+        if not member:
+            return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
+
+        try:
+            await interaction.response.send_message(f"👢 Wyrzucono {member.mention}...", ephemeral=True)
+            await member.kick(reason=f"Wyrzucono przy weryfikacji przez {interaction.user.name}")
             
             track_verification_stat("kicked")
 
-            embed = discord.Embed(title="👋 WYRZUCONO!", description=f"**{self.member.name}** nie przeszedł weryfikacji.", color=discord.Color.orange())
+            embed = discord.Embed(title="👋 WYRZUCONO!", description=f"**{member.name}** nie przeszedł weryfikacji.", color=discord.Color.orange())
             embed.set_image(url=random.choice(GIFS_KICK))
             await self.channel.send(embed=embed)
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             await self.channel.delete()
         except Exception as e:
             await self.channel.send(f"❌ Nie udało się: {e}")
@@ -576,19 +615,28 @@ class VerifyDecisionView(View):
         if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do banowania!", ephemeral=True)
 
+        guild = interaction.guild
         try:
-            await interaction.response.send_message(f"🔨 Zbanowano {self.member.mention}...", ephemeral=True)
-            await self.member.ban(reason=f"Zbanowano przy weryfikacji przez {interaction.user.name}")
+            member = await guild.fetch_member(self.member.id)
+        except discord.NotFound:
+            member = None
+
+        if not member:
+            return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
+
+        try:
+            await interaction.response.send_message(f"🔨 Zbanowano {member.mention}...", ephemeral=True)
+            await member.ban(reason=f"Zbanowano przy weryfikacji przez {interaction.user.name}")
             
             track_verification_stat("banned")
 
-            embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{self.member.name}** nie przeszedł weryfikacji.", color=KAWAII_RED)
+            embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{member.name}** nie przeszedł weryfikacji.", color=KAWAII_RED)
             embed.set_image(url=random.choice(GIFS_BAN))
             await self.channel.send(embed=embed)
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             await self.channel.delete()
-        except:
-            await self.channel.send(f"❌ Nie udało się.")
+        except Exception as e:
+            await self.channel.send(f"❌ Nie udało się: {e}")
 
 
 # --- WIDOKI DLA NOWYCH INTERAKTYWNYCH FUNKCJI ---
@@ -719,7 +767,7 @@ class KPSAdminDecisionView(View):
         self.verified_role = verified_role
         self.channel = channel
 
-    @discord.ui.button(label="🟢 Wpuść", style=discord.ButtonStyle.success, emoji="🎟️")
+    @discord.ui.button(label="✅ ZATWIERDŹ", style=discord.ButtonStyle.success, emoji="🎟️")
     async def accept(self, interaction: discord.Interaction, button: Button):
         if interaction.user.id != self.admin.id:
             return await interaction.response.send_message("⛔ Tylko sędzia tego pojedynku może podjąć decyzję!", ephemeral=True)
@@ -728,7 +776,11 @@ class KPSAdminDecisionView(View):
         if not guild:
             return await interaction.response.send_message("❌ Błąd: Nie można odnaleźć serwera.", ephemeral=True)
 
-        member = guild.get_member(self.member.id)
+        try:
+            member = await guild.fetch_member(self.member.id)
+        except discord.NotFound:
+            member = None
+
         if not member:
             return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
 
@@ -742,7 +794,7 @@ class KPSAdminDecisionView(View):
         roles_added = []
         try:
             await member.add_roles(verified_role)
-            roles_added.append("Bilecik")
+            roles_added.append("—͟͞✅・Bilecik")
         except Exception as e:
             print(f"Błąd nadawania roli Bilecik: {e}")
         
@@ -750,7 +802,7 @@ class KPSAdminDecisionView(View):
         if zaba_role:
             try:
                 await member.add_roles(zaba_role)
-                roles_added.append("Żaby")
+                roles_added.append("🐸 • Żaby")
             except Exception as e:
                 print(f"Błąd nadawania roli Żaby: {e}")
         
@@ -758,10 +810,12 @@ class KPSAdminDecisionView(View):
         track_verification_stat("verified")
 
         welcome_embed = discord.Embed(
-            title="🎉 WERYFIKACJA ZATWIERDZONA! 🎉",
-            description=f"Witaj serdecznie na naszym serwerze, {member.mention}! 🌸\n"
-                        f"Pomyślnie nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}.\n\n"
-                        f"**Ten kanał zostanie automatycznie usunięty za 10 sekund...** ⏳",
+            title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
+            description=f"Serdecznie witamy i zapraszamy na serwer, {member.mention}! 🥰\n\n"
+                        f"✨ Zostałeś pomyślnie zweryfikowany decyzją sędziego po pojedynku!\n"
+                        f"🌸 Nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}\n"
+                        f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
+                        f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
             color=KAWAII_PINK
         )
         welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
@@ -785,15 +839,24 @@ class KPSAdminDecisionView(View):
         if interaction.user.id != self.admin.id:
             return await interaction.response.send_message("⛔ Tylko sędzia tego pojedynku może podjąć decyzję!", ephemeral=True)
 
+        guild = interaction.guild
         try:
-            await interaction.response.send_message(f"👢 Wyrzucono {self.member.mention}...", ephemeral=True)
-            await self.member.kick(reason=f"Przegrany pojedynek KPS i decyzja sędziego")
+            member = await guild.fetch_member(self.member.id)
+        except discord.NotFound:
+            member = None
+
+        if not member:
+            return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
+
+        try:
+            await interaction.response.send_message(f"👢 Wyrzucono {member.mention}...", ephemeral=True)
+            await member.kick(reason=f"Przegrany pojedynek KPS i decyzja sędziego")
             track_verification_stat("kicked")
 
-            embed = discord.Embed(title="👋 WYRZUCONO!", description=f"**{self.member.name}** przegrał pojedynek KPS i został wyrzucony.", color=discord.Color.orange())
+            embed = discord.Embed(title="👋 WYRZUCONO!", description=f"**{member.name}** przegrał pojedynek KPS i został wyrzucony.", color=discord.Color.orange())
             embed.set_image(url=random.choice(GIFS_KICK))
             await self.channel.send(embed=embed)
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             await self.channel.delete()
         except Exception as e:
             await self.channel.send(f"❌ Nie udało się: {e}")
@@ -803,15 +866,24 @@ class KPSAdminDecisionView(View):
         if interaction.user.id != self.admin.id:
             return await interaction.response.send_message("⛔ Tylko sędzia tego pojedynku może podjąć decyzję!", ephemeral=True)
 
+        guild = interaction.guild
         try:
-            await interaction.response.send_message(f"🔨 Zbanowano {self.member.mention}...", ephemeral=True)
-            await self.member.ban(reason=f"Przegrany pojedynek KPS i decyzja sędziego")
+            member = await guild.fetch_member(self.member.id)
+        except discord.NotFound:
+            member = None
+
+        if not member:
+            return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
+
+        try:
+            await interaction.response.send_message(f"🔨 Zbanowano {member.mention}...", ephemeral=True)
+            await member.ban(reason=f"Przegrany pojedynek KPS i decyzja sędziego")
             track_verification_stat("banned")
 
-            embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{self.member.name}** przegrał pojedynek KPS i został zbanowany.", color=KAWAII_RED)
+            embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{member.name}** przegrał pojedynek KPS i został zbanowany.", color=KAWAII_RED)
             embed.set_image(url=random.choice(GIFS_BAN))
             await self.channel.send(embed=embed)
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             await self.channel.delete()
         except Exception as e:
             await self.channel.send(f"❌ Nie udało się: {e}")
@@ -885,26 +957,44 @@ class KPSView(View):
                 track_verification_stat("verified")
 
                 try:
-                    await self.member.add_roles(self.verified_role)
-                except:
-                    pass
-                zaba_role = discord.utils.get(interaction.guild.roles, name="🐸 • Żaby")
-                if zaba_role:
+                    member = await interaction.guild.fetch_member(self.member.id)
+                except discord.NotFound:
+                    member = None
+
+                if member:
                     try:
-                        await self.member.add_roles(zaba_role)
+                        await member.add_roles(self.verified_role)
                     except:
                         pass
-                update_data(self.member.id, "balance", 150, "add")
+                    zaba_role = discord.utils.get(interaction.guild.roles, name="🐸 • Żaby")
+                    if zaba_role:
+                        try:
+                            await member.add_roles(zaba_role)
+                        except:
+                            pass
+                    update_data(member.id, "balance", 150, "add")
 
-                general = discord.utils.get(interaction.guild.text_channels, name="💬・pogadanki") or discord.utils.get(interaction.guild.text_channels, name="ogólny")
-                if general:
                     welcome_embed = discord.Embed(
-                        description=f"Witamy **{self.member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Pokonał sędziego w pojedynku KPS! ⚔️)*",
+                        title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
+                        description=f"Serdecznie witamy i zapraszamy na serwer, {member.mention}! 🥰\n\n"
+                                    f"⚔️ Pokonałeś sędziego w pojedynku KPS i zostałeś automatycznie zweryfikowany!\n"
+                                    f"🌸 Nadano Ci role: **—͟͞✅・Bilecik**, **🐸 • Żaby**\n"
+                                    f"💰 Otrzymujesz bonusowe **150 monet** do ekonomii! 💰\n\n"
+                                    f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
                         color=KAWAII_PINK
                     )
-                    b = get_profile_data(self.member.id).get("bio", "Nowy gracz na streecie!")
-                    welcome_embed.add_field(name="Zostawił takie bio:", value=b)
-                    await general.send(welcome_embed)
+                    welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
+                    await self.channel.send(embed=welcome_embed)
+
+                    general = discord.utils.get(interaction.guild.text_channels, name="💬・pogadanki") or discord.utils.get(interaction.guild.text_channels, name="ogólny")
+                    if general:
+                        chat_welcome = discord.Embed(
+                            description=f"Witamy **{member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Pokonał sędziego w pojedynku KPS! ⚔️)*",
+                            color=KAWAII_PINK
+                        )
+                        b = get_profile_data(member.id).get("bio", "Nowy gracz na streecie!")
+                        chat_welcome.add_field(name="Zostawił takie bio:", value=b)
+                        await general.send(chat_welcome)
 
                 await asyncio.sleep(10)
                 try:
@@ -1116,11 +1206,17 @@ class Verification(commands.Cog):
 
     @commands.command(name="w")
     async def w_command(self, ctx, action: str = None, *, member: discord.Member = None):
-        """Komendy administracyjne do weryfikacji. Użycie: !w <wpusc|kick|ban|moneta|ruletka|pytaj|staty> [użytkownik]"""
+        """Komendy administracyjne do weryfikacji. Użycie: !w <wpusc|kick|ban|moneta|ruletka|kps|skan|quiz|pytaj|staty> [użytkownik]"""
         if not ctx.author.guild_permissions.manage_roles and ctx.author.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await ctx.send("⛔ Brak uprawnień do korzystania z komend weryfikacji!")
 
-        if not action or action.lower() not in ["wpusc", "akceptuj", "yes", "kick", "no", "ban", "moneta", "ruletka", "pytaj", "pytanie", "staty", "statystyki"]:
+        valid_actions = [
+            "wpusc", "akceptuj", "yes", "kick", "no", "ban", "moneta", "ruletka",
+            "pytaj", "pytanie", "staty", "statystyki", "kps", "kpn", "rps",
+            "skan", "wykrywacz", "audit", "quiz", "test"
+        ]
+
+        if not action or action.lower() not in valid_actions:
             embed = discord.Embed(
                 title="⚖️ Panel Pomocy Weryfikacji",
                 description="Użyj jednego z poniższych parametrów:\n"
@@ -1129,8 +1225,11 @@ class Verification(commands.Cog):
                             "• `!w ban` - Banuje użytkownika na serwerze.\n"
                             "• `!w moneta` - 50/50 na wpuszczenie lub kick z animacją rzutu monetą.\n"
                             "• `!w ruletka` - Rosyjska ruletka (1/6 szans na kick, 5/6 na wpuszczenie) z animacją rewolweru.\n"
+                            "• `!w kps` / `!w kpn` - Inicjuje pojedynek Kamień, Papier, Nożyce z kandydatem.\n"
+                            "• `!w skan` / `!w wykrywacz` - Przeprowadza zabawny diagnostyczny skan uroczości.\n"
+                            "• `!w quiz` / `!w test` - Wyświetla szybki weryfikacyjny test jednokrotnego wyboru (30s).\n"
                             "• `!w pytaj` - Zadaje użytkownikowi losowe, zabawne pytanie rekrutacyjne.\n"
-                            "• `!w staty` - Wyświetla globalne statystyki systemu weryfikacji.",
+                            "• `!w staty` - Wyświetla globalne statystyki systemu weryfikacji z emotkami.",
                 color=KAWAII_GOLD
             )
             return await ctx.send(embed=embed)
@@ -1216,7 +1315,7 @@ class Verification(commands.Cog):
                 embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{member.name}** nie przeszedł weryfikacji (decyzja: {ctx.author.mention}).", color=KAWAII_RED)
                 embed.set_image(url=random.choice(GIFS_BAN))
                 await ctx.send(embed=embed)
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
                 await ctx.channel.delete()
             except Exception as e:
                 await ctx.send(f"❌ Nie udało się: {e}")
@@ -1258,25 +1357,46 @@ class Verification(commands.Cog):
                 track_verification_stat("verified")
 
                 try:
-                    await member.add_roles(verified_role)
-                except:
-                    pass
-                zaba_role = discord.utils.get(ctx.guild.roles, name="🐸 • Żaby")
-                if zaba_role:
+                    fetched_member = await ctx.guild.fetch_member(member.id)
+                except discord.NotFound:
+                    fetched_member = None
+
+                if fetched_member:
+                    roles_added = []
                     try:
-                        await member.add_roles(zaba_role)
+                        await fetched_member.add_roles(verified_role)
+                        roles_added.append("—͟͞✅・Bilecik")
                     except:
                         pass
-                update_data(member.id, "balance", 100, "add")
+                    zaba_role = discord.utils.get(ctx.guild.roles, name="🐸 • Żaby")
+                    if zaba_role:
+                        try:
+                            await fetched_member.add_roles(zaba_role)
+                            roles_added.append("🐸 • Żaby")
+                        except:
+                            pass
+                    update_data(fetched_member.id, "balance", 100, "add")
 
-                general = discord.utils.get(ctx.guild.text_channels, name="💬・pogadanki") or discord.utils.get(ctx.guild.text_channels, name="ogólny")
-                if general:
-                    embed = discord.Embed(description=f"Witamy **{member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Wygrał weryfikacyjny rzut monetą! 🪙)*", color=KAWAII_PINK)
-                    b = get_profile_data(member.id).get("bio", "Nowy gracz na streecie!")
-                    embed.add_field(name="Zostawił takie bio:", value=b)
-                    await general.send(embed=embed)
+                    welcome_embed = discord.Embed(
+                        title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
+                        description=f"Serdecznie witamy i zapraszamy na serwer, {fetched_member.mention}! 🥰\n\n"
+                                    f"🪙 Wygrałeś weryfikacyjny rzut monetą! Szczęśliwy traf!\n"
+                                    f"🌸 Nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}\n"
+                                    f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
+                                    f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
+                        color=KAWAII_PINK
+                    )
+                    welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
+                    await ctx.send(embed=welcome_embed)
 
-                await asyncio.sleep(6)
+                    general = discord.utils.get(ctx.guild.text_channels, name="💬・pogadanki") or discord.utils.get(ctx.guild.text_channels, name="ogólny")
+                    if general:
+                        embed = discord.Embed(description=f"Witamy **{fetched_member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Wygrał weryfikacyjny rzut monetą! 🪙)*", color=KAWAII_PINK)
+                        b = get_profile_data(fetched_member.id).get("bio", "Nowy gracz na streecie!")
+                        embed.add_field(name="Zostawił takie bio:", value=b)
+                        await general.send(embed=embed)
+
+                await asyncio.sleep(10)
                 try:
                     await ctx.channel.delete()
                 except:
@@ -1292,15 +1412,21 @@ class Verification(commands.Cog):
                 track_verification_stat("kicked")
 
                 try:
-                    await member.kick(reason="Przegrany weryfikacyjny rzut monetą (!w moneta)")
-                except:
-                    pass
+                    fetched_member = await ctx.guild.fetch_member(member.id)
+                except discord.NotFound:
+                    fetched_member = None
+
+                if fetched_member:
+                    try:
+                        await fetched_member.kick(reason="Przegrany weryfikacyjny rzut monetą (!w moneta)")
+                    except:
+                        pass
 
                 embed_kick = discord.Embed(title="👋 WYRZUCONO!", description=f"**{member.name}** przegrał rzut monetą i został wyrzucony.", color=discord.Color.orange())
                 embed_kick.set_image(url=random.choice(GIFS_KICK))
                 await ctx.send(embed_kick)
 
-                await asyncio.sleep(6)
+                await asyncio.sleep(10)
                 try:
                     await ctx.channel.delete()
                 except:
@@ -1343,15 +1469,21 @@ class Verification(commands.Cog):
                 await msg.edit(embed=bullet_embed)
 
                 try:
-                    await member.kick(reason="Przegrana rosyjska ruletka weryfikacyjna (!w ruletka)")
-                except:
-                    pass
+                    fetched_member = await ctx.guild.fetch_member(member.id)
+                except discord.NotFound:
+                    fetched_member = None
+
+                if fetched_member:
+                    try:
+                        await fetched_member.kick(reason="Przegrana rosyjska ruletka weryfikacyjna (!w ruletka)")
+                    except:
+                        pass
 
                 embed_kick = discord.Embed(title="👋 WYRZUCONO!", description=f"**{member.name}** poległ w rosyjskiej ruletce weryfikacyjnej.", color=discord.Color.orange())
                 embed_kick.set_image(url=random.choice(GIFS_KICK))
                 await ctx.send(embed_kick)
 
-                await asyncio.sleep(6)
+                await asyncio.sleep(10)
                 try:
                     await ctx.channel.delete()
                 except:
@@ -1367,25 +1499,46 @@ class Verification(commands.Cog):
                 await msg.edit(embed=bullet_embed)
 
                 try:
-                    await member.add_roles(verified_role)
-                except:
-                    pass
-                zaba_role = discord.utils.get(ctx.guild.roles, name="🐸 • Żaby")
-                if zaba_role:
+                    fetched_member = await ctx.guild.fetch_member(member.id)
+                except discord.NotFound:
+                    fetched_member = None
+
+                if fetched_member:
+                    roles_added = []
                     try:
-                        await member.add_roles(zaba_role)
+                        await fetched_member.add_roles(verified_role)
+                        roles_added.append("—͟͞✅・Bilecik")
                     except:
                         pass
-                update_data(member.id, "balance", 100, "add")
+                    zaba_role = discord.utils.get(ctx.guild.roles, name="🐸 • Żaby")
+                    if zaba_role:
+                        try:
+                            await fetched_member.add_roles(zaba_role)
+                            roles_added.append("🐸 • Żaby")
+                        except:
+                            pass
+                    update_data(fetched_member.id, "balance", 100, "add")
 
-                general = discord.utils.get(ctx.guild.text_channels, name="💬・pogadanki") or discord.utils.get(ctx.guild.text_channels, name="ogólny")
-                if general:
-                    embed = discord.Embed(description=f"Witamy **{member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Przeżył weryfikacyjną rosyjską ruletkę! 🔫)*", color=KAWAII_PINK)
-                    b = get_profile_data(member.id).get("bio", "Nowy gracz na streecie!")
-                    embed.add_field(name="Zostawił takie bio:", value=b)
-                    await general.send(embed=embed)
+                    welcome_embed = discord.Embed(
+                        title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
+                        description=f"Serdecznie witamy i zapraszamy na serwer, {fetched_member.mention}! 🥰\n\n"
+                                    f"🔫 Przeżyłeś rosyjską ruletkę! Niesamowite szczęście!\n"
+                                    f"🌸 Nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}\n"
+                                    f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
+                                    f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
+                        color=KAWAII_PINK
+                    )
+                    welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
+                    await ctx.send(embed=welcome_embed)
 
-                await asyncio.sleep(6)
+                    general = discord.utils.get(ctx.guild.text_channels, name="💬・pogadanki") or discord.utils.get(ctx.guild.text_channels, name="ogólny")
+                    if general:
+                        embed = discord.Embed(description=f"Witamy **{fetched_member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Przeżył weryfikacyjną rosyjską ruletkę! 🔫)*", color=KAWAII_PINK)
+                        b = get_profile_data(fetched_member.id).get("bio", "Nowy gracz na streecie!")
+                        embed.add_field(name="Zostawił takie bio:", value=b)
+                        await general.send(embed=embed)
+
+                await asyncio.sleep(10)
                 try:
                     await ctx.channel.delete()
                 except:
@@ -1506,7 +1659,13 @@ class Verification(commands.Cog):
                     "coin_heads": 0,
                     "coin_tails": 0,
                     "roulette_live": 0,
-                    "roulette_dead": 0
+                    "roulette_dead": 0,
+                    "kps_played": 0,
+                    "kps_wins": 0,
+                    "kps_losses": 0,
+                    "quiz_wins": 0,
+                    "quiz_losses": 0,
+                    "scans_run": 0
                 }
             
             total_processed = stats.get("verified", 0) + stats.get("kicked", 0) + stats.get("banned", 0)
@@ -1515,16 +1674,24 @@ class Verification(commands.Cog):
                 survival_rate = (stats.get("verified", 0) / total_processed) * 100.0
             
             embed_stats = discord.Embed(
-                title="📊 STATYSTYKI SYSTEMU WERYFIKACJI 📊",
-                description="Oto globalne statystyki weryfikacji na serwerze Nyanko:",
+                title="📊 ROZSZERZONE STATYSTYKI WERYFIKACJI 📊",
+                description="Oto globalny raport z weryfikacji i gier na serwerze Nyanko:",
                 color=KAWAII_GOLD
             )
-            embed_stats.add_field(name="✅ Przepuszczeni", value=f"`{stats.get('verified', 0)}` graczy", inline=True)
-            embed_stats.add_field(name="👢 Wyrzuceni (Kick)", value=f"`{stats.get('kicked', 0)}` graczy", inline=True)
-            embed_stats.add_field(name="🔨 Zbanowani (Ban)", value=f"`{stats.get('banned', 0)}` graczy", inline=True)
+            embed_stats.add_field(name="💖 Zatwierdzeni (Bileciki)", value=f"🥇 `{stats.get('verified', 0)}` graczy", inline=True)
+            embed_stats.add_field(name="`❌ Wyrzuceni`", value=f"🚪 `{stats.get('kicked', 0)}` graczy", inline=True)
+            embed_stats.add_field(name="🔨 Zbanowani (Bany)", value=f"🚷 `{stats.get('banned', 0)}` graczy", inline=True)
             
-            embed_stats.add_field(name="🪙 Rzuty Monetą", value=f"Orzeł: `{stats.get('coin_heads', 0)}` | Reszka: `{stats.get('coin_tails', 0)}`", inline=False)
-            embed_stats.add_field(name="🔫 Rosyjska Ruletka", value=f"Przeżyli: `{stats.get('roulette_live', 0)}` | Polegli: `{stats.get('roulette_dead', 0)}`", inline=False)
+            embed_stats.add_field(
+                name="🪙 Rzuty Monetą (50/50)",
+                value=f"🦅 Orzeł (Wpuszczenie): `{stats.get('coin_heads', 0)}` | 🪙 Reszka (Kick): `{stats.get('coin_tails', 0)}`",
+                inline=False
+            )
+            embed_stats.add_field(
+                name="🔫 Rosyjska Ruletka (1/6)",
+                value=f"💚 Przeżyli (Wpuszczenie): `{stats.get('roulette_live', 0)}` | 💥 Polegli (Kick): `{stats.get('roulette_dead', 0)}`",
+                inline=False
+            )
             
             kps_wins = stats.get("kps_wins", 0)
             kps_losses = stats.get("kps_losses", 0)
@@ -1533,12 +1700,30 @@ class Verification(commands.Cog):
             quiz_losses = stats.get("quiz_losses", 0)
             scans_run = stats.get("scans_run", 0)
             
-            embed_stats.add_field(name="⚔️ Pojedynki KPS", value=f"Wygrane kandydata: `{kps_wins}` | Sędziego: `{kps_losses}` (Grało: `{kps_played}`)", inline=False)
-            embed_stats.add_field(name="🧠 Quizy Weryfikacyjne", value=f"Dobre odp.: `{quiz_wins}` | Błędne/Czas: `{quiz_losses}`", inline=False)
-            embed_stats.add_field(name="🔍 Skanery Uroczości", value=f"Wykonano: `{scans_run}` skanów", inline=False)
+            embed_stats.add_field(
+                name="⚔️ Pojedynki KPS (Kamień-Papier-Nożyce)",
+                value=f"🏆 Wygrane kandydata: `{kps_wins}` | 👑 Wygrane sędziego: `{kps_losses}`\n🎮 Razem pojedynków: `{kps_played}`",
+                inline=False
+            )
+            embed_stats.add_field(
+                name="🧠 Quizy Weryfikacyjne",
+                value=f"🟢 Dobre odpowiedzi: `{quiz_wins}` | 🔴 Błędne/Limit czasu: `{quiz_losses}`",
+                inline=False
+            )
+            embed_stats.add_field(
+                name="🔍 Skanery Uroczości",
+                value=f"🌸 Wykonano diagnostyk: `{scans_run}` skanów",
+                inline=False
+            )
             
-            embed_stats.add_field(name="❤️ Wskaźnik Przetrwania (Survival Rate)", value=f"`{survival_rate:.1f}%` szansy na wpuszczenie", inline=False)
-            embed_stats.set_footer(text=f"Łącznie obsłużono: {total_processed} prób weryfikacji")
+            embed_stats.add_field(
+                name="❤️ Globalny Wskaźnik Przetrwania",
+                value=f"📈 `{survival_rate:.1f}%` szansy na pomyślną weryfikację",
+                inline=False
+            )
+            
+            embed_stats.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else self.bot.user.default_avatar.url)
+            embed_stats.set_footer(text=f"Łącznie obsłużono: {total_processed} weryfikowanych graczy")
             
             await ctx.send(embed=embed_stats)
 
