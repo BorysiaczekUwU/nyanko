@@ -149,6 +149,128 @@ ROLES = {
 
 pending_roles = {}
 
+async def execute_verification(bot, guild, member, channel, balance_amount, welcome_description, pogadanki_extra="", interaction=None):
+    # 1. Pomiary ról do dodania
+    roles_to_add = []
+    roles_added_names = []
+    
+    # Rola Bilecik
+    verified_role = discord.utils.get(guild.roles, name="—͟͞✅・Bilecik")
+    if not verified_role:
+        try:
+            verified_role = await guild.create_role(name="—͟͞✅・Bilecik", color=discord.Color.from_rgb(255, 182, 193))
+        except Exception as e:
+            print(f"Błąd tworzenia roli Bilecik: {e}")
+    if verified_role:
+        roles_to_add.append(verified_role)
+        roles_added_names.append("—͟͞✅・Bilecik")
+        
+    # Rola Żaby
+    zaba_role = discord.utils.get(guild.roles, name="🐸 • Żaby")
+    if zaba_role:
+        roles_to_add.append(zaba_role)
+        roles_added_names.append("🐸 • Żaby")
+        
+    # Role oczekujące wybrane w kreatorze profilu
+    user_pending_ids = pending_roles.get(member.id, [])
+    for rid in user_pending_ids:
+        r = guild.get_role(rid)
+        if r and r not in roles_to_add:
+            roles_to_add.append(r)
+            roles_added_names.append(r.name)
+            
+    # Nadanie ról (zbiorczo, z fallbackiem)
+    if roles_to_add:
+        try:
+            await member.add_roles(*roles_to_add)
+        except discord.Forbidden:
+            for r in roles_to_add:
+                try:
+                    await member.add_roles(r)
+                except:
+                    pass
+        except Exception as e:
+            print(f"Błąd dodawania ról: {e}")
+            
+    # Czyszczenie listy oczekujących ról
+    pending_roles[member.id] = []
+    
+    # 2. Aktualizacja pseudonimu o flagę orientacji
+    profile = get_profile_data(member.id)
+    orientation = profile.get("orientation", "")
+    if orientation:
+        clean_orient = orientation.split()[-1] if len(orientation.split()) > 1 else orientation
+        chosen_flag = ""
+        for v in ORIENTATIONS.values():
+            if v["name"] == clean_orient or v["name"] in orientation:
+                chosen_flag = v.get("flag", "")
+                break
+        if chosen_flag:
+            data_flags = set([val["flag"] for val in ORIENTATIONS.values() if "flag" in val])
+            nick = member.display_name
+            for flag in data_flags:
+                nick = nick.replace(f"{flag} ", "").replace(flag, "")
+            nick = nick.strip()
+            if len(nick) == 0:
+                nick = member.name
+            new_nick = f"{chosen_flag} {nick}"
+            if len(new_nick) > 32:
+                new_nick = new_nick[:32]
+            try:
+                await member.edit(nick=new_nick)
+            except Exception as e:
+                print(f"Błąd zmiany pseudonimu przy weryfikacji: {e}")
+                
+    # 3. Zapisanie ekonomii i śledzenie statystyk
+    update_data(member.id, "balance", balance_amount, "add")
+    track_verification_stat("verified")
+    
+    # 4. Wysłanie uroczej wiadomości powitalnej na kanale weryfikacyjnym
+    formatted_roles = ", ".join([f"**{r}**" for r in roles_added_names])
+    desc = welcome_description.replace("{roles}", formatted_roles)
+    
+    welcome_embed = discord.Embed(
+        title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
+        description=desc,
+        color=KAWAII_PINK
+    )
+    welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
+    
+    if interaction:
+        try:
+            await interaction.response.send_message(embed=welcome_embed)
+        except Exception:
+            try:
+                await channel.send(embed=welcome_embed)
+            except:
+                pass
+    else:
+        try:
+            await channel.send(embed=welcome_embed)
+        except:
+            pass
+            
+    # 5. Wysłanie powitania na kanale pogadanki / ogólny
+    general = discord.utils.get(guild.text_channels, name="💬・pogadanki") or discord.utils.get(guild.text_channels, name="ogólny")
+    if general:
+        pogadanki_desc = f"Witamy **{member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖"
+        if pogadanki_extra:
+            pogadanki_desc += f"\n*{pogadanki_extra}*"
+        embed = discord.Embed(description=pogadanki_desc, color=KAWAII_PINK)
+        b = profile.get("bio", "Nowy gracz na streecie!")
+        embed.add_field(name="Zostawił takie bio:", value=b)
+        try:
+            await general.send(embed=embed)
+        except Exception as e:
+            print(f"Błąd wysyłania powitania na ogólny: {e}")
+            
+    # 6. Automatyczne usunięcie kanału weryfikacyjnego po 10 sekundach
+    await asyncio.sleep(10)
+    try:
+        await channel.delete()
+    except Exception as e:
+        print(f"Błąd usuwania kanału: {e}")
+
 # --- MODAL: BIO ---
 class BioModal(Modal, title="Stwórz Swój Profil!"):
     bio = TextInput(
@@ -532,55 +654,24 @@ class VerifyDecisionView(View):
         if not member:
             return await interaction.response.send_message("❌ Błąd: Użytkownik opuścił serwer.", ephemeral=True)
 
-        verified_role = discord.utils.get(guild.roles, name="—͟͞✅・Bilecik")
-        if not verified_role:
-            try:
-                verified_role = await guild.create_role(name="—͟͞✅・Bilecik", color=discord.Color.from_rgb(255, 182, 193))
-            except Exception as e:
-                return await interaction.response.send_message(f"❌ Błąd tworzenia roli: {e}", ephemeral=True)
-
-        roles_added = []
-        try: 
-            await member.add_roles(verified_role)
-            roles_added.append("—͟͞✅・Bilecik")
-        except Exception as e: 
-            print(f"Błąd nadawania roli Bilecik: {e}")
-        
-        zaba_role = discord.utils.get(guild.roles, name="🐸 • Żaby")
-        if zaba_role:
-            try: 
-                await member.add_roles(zaba_role)
-                roles_added.append("🐸 • Żaby")
-            except Exception as e: 
-                print(f"Błąd nadawania roli Żaby: {e}")
-        
-        update_data(member.id, "balance", 100, "add")
-        track_verification_stat("verified")
-
-        welcome_embed = discord.Embed(
-            title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
-            description=f"Serdecznie witamy i zapraszamy na serwer, {member.mention}! 🥰\n\n"
-                        f"✨ Zostałeś pomyślnie zweryfikowany przez administrację!\n"
-                        f"🌸 Nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}\n"
-                        f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
-                        f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
-            color=KAWAII_PINK
+        welcome_desc = (
+            f"Serdecznie witamy i zapraszamy na serwer, {member.mention}! 🥰\n\n"
+            f"✨ Zostałeś pomyślnie zweryfikowany przez administrację!\n"
+            f"🌸 Nadano Ci role: {{roles}}\n"
+            f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
+            f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳"
         )
-        welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
-        await interaction.response.send_message(embed=welcome_embed)
         
-        general = discord.utils.get(guild.text_channels, name="💬・pogadanki") or discord.utils.get(guild.text_channels, name="ogólny")
-        if general:
-            embed = discord.Embed(description=f"Witamy **{member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖", color=KAWAII_PINK)
-            b = get_profile_data(member.id).get("bio", "Nowy gracz na streecie!")
-            embed.add_field(name="Zostawił takie bio:", value=b)
-            await general.send(embed=embed)
-
-        await asyncio.sleep(10)
-        try:
-            await self.channel.delete()
-        except:
-            pass
+        await execute_verification(
+            bot=self.bot,
+            guild=guild,
+            member=member,
+            channel=self.channel,
+            balance_amount=100,
+            welcome_description=welcome_desc,
+            pogadanki_extra="",
+            interaction=interaction
+        )
 
     @discord.ui.button(label="👋 WYRZUĆ", style=discord.ButtonStyle.danger, emoji="👢")
     async def kick_button(self, interaction: discord.Interaction, button: Button):
@@ -954,7 +1045,6 @@ class KPSView(View):
                 await interaction.message.edit(embed=embed, view=self)
 
                 track_verification_stat("kps_wins")
-                track_verification_stat("verified")
 
                 try:
                     member = await interaction.guild.fetch_member(self.member.id)
@@ -962,45 +1052,23 @@ class KPSView(View):
                     member = None
 
                 if member:
-                    try:
-                        await member.add_roles(self.verified_role)
-                    except:
-                        pass
-                    zaba_role = discord.utils.get(interaction.guild.roles, name="🐸 • Żaby")
-                    if zaba_role:
-                        try:
-                            await member.add_roles(zaba_role)
-                        except:
-                            pass
-                    update_data(member.id, "balance", 150, "add")
-
-                    welcome_embed = discord.Embed(
-                        title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
-                        description=f"Serdecznie witamy i zapraszamy na serwer, {member.mention}! 🥰\n\n"
-                                    f"⚔️ Pokonałeś sędziego w pojedynku KPS i zostałeś automatycznie zweryfikowany!\n"
-                                    f"🌸 Nadano Ci role: **—͟͞✅・Bilecik**, **🐸 • Żaby**\n"
-                                    f"💰 Otrzymujesz bonusowe **150 monet** do ekonomii! 💰\n\n"
-                                    f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
-                        color=KAWAII_PINK
+                    welcome_desc = (
+                        f"Serdecznie witamy i zapraszamy na serwer, {member.mention}! 🥰\n\n"
+                        f"⚔️ Pokonałeś sędziego w pojedynku KPS i zostałeś automatycznie zweryfikowany!\n"
+                        f"🌸 Nadano Ci role: {{roles}}\n"
+                        f"💰 Otrzymujesz bonusowe **150 monet** do ekonomii! 💰\n\n"
+                        f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳"
                     )
-                    welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
-                    await self.channel.send(embed=welcome_embed)
-
-                    general = discord.utils.get(interaction.guild.text_channels, name="💬・pogadanki") or discord.utils.get(interaction.guild.text_channels, name="ogólny")
-                    if general:
-                        chat_welcome = discord.Embed(
-                            description=f"Witamy **{member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Pokonał sędziego w pojedynku KPS! ⚔️)*",
-                            color=KAWAII_PINK
-                        )
-                        b = get_profile_data(member.id).get("bio", "Nowy gracz na streecie!")
-                        chat_welcome.add_field(name="Zostawił takie bio:", value=b)
-                        await general.send(chat_welcome)
-
-                await asyncio.sleep(10)
-                try:
-                    await self.channel.delete()
-                except:
-                    pass
+                    await execute_verification(
+                        bot=self.bot,
+                        guild=interaction.guild,
+                        member=member,
+                        channel=self.channel,
+                        balance_amount=150,
+                        welcome_description=welcome_desc,
+                        pogadanki_extra="(Pokonał sędziego w pojedynku KPS! ⚔️)",
+                        interaction=None
+                    )
             else:
                 embed.description = f"👑 **Sędzia {self.admin.mention} wygrywa pojedynek!**\nLos kandydata leży w rękach sędziego..."
                 embed.color = discord.Color.red()
@@ -1249,46 +1317,21 @@ class Verification(commands.Cog):
                 return await ctx.send(f"❌ Nie udało się stworzyć/znaleźć roli weryfikacyjnej: {e}")
 
         if action in ["wpusc", "akceptuj", "yes"]:
-            roles_added = []
-            try:
-                await member.add_roles(verified_role)
-                roles_added.append("Bilecik")
-            except Exception as e:
-                await ctx.send(f"⚠️ Błąd dodawania roli Bilecik: {e}")
-
-            zaba_role = discord.utils.get(ctx.guild.roles, name="🐸 • Żaby")
-            if zaba_role:
-                try:
-                    await member.add_roles(zaba_role)
-                    roles_added.append("Żaby")
-                except Exception as e:
-                    await ctx.send(f"⚠️ Błąd dodawania roli Żaby: {e}")
-
-            update_data(member.id, "balance", 100, "add")
-            track_verification_stat("verified")
-
-            welcome_embed = discord.Embed(
-                title="🎉 WERYFIKACJA ZATWIERDZONA! 🎉",
-                description=f"Witaj serdecznie na naszym serwerze, {member.mention}! 🌸\n"
-                            f"Pomyślnie nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}.\n\n"
-                            f"**Ten kanał zostanie automatycznie usunięty za 10 sekund...** ⏳",
-                color=KAWAII_PINK
+            welcome_desc = (
+                f"Witaj serdecznie na naszym serwerze, {member.mention}! 🌸\n"
+                f"Pomyślnie nadano Ci role: {{roles}}.\n\n"
+                f"**Ten kanał zostanie automatycznie usunięty za 10 sekund...** ⏳"
             )
-            welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
-            await ctx.send(embed=welcome_embed)
-
-            general = discord.utils.get(ctx.guild.text_channels, name="💬・pogadanki") or discord.utils.get(ctx.guild.text_channels, name="ogólny")
-            if general:
-                embed = discord.Embed(description=f"Witamy **{member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖", color=KAWAII_PINK)
-                b = get_profile_data(member.id).get("bio", "Nowy gracz na streecie!")
-                embed.add_field(name="Zostawił takie bio:", value=b)
-                await general.send(embed=embed)
-
-            await asyncio.sleep(10)
-            try:
-                await ctx.channel.delete()
-            except Exception as e:
-                await ctx.send(f"❌ Nie udało się usunąć kanału: {e}")
+            await execute_verification(
+                bot=self.bot,
+                guild=ctx.guild,
+                member=member,
+                channel=ctx.channel,
+                balance_amount=100,
+                welcome_description=welcome_desc,
+                pogadanki_extra="",
+                interaction=None
+            )
 
         elif action in ["kick", "no"]:
             try:
@@ -1354,53 +1397,29 @@ class Verification(commands.Cog):
                 await msg.edit(embed=coin_embed)
 
                 track_verification_stat("coin_heads")
-                track_verification_stat("verified")
-
                 try:
                     fetched_member = await ctx.guild.fetch_member(member.id)
                 except discord.NotFound:
                     fetched_member = None
 
                 if fetched_member:
-                    roles_added = []
-                    try:
-                        await fetched_member.add_roles(verified_role)
-                        roles_added.append("—͟͞✅・Bilecik")
-                    except:
-                        pass
-                    zaba_role = discord.utils.get(ctx.guild.roles, name="🐸 • Żaby")
-                    if zaba_role:
-                        try:
-                            await fetched_member.add_roles(zaba_role)
-                            roles_added.append("🐸 • Żaby")
-                        except:
-                            pass
-                    update_data(fetched_member.id, "balance", 100, "add")
-
-                    welcome_embed = discord.Embed(
-                        title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
-                        description=f"Serdecznie witamy i zapraszamy na serwer, {fetched_member.mention}! 🥰\n\n"
-                                    f"🪙 Wygrałeś weryfikacyjny rzut monetą! Szczęśliwy traf!\n"
-                                    f"🌸 Nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}\n"
-                                    f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
-                                    f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
-                        color=KAWAII_PINK
+                    welcome_desc = (
+                        f"Serdecznie witamy i zapraszamy na serwer, {fetched_member.mention}! 🥰\n\n"
+                        f"🪙 Wygrałeś weryfikacyjny rzut monetą! Szczęśliwy traf!\n"
+                        f"🌸 Nadano Ci role: {{roles}}\n"
+                        f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
+                        f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳"
                     )
-                    welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
-                    await ctx.send(embed=welcome_embed)
-
-                    general = discord.utils.get(ctx.guild.text_channels, name="💬・pogadanki") or discord.utils.get(ctx.guild.text_channels, name="ogólny")
-                    if general:
-                        embed = discord.Embed(description=f"Witamy **{fetched_member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Wygrał weryfikacyjny rzut monetą! 🪙)*", color=KAWAII_PINK)
-                        b = get_profile_data(fetched_member.id).get("bio", "Nowy gracz na streecie!")
-                        embed.add_field(name="Zostawił takie bio:", value=b)
-                        await general.send(embed=embed)
-
-                await asyncio.sleep(10)
-                try:
-                    await ctx.channel.delete()
-                except:
-                    pass
+                    await execute_verification(
+                        bot=self.bot,
+                        guild=ctx.guild,
+                        member=fetched_member,
+                        channel=ctx.channel,
+                        balance_amount=100,
+                        welcome_description=welcome_desc,
+                        pogadanki_extra="(Wygrał weryfikacyjny rzut monetą! 🪙)",
+                        interaction=None
+                    )
             else:
                 coin_embed.title = "🪙 WYNIK: RESZKA! 🪙"
                 coin_embed.description = f"**Wynik: RESZKA!** 🪙\n\n" \
@@ -1490,59 +1509,29 @@ class Verification(commands.Cog):
                     pass
             else:
                 track_verification_stat("roulette_live")
-                track_verification_stat("verified")
-
-                bullet_embed.title = "🔒 KLIK! 🔒"
-                bullet_embed.description = f"**Wynik: SUCHY STRZAŁ!** 🔒\n\n" \
-                                           f"Szczęśliwy traf! Komora była pusta. {member.mention} przeżył próbę i zostaje wpuszczony! 🎉"
-                bullet_embed.color = discord.Color.green()
-                await msg.edit(embed=bullet_embed)
-
                 try:
                     fetched_member = await ctx.guild.fetch_member(member.id)
                 except discord.NotFound:
                     fetched_member = None
 
                 if fetched_member:
-                    roles_added = []
-                    try:
-                        await fetched_member.add_roles(verified_role)
-                        roles_added.append("—͟͞✅・Bilecik")
-                    except:
-                        pass
-                    zaba_role = discord.utils.get(ctx.guild.roles, name="🐸 • Żaby")
-                    if zaba_role:
-                        try:
-                            await fetched_member.add_roles(zaba_role)
-                            roles_added.append("🐸 • Żaby")
-                        except:
-                            pass
-                    update_data(fetched_member.id, "balance", 100, "add")
-
-                    welcome_embed = discord.Embed(
-                        title="🎉 POMYŚLNIE ZWERYFIKOWANO! 🎉",
-                        description=f"Serdecznie witamy i zapraszamy na serwer, {fetched_member.mention}! 🥰\n\n"
-                                    f"🔫 Przeżyłeś rosyjską ruletkę! Niesamowite szczęście!\n"
-                                    f"🌸 Nadano Ci role: {', '.join([f'**{r}**' for r in roles_added]) if roles_added else 'Brak'}\n"
-                                    f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
-                                    f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳",
-                        color=KAWAII_PINK
+                    welcome_desc = (
+                        f"Serdecznie witamy i zapraszamy na serwer, {fetched_member.mention}! 🥰\n\n"
+                        f"🔫 Przeżyłeś rosyjską ruletkę! Niesamowite szczęście!\n"
+                        f"🌸 Nadano Ci role: {{roles}}\n"
+                        f"💰 Otrzymujesz na start **100 monet** do ekonomii!\n\n"
+                        f"**Ten kanał weryfikacyjny zostanie automatycznie usunięty za 10 sekund...** ⏳"
                     )
-                    welcome_embed.set_footer(text="Życzymy miłej zabawy! 💕")
-                    await ctx.send(embed=welcome_embed)
-
-                    general = discord.utils.get(ctx.guild.text_channels, name="💬・pogadanki") or discord.utils.get(ctx.guild.text_channels, name="ogólny")
-                    if general:
-                        embed = discord.Embed(description=f"Witamy **{fetched_member.mention}**! (≧◡≦) ♡\n Cieszymy się że połączyłeś się z nami! 💖\n*(Przeżył weryfikacyjną rosyjską ruletkę! 🔫)*", color=KAWAII_PINK)
-                        b = get_profile_data(fetched_member.id).get("bio", "Nowy gracz na streecie!")
-                        embed.add_field(name="Zostawił takie bio:", value=b)
-                        await general.send(embed=embed)
-
-                await asyncio.sleep(10)
-                try:
-                    await ctx.channel.delete()
-                except:
-                    pass
+                    await execute_verification(
+                        bot=self.bot,
+                        guild=ctx.guild,
+                        member=fetched_member,
+                        channel=ctx.channel,
+                        balance_amount=100,
+                        welcome_description=welcome_desc,
+                        pogadanki_extra="(Przeżył weryfikacyjną rosyjską ruletkę! 🔫)",
+                        interaction=None
+                    )
 
         elif action in ["pytaj", "pytanie"]:
             question = random.choice(ABSURD_QUESTIONS)
