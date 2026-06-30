@@ -4,6 +4,7 @@ from discord.ui import Button, View
 import random
 import asyncio
 from datetime import datetime, timedelta, timezone
+from typing import Union
 from utils import KAWAII_RED, KAWAII_PINK, KAWAII_GOLD, update_data, get_profile_data, update_profile
 
 
@@ -202,15 +203,17 @@ class Admin(commands.Cog):
 
     @commands.command()
     @has_perms_or_borysiaczek(ban_members=True)
-    async def ban(self, ctx, member: discord.Member, *, reason="Brak"):
-        if member.top_role >= ctx.author.top_role: return
-        await send_dm_log(member, ctx.guild.name, reason, "BAN")
+    async def ban(self, ctx, target: Union[discord.Member, discord.User], *, reason="Brak"):
+        if isinstance(target, discord.Member):
+            if target.top_role >= ctx.author.top_role: return
+        await send_dm_log(target, ctx.guild.name, reason, "BAN")
         try:
-            await member.ban(reason=reason)
-            embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{member.name}** wygnany!\nPowód: {reason}", color=KAWAII_RED)
+            await ctx.guild.ban(target, reason=reason)
+            embed = discord.Embed(title="🔨 ZBANOWANO!", description=f"**{target.name}** wygnany!\nPowód: {reason}", color=KAWAII_RED)
             embed.set_image(url=random.choice(GIFS_BAN))
             await ctx.send(embed=embed)
-        except: await ctx.send("❌ Błąd.")
+        except Exception as e:
+            await ctx.send(f"❌ Błąd: {e}")
 
     @commands.command()
     @has_perms_or_borysiaczek(ban_members=True)
