@@ -181,6 +181,11 @@ class General(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
+        # Sprawdzamy czy użytkownik miał rolę weryfikacyjną
+        has_verified_role = any(r.name == "—͟͞✅・Bilecik" for r in member.roles)
+        if not has_verified_role:
+            return  # Ignorujemy, jeśli osoba nie przeszła weryfikacji
+
         channel = discord.utils.get(member.guild.text_channels, name="💬・pogadanki")
         if channel:
             embed = discord.Embed(description=f"O nie... **{member.name}** uciekł... Trzymaj się gdziekolwiek tam jesteś! 💔", color=discord.Color.dark_grey())

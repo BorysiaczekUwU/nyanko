@@ -283,7 +283,7 @@ class BioModal(Modal, title="Stwórz Swój Profil!"):
 
     async def on_submit(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "bio", self.bio.value)
-        await interaction.response.send_message("✅ Twoje bio zostało zapisane! Poczekaj na wciśnięcie ZATWIERDŹ przez Sędziego.", ephemeral=True)
+        await interaction.response.defer(thinking=False)
 
 # --- PANEL WYBORU KOLORU ---
 class ColorSelectView(View):
@@ -477,6 +477,123 @@ class RoleSelectView(View):
         await interaction.response.send_message("Wybierz swój kolor z listy poniżej:", view=view, ephemeral=True)
 
 
+# --- WIDOK Z MENU ROZWIJANYMI NA WERYFIKACJI ---
+class VerificationProfileSelectView(View):
+    def __init__(self, bot, member):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.member = member
+        if member and member.id not in pending_roles:
+            pending_roles[member.id] = []
+
+    async def handle_roles(self, interaction: discord.Interaction, select: Select, category_name: str):
+        guild = interaction.guild
+        user = interaction.user
+        
+        if guild is None and self.member and hasattr(self.member, "guild"):
+            guild = self.member.guild
+            user = guild.get_member(user.id) or self.member
+            
+        if not guild or not hasattr(user, 'add_roles'):
+            return await interaction.response.send_message("❌ Błąd: Nie znaleziono serwera lub uprawnień (spróbuj z kanału).", ephemeral=True)
+        
+        chosen_values_str = ", ".join(select.values)
+        if category_name == "orientation":
+            formatted_vals = []
+            for val in select.values:
+                flag = next((v["flag"] for v in ORIENTATIONS.values() if v["name"] == val), "")
+                formatted_vals.append(f"{flag} {val}" if flag else val)
+            chosen_values_str = ", ".join(formatted_vals)
+            
+        update_profile(user.id, category_name, chosen_values_str)
+        
+        roles_to_add = []
+        for role_name in select.values:
+            r = discord.utils.get(guild.roles, name=role_name)
+            if r: roles_to_add.append(r.id)
+        
+        cat_role_ids = [discord.utils.get(guild.roles, name=rn).id for rn in ROLES[category_name] if discord.utils.get(guild.roles, name=rn)]
+        pending_roles[user.id] = [rid for rid in pending_roles[user.id] if rid not in cat_role_ids]
+        pending_roles[user.id].extend(roles_to_add)
+        
+        await interaction.response.defer(thinking=False)
+
+    @discord.ui.select(placeholder="Wybierz płeć!", min_values=1, max_values=1, options=[
+        discord.SelectOption(label="—͟͞👧・Niewiasta", emoji="👱‍♀️"),
+        discord.SelectOption(label="—͟͞👦・Jegomość", emoji="👱‍♂️"),
+        discord.SelectOption(label="—͟͞👤・Helikopter Bojowy", emoji="🚁")
+    ], row=0)
+    async def gender_select(self, interaction: discord.Interaction, select: Select):
+        await self.handle_roles(interaction, select, "gender")
+
+    @discord.ui.select(placeholder="Wybierz wiek!", min_values=1, max_values=1, options=[
+        discord.SelectOption(label="16+", emoji="1️⃣"),
+        discord.SelectOption(label="18+", emoji="2️⃣"),
+        discord.SelectOption(label="22+", emoji="3️⃣"),
+        discord.SelectOption(label="25+", emoji="4️⃣"),
+        discord.SelectOption(label="30+", emoji="5️⃣"),
+        discord.SelectOption(label="35+", emoji="6️⃣")
+    ], row=1)
+    async def age_select(self, interaction: discord.Interaction, select: Select):
+         await self.handle_roles(interaction, select, "age")
+
+    @discord.ui.select(placeholder="Wybierz pingi!", min_values=1, max_values=3, options=[
+        discord.SelectOption(label="Gaduła", emoji="🗣️"),
+        discord.SelectOption(label="Defibrylator Czatu", emoji="⚡"),
+        discord.SelectOption(label="Giejmer", emoji="🎮")
+    ], row=2)
+    async def ping_select(self, interaction: discord.Interaction, select: Select):
+         await self.handle_roles(interaction, select, "ping")
+
+    @discord.ui.select(placeholder="Wybierz tożsamość / flagę!", min_values=1, max_values=1, options=[
+        discord.SelectOption(label=v["name"], emoji=v.get("emoji", "🏳️‍🌈"), value=v["name"]) for v in list(ORIENTATIONS.values())[:25]
+    ], row=3)
+    async def orient_select(self, interaction: discord.Interaction, select: Select):
+        await self.handle_roles(interaction, select, "orientation")
+
+    @discord.ui.select(placeholder="Wybierz swój kolor!", min_values=1, max_values=1, options=[
+        discord.SelectOption(label="Czarny", emoji="⚫"),
+        discord.SelectOption(label="Krwisty", emoji="🩸"),
+        discord.SelectOption(label="Czerwony", emoji="🔴"),
+        discord.SelectOption(label="Brązowy", emoji="🟤"),
+        discord.SelectOption(label="Pomarańczowy", emoji="🟠"),
+        discord.SelectOption(label="Żółty", emoji="🟡"),
+        discord.SelectOption(label="Łososiowy", emoji="🍣"),
+        discord.SelectOption(label="Limonkowy", emoji="🍏"),
+        discord.SelectOption(label="Zielony", emoji="🟢"),
+        discord.SelectOption(label="Błękitny", emoji="🩵"),
+        discord.SelectOption(label="Niebieski", emoji="🔵"),
+        discord.SelectOption(label="Fioletowy", emoji="🟣"),
+        discord.SelectOption(label="Różowy", emoji="🌸"),
+        discord.SelectOption(label="Biały", emoji="⚪")
+    ], row=4)
+    async def color_select(self, interaction: discord.Interaction, select: Select):
+        guild = interaction.guild
+        user = interaction.user
+        
+        if guild is None and self.member and hasattr(self.member, "guild"):
+            guild = self.member.guild
+            user = guild.get_member(user.id) or self.member
+            
+        if not guild or not hasattr(user, 'add_roles'):
+            return await interaction.response.send_message("❌ Błąd: Nie znaleziono serwera lub uprawnień (spróbuj z kanału).", ephemeral=True)
+            
+        chosen_value = select.values[0]
+        update_profile(user.id, "color", chosen_value)
+        
+        r = discord.utils.get(guild.roles, name=chosen_value)
+        role_id = r.id if r else None
+        
+        if role_id:
+            cat_role_ids = [discord.utils.get(guild.roles, name=rn).id for rn in ROLES["color"] if discord.utils.get(guild.roles, name=rn)]
+            pending_roles[user.id] = [rid for rid in pending_roles[user.id] if rid not in cat_role_ids]
+            pending_roles[user.id].append(role_id)
+            
+            await interaction.response.defer(thinking=False)
+        else:
+            await interaction.response.send_message(f"❌ Nie znaleziono roli **{chosen_value}** na serwerze.", ephemeral=True)
+
+
 # --- PANEL WERYFIKACYJNY DLA NOWEGO UŻYTKOWNIKA ---
 class VerificationWelcomeView(View):
     def __init__(self, bot, member, verified_role, channel):
@@ -485,22 +602,15 @@ class VerificationWelcomeView(View):
         self.member = member
         self.verified_role = verified_role
         self.channel = channel
+        self.profile_msg = None
 
-    @discord.ui.button(label="🎨 Otwórz Kreator Profilu", style=discord.ButtonStyle.success, emoji="✨")
-    async def open_bio(self, interaction: discord.Interaction, button: Button):
+    @discord.ui.button(label="📝 Napisz Bio", style=discord.ButtonStyle.blurple, emoji="✍️", row=0)
+    async def bio_button(self, interaction: discord.Interaction, button: Button):
         if interaction.user.id != self.member.id:
-            return await interaction.response.send_message("❌ Tylko osoba weryfikowana może konfigurować swój profil!", ephemeral=True)
-            
-        from cogs.profile import CombinedBioHub
-        view = CombinedBioHub(self.bot)
-        embed = discord.Embed(
-            title="🎨 Kreator Profilu / Tożsamości",
-            description="Użyj menu poniżej, aby edytować różne aspekty swojego profilu, tożsamości oraz darmowych ról na serwerze!",
-            color=KAWAII_PINK
-        )
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+            return await interaction.response.send_message("⛔ Ty nie piszesz tu bio!", ephemeral=True)
+        await interaction.response.send_modal(BioModal())
 
-    @discord.ui.button(label="🟢 Oznacz Gotowość", style=discord.ButtonStyle.green, emoji="🟢")
+    @discord.ui.button(label="🟢 Oznacz Gotowość", style=discord.ButtonStyle.green, emoji="🟢", row=0)
     async def ready_button(self, interaction: discord.Interaction, button: Button):
         if interaction.user.id != self.member.id:
             return await interaction.response.send_message("❌ Tylko osoba weryfikowana może oznaczyć swoją gotowość!", ephemeral=True)
@@ -511,12 +621,18 @@ class VerificationWelcomeView(View):
         if not bio or bio == "Pusto..." or len(bio) < 5:
             return await interaction.response.send_message(
                 "❌ **Nie uzupełniłeś jeszcze swojego bio!**\n"
-                "Kliknij przycisk **`🎨 Otwórz Kreator Profilu`**, a następnie kliknij **`Napisz Bio`** i opisz siebie przed oznaczeniem gotowości.", 
+                "Kliknij przycisk **`📝 Napisz Bio`** powyżej i opisz siebie przed oznaczeniem gotowości.", 
                 ephemeral=True
             )
 
         for item in self.children:
             item.disabled = True
+
+        if self.profile_msg:
+            try:
+                await self.profile_msg.edit(view=None)
+            except Exception as e:
+                print(f"Błąd usuwania widoku z komunikatu profilu: {e}")
 
         # Animacja ładowania
         loading_embed = discord.Embed(
@@ -569,7 +685,7 @@ class VerificationWelcomeView(View):
             view=decision_view
         )
 
-    @discord.ui.button(label="Szybki Kick", style=discord.ButtonStyle.danger, emoji="👢")
+    @discord.ui.button(label="Szybki Kick", style=discord.ButtonStyle.danger, emoji="👢", row=1)
     async def quick_kick(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.kick_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do wyrzucania!", ephemeral=True)
@@ -597,7 +713,7 @@ class VerificationWelcomeView(View):
         except Exception as e:
             await self.channel.send(f"❌ Nie udało się: {e}")
 
-    @discord.ui.button(label="Szybki Ban", style=discord.ButtonStyle.danger, emoji="🔨")
+    @discord.ui.button(label="Szybki Ban", style=discord.ButtonStyle.danger, emoji="🔨", row=1)
     async def quick_ban(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.ban_members and interaction.user.name.lower() not in ["≽^borysiaczekuwu^≼", "borysiaczekuwu"]:
             return await interaction.response.send_message("⛔ Brak uprawnień do banowania!", ephemeral=True)
@@ -1794,9 +1910,9 @@ class Verification(commands.Cog):
             embed = discord.Embed(
                 title=f"🌸 Witaj {member.name}! Rozpocznij weryfikację", 
                 description=(
-                    "Cieszymy się, że jesteś z nami! Aby uzyskać dostęp do serwera, wykonaj poniższe kroki:\n\n"
-                    "1️⃣ Kliknij zielony przycisk **`🎨 Otwórz Kreator Profilu`** poniżej.\n"
-                    "2️⃣ W menu, które się pojawi, uzupełnij swoje **bio, płeć, wiek, kolor oraz role** (wszystko konfigurujesz prywatnie i wygodnie).\n"
+                    "Cieszymy się, że jesteś z nami! Aby uzyskać dostęp do serwera, uzupełnij poniższe dane:\n\n"
+                    "1️⃣ Wybierz swoją **płeć, wiek, pingi, tożsamość/flagę oraz kolor** z poniższych menu rozwijanych.\n"
+                    "2️⃣ Kliknij przycisk **`📝 Napisz Bio`** poniżej, aby opisać siebie.\n"
                     "3️⃣ Po zakończeniu konfiguracji kliknij przycisk **`🟢 Oznacz Gotowość`**.\n\n"
                     "⏳ *Po oznaczeniu gotowości, administracja/sędziowie sprawdzą Twój profil i zatwierdzą Twój dostęp!*"
                 ),
@@ -1804,9 +1920,17 @@ class Verification(commands.Cog):
             )
             embed.set_footer(text="Podczas oczekiwania na weryfikację możesz pisać na tym kanale.")
             
-            view = VerificationWelcomeView(self.bot, member, verified_role, channel)
+            profile_view = VerificationProfileSelectView(self.bot, member)
+            buttons_view = VerificationWelcomeView(self.bot, member, verified_role, channel)
             
-            await channel.send(f"{member.mention} - panel weryfikacji został przygotowany!", embed=embed, view=view)
+            profile_msg = await channel.send(f"{member.mention} - uzupełnij swoje role i kolor nicku poniżej:", embed=embed, view=profile_view)
+            buttons_view.profile_msg = profile_msg
+            
+            embed_buttons = discord.Embed(
+                description="Uzupełnij bio i zgłoś swoją gotowość do weryfikacji sędziom serwera:",
+                color=KAWAII_PINK
+            )
+            await channel.send(embed=embed_buttons, view=buttons_view)
         except Exception as e: 
             print(f"Błąd tworzenia instancji weryfikacji: {e}")
 
