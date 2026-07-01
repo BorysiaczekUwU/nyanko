@@ -49,9 +49,9 @@ class CreateTicketView(View):
         member = interaction.user
 
         # Sprawdzamy czy już ma ticket
-        category = discord.utils.get(guild.categories, name="TICKETY")
+        category = discord.utils.get(guild.categories, name="╒══════╡Tickety╞══════╕")
         if not category:
-            category = await guild.create_category("TICKETY")
+            category = await guild.create_category("╒══════╡Tickety╞══════╕")
 
         channel_name = f"🎟️・{member.name}".lower().replace("#", "")
         existing_channel = discord.utils.get(guild.text_channels, name=channel_name)

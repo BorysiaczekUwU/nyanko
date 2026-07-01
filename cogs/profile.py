@@ -59,7 +59,7 @@ class PronounsSelect(Select):
             discord.SelectOption(label="Oni/Ich", value="Oni/Ich"),
             discord.SelectOption(label="Inne", value="Inne"),
         ]
-        super().__init__(placeholder="Wybierz zaimki...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Wybierz zaimki...", min_values=1, max_values=1, options=options, custom_id="profile_select_pronouns")
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "pronouns", self.values[0])
@@ -75,7 +75,7 @@ class StatusSelect(Select):
             discord.SelectOption(label="Szukam", emoji="🔎", value="Szukam"),
             discord.SelectOption(label="Nie szukam", emoji="⛔", value="Nie szukam"),
         ]
-        super().__init__(placeholder="Twój status...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Twój status...", min_values=1, max_values=1, options=options, custom_id="profile_select_status")
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "status", self.values[0])
@@ -88,7 +88,7 @@ class AgeSelect(Select):
         ranges = ["< 13", "13-15", "16-17", "18-21", "22-25", "25+"]
         for r in ranges:
             options.append(discord.SelectOption(label=r, value=r))
-        super().__init__(placeholder="Wybierz wiek...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Wybierz wiek...", min_values=1, max_values=1, options=options, custom_id="profile_select_age")
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "age", self.values[0])
@@ -107,7 +107,7 @@ class BioLauncher(View):
         super().__init__(timeout=None)
         self.bot = bot
 
-    @discord.ui.button(label="🎨 Otwórz Kreator Profilu", style=discord.ButtonStyle.success, emoji="✨")
+    @discord.ui.button(label="🎨 Otwórz Kreator Profilu", style=discord.ButtonStyle.success, emoji="✨", custom_id="open_bio_launcher_btn")
     async def open_bio(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = CombinedBioHub(self.bot)
         embed = discord.Embed(
@@ -123,28 +123,28 @@ class CombinedBioHub(View):
         super().__init__(timeout=None)
         self.bot = bot
 
-    @discord.ui.button(label="🎭 Role & Tożsamość", style=discord.ButtonStyle.primary, emoji="🎭", row=0)
+    @discord.ui.button(label="🎭 Role & Tożsamość", style=discord.ButtonStyle.primary, emoji="🎭", row=0, custom_id="bio_hub_roles_btn")
     async def roles_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Wysyła widok z pliku verification.py (Płeć, Wiek, Pingi, Orientacja)
         view = RoleSelectView(self.bot, interaction.user, is_setup=True)
         await interaction.response.send_message("Wybierz swoje serwerowe role z poniższego menu:", view=view, ephemeral=True)
 
-    @discord.ui.button(label="🎨 Kolor Nicku", style=discord.ButtonStyle.primary, emoji="🎨", row=0)
+    @discord.ui.button(label="🎨 Kolor Nicku", style=discord.ButtonStyle.primary, emoji="🎨", row=0, custom_id="bio_hub_color_btn")
     async def color_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = ColorSelectView(self.bot, interaction.user, is_setup=True)
         await interaction.response.send_message("Wybierz swój kolor z listy poniżej:", view=view, ephemeral=True)
 
-    @discord.ui.button(label="🏷️ Opcje Profilu", style=discord.ButtonStyle.primary, emoji="🏷️", row=0)
+    @discord.ui.button(label="🏷️ Opcje Profilu", style=discord.ButtonStyle.primary, emoji="🏷️", row=0, custom_id="bio_hub_addons_btn")
     async def addons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Wysyła opcje związane tylko z bazą (Zaimki, Status)
         view = AddonsSelectView()
         await interaction.response.send_message("Skonfiguruj dodatki widoczne pod komendą `!bio`:", view=view, ephemeral=True)
 
-    @discord.ui.button(label="📝 Napisz Bio", style=discord.ButtonStyle.secondary, emoji="✍️", row=1)
+    @discord.ui.button(label="📝 Napisz Bio", style=discord.ButtonStyle.secondary, emoji="✍️", row=1, custom_id="bio_hub_bio_btn")
     async def bio_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(BioModal())
 
-    @discord.ui.button(label="🎂 Ustaw Urodziny", style=discord.ButtonStyle.secondary, emoji="📅", row=1)
+    @discord.ui.button(label="🎂 Ustaw Urodziny", style=discord.ButtonStyle.secondary, emoji="📅", row=1, custom_id="bio_hub_bday_btn")
     async def bday_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(BirthdayModal())
 
@@ -166,6 +166,12 @@ class BioModal(Modal, title="Opisz siebie ✨"):
 class Profile(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        # Rejestracja widoków w celu zapewnienia ich persystencji
+        self.bot.add_view(BioLauncher(self.bot))
+        self.bot.add_view(CombinedBioHub(self.bot))
+        self.bot.add_view(AddonsSelectView())
+        self.bot.add_view(RoleSelectView(self.bot, None, is_setup=True))
+        self.bot.add_view(ColorSelectView(self.bot, None, is_setup=True))
 
     @commands.command()
     async def setbio(self, ctx):

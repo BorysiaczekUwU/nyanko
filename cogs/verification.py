@@ -288,12 +288,12 @@ class BioModal(Modal, title="Stwórz Swój Profil!"):
 # --- PANEL WYBORU KOLORU ---
 class ColorSelectView(View):
     def __init__(self, bot, member, is_setup=False):
-        super().__init__(timeout=60)
+        super().__init__(timeout=None)
         self.bot = bot
         self.member = member
         self.is_setup = is_setup
 
-    @discord.ui.select(placeholder="Wybierz swój kolor!", min_values=1, max_values=1, options=[
+    @discord.ui.select(placeholder="Wybierz swój kolor!", min_values=1, max_values=1, custom_id="color_select_menu", options=[
         discord.SelectOption(label="Czarny", emoji="⚫"),
         discord.SelectOption(label="Krwisty", emoji="🩸"),
         discord.SelectOption(label="Czerwony", emoji="🔴"),
@@ -413,7 +413,7 @@ class RoleSelectView(View):
             
             await interaction.response.defer(thinking=False)
 
-    @discord.ui.select(placeholder="Wybierz płeć!", min_values=1, max_values=1, options=[
+    @discord.ui.select(placeholder="Wybierz płeć!", min_values=1, max_values=1, custom_id="role_select_gender", options=[
         discord.SelectOption(label="—͟͞👧・Niewiasta", emoji="👱‍♀️"),
         discord.SelectOption(label="—͟͞👦・Jegomość", emoji="👱‍♂️"),
         discord.SelectOption(label="—͟͞👤・Helikopter Bojowy", emoji="🚁")
@@ -421,7 +421,7 @@ class RoleSelectView(View):
     async def gender_select(self, interaction: discord.Interaction, select: Select):
         await self.handle_roles(interaction, select, "gender")
 
-    @discord.ui.select(placeholder="Wybierz wiek!", min_values=1, max_values=1, options=[
+    @discord.ui.select(placeholder="Wybierz wiek!", min_values=1, max_values=1, custom_id="role_select_age", options=[
         discord.SelectOption(label="16+", emoji="1️⃣"),
         discord.SelectOption(label="18+", emoji="2️⃣"),
         discord.SelectOption(label="22+", emoji="3️⃣"),
@@ -432,7 +432,7 @@ class RoleSelectView(View):
     async def age_select(self, interaction: discord.Interaction, select: Select):
          await self.handle_roles(interaction, select, "age")
 
-    @discord.ui.select(placeholder="Wybierz pingi!", min_values=1, max_values=3, options=[
+    @discord.ui.select(placeholder="Wybierz pingi!", min_values=1, max_values=3, custom_id="role_select_ping", options=[
         discord.SelectOption(label="Gaduła", emoji="🗣️"),
         discord.SelectOption(label="Defibrylator Czatu", emoji="⚡"),
         discord.SelectOption(label="Giejmer", emoji="🎮")
@@ -440,7 +440,7 @@ class RoleSelectView(View):
     async def ping_select(self, interaction: discord.Interaction, select: Select):
          await self.handle_roles(interaction, select, "ping")
 
-    @discord.ui.select(placeholder="Wybierz tożsamość / flagę!", min_values=1, max_values=1, options=[
+    @discord.ui.select(placeholder="Wybierz tożsamość / flagę!", min_values=1, max_values=1, custom_id="role_select_orient", options=[
         discord.SelectOption(label=v["name"], emoji=v.get("emoji", "🏳️‍🌈"), value=v["name"]) for v in list(ORIENTATIONS.values())[:25]
     ])
     async def orient_select(self, interaction: discord.Interaction, select: Select):
@@ -463,13 +463,13 @@ class RoleSelectView(View):
                     pass
         await self.handle_roles(interaction, select, "orientation")
 
-    @discord.ui.button(label="✏️ NAPISZ BIO", style=discord.ButtonStyle.blurple, emoji="📖", row=4)
+    @discord.ui.button(label="✏️ NAPISZ BIO", style=discord.ButtonStyle.blurple, emoji="📖", row=4, custom_id="role_select_bio_btn")
     async def bio_button(self, interaction: discord.Interaction, button: Button):
         if self.member and interaction.user.id != self.member.id:
             return await interaction.response.send_message("⛔ Ty nie piszesz tu bio!", ephemeral=True)
         await interaction.response.send_modal(BioModal())
 
-    @discord.ui.button(label="🎨 WYBIERZ KOLOR", style=discord.ButtonStyle.secondary, emoji="🎨", row=4)
+    @discord.ui.button(label="🎨 WYBIERZ KOLOR", style=discord.ButtonStyle.secondary, emoji="🎨", row=4, custom_id="role_select_color_btn")
     async def color_button(self, interaction: discord.Interaction, button: Button):
         if self.member and interaction.user.id != self.member.id:
             return await interaction.response.send_message("⛔ Ty nie wybierasz tu koloru!", ephemeral=True)
@@ -1339,6 +1339,9 @@ class Verification(commands.Cog):
         self.join_times = {}
         self.raid_mode = {}
         self.raid_end_time = {}
+        # Rejestracja widoków dla persystencji (żeby działały po restarcie)
+        self.bot.add_view(RoleSelectView(self.bot, None, is_setup=True))
+        self.bot.add_view(ColorSelectView(self.bot, None, is_setup=True))
 
     async def _create_missing_roles(self, guild):
         for category, role_names in ROLES.items():
