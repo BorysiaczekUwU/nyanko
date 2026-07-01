@@ -334,7 +334,7 @@ class ColorSelectView(View):
             if r:
                 try: 
                     await user.add_roles(r)
-                    await interaction.response.send_message(f"✅ Zaktualizowano kolor nicku na: **{chosen_value}**", ephemeral=True)
+                    await interaction.response.defer(thinking=False)
                 except:
                     await interaction.response.send_message(f"❌ Brak uprawnień bota do nadania roli **{chosen_value}**.", ephemeral=True)
             else:
@@ -348,7 +348,7 @@ class ColorSelectView(View):
                 pending_roles[user.id] = [rid for rid in pending_roles[user.id] if rid not in cat_role_ids]
                 pending_roles[user.id].append(role_id)
                 
-                await interaction.response.send_message(f"✅ Wybrano kolor nicku: **{chosen_value}**! Dostaniesz go po weryfikacji.", ephemeral=True)
+                await interaction.response.defer(thinking=False)
             else:
                 await interaction.response.send_message(f"❌ Nie znaleziono roli **{chosen_value}** na serwerze.", ephemeral=True)
 
@@ -400,7 +400,7 @@ class RoleSelectView(View):
                     except: pass
                     added_roles.append(r.name)
             
-            await interaction.response.send_message(f"✅ Zaktualizowano profil i role! ({category_name}): {', '.join(added_roles)}", ephemeral=True)
+            await interaction.response.defer(thinking=False)
         else:
             roles_to_add = []
             for role_name in select.values:
@@ -411,7 +411,7 @@ class RoleSelectView(View):
             pending_roles[user.id] = [rid for rid in pending_roles[user.id] if rid not in cat_role_ids]
             pending_roles[user.id].extend(roles_to_add)
             
-            await interaction.response.send_message(f"✅ Twój profil ({category_name}) zaktualizowany! Role na serwerze dostaniesz po weryfikacji.", ephemeral=True)
+            await interaction.response.defer(thinking=False)
 
     @discord.ui.select(placeholder="Wybierz płeć!", min_values=1, max_values=1, options=[
         discord.SelectOption(label="—͟͞👧・Niewiasta", emoji="👱‍♀️"),
@@ -1780,9 +1780,9 @@ class Verification(commands.Cog):
             if role.permissions.manage_roles:
                 overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True)
 
-        channel_name = f"weryfikacja-{member.name}".lower().replace("#", "")
+        channel_name = f"✅・{member.name}".lower().replace("#", "")
         
-        category_name = "╒═══════╡Weryfikacja╞═══════╕"
+        category_name = "╒═════╡Weryfikacja╞═════╕"
         category = discord.utils.get(guild.categories, name=category_name)
         if not category:
             try: category = await guild.create_category(category_name)

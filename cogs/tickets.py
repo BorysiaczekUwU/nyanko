@@ -53,7 +53,7 @@ class CreateTicketView(View):
         if not category:
             category = await guild.create_category("TICKETY")
 
-        channel_name = f"ticket-{member.name}".lower().replace("#", "")
+        channel_name = f"🎟️・{member.name}".lower().replace("#", "")
         existing_channel = discord.utils.get(guild.text_channels, name=channel_name)
         if existing_channel:
             await interaction.response.send_message(f"⛔ Masz już otwarty ticket: {existing_channel.mention}", ephemeral=True)
@@ -109,7 +109,7 @@ class Tickets(commands.Cog):
     async def check_inactive_tickets(self):
         # Sprawdzamy wszystkie kanały tekstowe w poszukiwaniu nieaktywnych ticketów
         for guild in self.bot.guilds:
-            category = discord.utils.get(guild.categories, name="TICKETY")
+            category = discord.utils.get(guild.categories, name="╒══════╡Tickety╞══════╕")
             if not category: continue
 
             for channel in category.text_channels:

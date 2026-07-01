@@ -48,7 +48,7 @@ class GenderSelect(Select):
             await interaction.response.send_modal(CustomGenderModal())
         else:
             update_profile(interaction.user.id, "gender", val)
-            await interaction.response.send_message(f"✅ Ustawiono płeć: **{val}**", ephemeral=True)
+            await interaction.response.defer(thinking=False)
 
 # --- WYBÓR ZAIMKÓW ---
 class PronounsSelect(Select):
@@ -63,7 +63,7 @@ class PronounsSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "pronouns", self.values[0])
-        await interaction.response.send_message(f"✅ Ustawiono zaimki: **{self.values[0]}**", ephemeral=True)
+        await interaction.response.defer(thinking=False)
 
 # --- WYBÓR STATUSU ZWIĄZKU ---
 class StatusSelect(Select):
@@ -79,7 +79,7 @@ class StatusSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "status", self.values[0])
-        await interaction.response.send_message(f"✅ Ustawiono status: **{self.values[0]}**", ephemeral=True)
+        await interaction.response.defer(thinking=False)
 
 # --- WYBÓR WIEKU ---
 class AgeSelect(Select):
@@ -92,7 +92,7 @@ class AgeSelect(Select):
 
     async def callback(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "age", self.values[0])
-        await interaction.response.send_message(f"✅ Ustawiono wiek: **{self.values[0]}**", ephemeral=True)
+        await interaction.response.defer(thinking=False)
 
 # --- WIDOK DODATKÓW DO PROFILU (ZAIMKI, STATUS, URODZINY) ---
 class AddonsSelectView(View):
