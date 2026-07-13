@@ -4,7 +4,7 @@ from discord.ui import View, Button, Select, Modal, TextInput
 import random
 import asyncio
 from datetime import datetime, timedelta, timezone
-from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD, get_profile_data, update_profile, update_data, ORIENTATIONS
+from utils import KAWAII_PINK, KAWAII_RED, KAWAII_GOLD, get_profile_data, update_profile, update_data, ORIENTATIONS, GENDERS
 
 GIFS_KICK = ["https://media.giphy.com/media/wQCWMHY9EHLfq/giphy.gif", "https://media.giphy.com/media/26FPn4rR1damB0MQo/giphy.gif"]
 GIFS_BAN = ["https://media.giphy.com/media/fe4dDMD2cAU5RfEaCU/giphy.gif", "https://media.giphy.com/media/AC1HrkBir3bzq/giphy.gif"]
@@ -140,7 +140,7 @@ COLOR_MAP = {
 
 # --- KONFIGURACJA RÓL ---
 ROLES = {
-    "gender": ["—͟͞👧・Niewiasta", "—͟͞👦・Jegomość", "—͟͞👤・Helikopter Bojowy"],
+    "gender": ["—͟͞👧・Niewiasta", "—͟͞👦・Jegomość", "—͟͞💗・Demigirl", "—͟͞💙・Demiboy", "—͟͞👤・Helikopter Bojowy"],
     "age": ["16+", "18+", "22+", "25+", "30+", "35+"],
     "color": ["Czarny", "Krwisty", "Czerwony", "Brązowy", "Pomarańczowy", "Żółty", "Łososiowy", "Limonkowy", "Zielony", "Błękitny", "Niebieski", "Fioletowy", "Różowy", "Biały"],
     "ping": ["Gaduła", "Defibrylator Czatu", "Giejmer"],
@@ -148,6 +148,65 @@ ROLES = {
 }
 
 pending_roles = {}
+
+async def refresh_member_flags(member, profile_data=None):
+    """Odświeża pseudonim członka dodając flagi płci i orientacji z profilu"""
+    if profile_data is None:
+        profile_data = get_profile_data(member.id)
+    
+    gender = profile_data.get("gender", "")
+    orientation = profile_data.get("orientation", "")
+    
+    # Znajdź flagę płci
+    gender_flag = ""
+    for g in GENDERS.values():
+        if g["name"] == gender or (g["role_name"] and g["role_name"] == gender) or (g["role_name"] and g["role_name"] in gender):
+            gender_flag = g.get("flag", "")
+            break
+            
+    # Znajdź flagę orientacji
+    orient_flag = ""
+    if orientation:
+        clean_orient = orientation.split()[-1] if len(orientation.split()) > 1 else orientation
+        for v in ORIENTATIONS.values():
+            if v["name"] == clean_orient or v["name"] in orientation:
+                orient_flag = v.get("flag", "")
+                break
+                
+    # Zbierz wszystkie znane flagi do usunięcia z obecnego pseudonimu
+    flags_to_strip = set()
+    for v in ORIENTATIONS.values():
+        if "flag" in v:
+            flags_to_strip.add(v["flag"])
+    for g in GENDERS.values():
+        if "flag" in g:
+            flags_to_strip.add(g["flag"])
+            
+    # Usuń stare flagi z pseudonimu
+    nick = member.display_name
+    for flag in flags_to_strip:
+        nick = nick.replace(f"{flag} ", "").replace(flag, "")
+        nick = nick.replace(flag, "")
+    nick = nick.strip()
+    
+    if len(nick) == 0:
+        nick = member.name
+        
+    # Połącz nowe flagi
+    flags_str = ""
+    if gender_flag:
+        flags_str += gender_flag
+    if orient_flag:
+        flags_str += orient_flag
+        
+    new_nick = f"{flags_str} {nick}" if flags_str else nick
+    if len(new_nick) > 32:
+        new_nick = new_nick[:32]
+        
+    try:
+        await member.edit(nick=new_nick)
+    except Exception as e:
+        print(f"Błąd zmiany pseudonimu dla {member.name}: {e}")
 
 async def execute_verification(bot, guild, member, channel, balance_amount, welcome_description, pogadanki_extra="", interaction=None):
     # 1. Pomiary ról do dodania
@@ -195,31 +254,9 @@ async def execute_verification(bot, guild, member, channel, balance_amount, welc
     # Czyszczenie listy oczekujących ról
     pending_roles[member.id] = []
     
-    # 2. Aktualizacja pseudonimu o flagę orientacji
+    # 2. Aktualizacja pseudonimu o flagi
     profile = get_profile_data(member.id)
-    orientation = profile.get("orientation", "")
-    if orientation:
-        clean_orient = orientation.split()[-1] if len(orientation.split()) > 1 else orientation
-        chosen_flag = ""
-        for v in ORIENTATIONS.values():
-            if v["name"] == clean_orient or v["name"] in orientation:
-                chosen_flag = v.get("flag", "")
-                break
-        if chosen_flag:
-            data_flags = set([val["flag"] for val in ORIENTATIONS.values() if "flag" in val])
-            nick = member.display_name
-            for flag in data_flags:
-                nick = nick.replace(f"{flag} ", "").replace(flag, "")
-            nick = nick.strip()
-            if len(nick) == 0:
-                nick = member.name
-            new_nick = f"{chosen_flag} {nick}"
-            if len(new_nick) > 32:
-                new_nick = new_nick[:32]
-            try:
-                await member.edit(nick=new_nick)
-            except Exception as e:
-                print(f"Błąd zmiany pseudonimu przy weryfikacji: {e}")
+    await refresh_member_flags(member, profile)
                 
     # 3. Zapisanie ekonomii i śledzenie statystyk
     update_data(member.id, "balance", balance_amount, "add")
@@ -395,6 +432,15 @@ class RoleSelectView(View):
             added_roles = []
             for role_name in select.values:
                 r = discord.utils.get(guild.roles, name=role_name)
+                if not r:
+                    try:
+                        role_color = discord.Color.default()
+                        if category_name == "orientation":
+                            color_val = next((v["color"] for v in ORIENTATIONS.values() if v["name"] == role_name), None)
+                            if color_val is not None: role_color = discord.Color(color_val)
+                        r = await guild.create_role(name=role_name, reason="Auto-tworzenie roli profilowej", color=role_color)
+                    except Exception as e:
+                        print(f"Nie udało się stworzyć roli {role_name}: {e}")
                 if r:
                     try: await user.add_roles(r)
                     except: pass
@@ -405,6 +451,15 @@ class RoleSelectView(View):
             roles_to_add = []
             for role_name in select.values:
                 r = discord.utils.get(guild.roles, name=role_name)
+                if not r:
+                    try:
+                        role_color = discord.Color.default()
+                        if category_name == "orientation":
+                            color_val = next((v["color"] for v in ORIENTATIONS.values() if v["name"] == role_name), None)
+                            if color_val is not None: role_color = discord.Color(color_val)
+                        r = await guild.create_role(name=role_name, reason="Auto-tworzenie roli profilowej", color=role_color)
+                    except Exception as e:
+                        print(f"Nie udało się stworzyć roli {role_name}: {e}")
                 if r: roles_to_add.append(r.id)
             
             cat_role_ids = [discord.utils.get(guild.roles, name=rn).id for rn in ROLES[category_name] if discord.utils.get(guild.roles, name=rn)]
@@ -416,10 +471,14 @@ class RoleSelectView(View):
     @discord.ui.select(placeholder="Wybierz płeć!", min_values=1, max_values=1, custom_id="role_select_gender", options=[
         discord.SelectOption(label="—͟͞👧・Niewiasta", emoji="👱‍♀️"),
         discord.SelectOption(label="—͟͞👦・Jegomość", emoji="👱‍♂️"),
+        discord.SelectOption(label="—͟͞💗・Demigirl", emoji="💗"),
+        discord.SelectOption(label="—͟͞💙・Demiboy", emoji="💙"),
         discord.SelectOption(label="—͟͞👤・Helikopter Bojowy", emoji="🚁")
     ])
     async def gender_select(self, interaction: discord.Interaction, select: Select):
         await self.handle_roles(interaction, select, "gender")
+        if self.is_setup:
+            await refresh_member_flags(interaction.user)
 
     @discord.ui.select(placeholder="Wybierz wiek!", min_values=1, max_values=1, custom_id="role_select_age", options=[
         discord.SelectOption(label="16+", emoji="1️⃣"),
@@ -444,24 +503,9 @@ class RoleSelectView(View):
         discord.SelectOption(label=v["name"], emoji=v.get("emoji", "🏳️‍🌈"), value=v["name"]) for v in list(ORIENTATIONS.values())[:25]
     ])
     async def orient_select(self, interaction: discord.Interaction, select: Select):
-        if self.is_setup:
-            data = set([v["flag"] for v in ORIENTATIONS.values()])
-            nick = interaction.user.display_name
-            for flag in data:
-                nick = nick.replace(f"{flag} ", "").replace(flag, "")
-            nick = nick.strip()
-            if len(nick) == 0: nick = interaction.user.name
-            
-            chosen_name = select.values[0]
-            chosen_flag = next((v["flag"] for v in ORIENTATIONS.values() if v["name"] == chosen_name), "")
-            if chosen_flag:
-                new_nick = f"{chosen_flag} {nick}"
-                if len(new_nick) > 32: new_nick = new_nick[:32]
-                try:
-                    await interaction.user.edit(nick=new_nick)
-                except:
-                    pass
         await self.handle_roles(interaction, select, "orientation")
+        if self.is_setup:
+            await refresh_member_flags(interaction.user)
 
     @discord.ui.button(label="✏️ NAPISZ BIO", style=discord.ButtonStyle.blurple, emoji="📖", row=4, custom_id="role_select_bio_btn")
     async def bio_button(self, interaction: discord.Interaction, button: Button):
@@ -521,6 +565,8 @@ class VerificationProfileSelectView(View):
     @discord.ui.select(placeholder="Wybierz płeć!", min_values=1, max_values=1, options=[
         discord.SelectOption(label="—͟͞👧・Niewiasta", emoji="👱‍♀️"),
         discord.SelectOption(label="—͟͞👦・Jegomość", emoji="👱‍♂️"),
+        discord.SelectOption(label="—͟͞💗・Demigirl", emoji="💗"),
+        discord.SelectOption(label="—͟͞💙・Demiboy", emoji="💙"),
         discord.SelectOption(label="—͟͞👤・Helikopter Bojowy", emoji="🚁")
     ], row=0)
     async def gender_select(self, interaction: discord.Interaction, select: Select):

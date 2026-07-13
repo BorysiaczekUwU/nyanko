@@ -51,6 +51,18 @@ ORIENTATIONS = {
     "pozioma": {"flag": "🇲🇨", "emoji": "🇲🇨", "name": "Pozioma", "color": 0xFF0000},
 }
 
+# --- PŁCIE ---
+# "flag": to co pojawi się w nicku.
+# "emoji": to co idzie do ikonki na liście (MUSI być to JEDNA walidna emotka).
+GENDERS = {
+    "chlopak": {"flag": "👦", "emoji": "👱‍♂️", "name": "Chłopak", "role_name": "—͟͞👦・Jegomość"},
+    "dziewczyna": {"flag": "👧", "emoji": "👱‍♀️", "name": "Dziewczyna", "role_name": "—͟͞👧・Niewiasta"},
+    "demigirl": {"flag": "💗🩶🤍", "emoji": "💗", "name": "Demigirl", "role_name": "—͟͞💗・Demigirl"},
+    "demiboy": {"flag": "💙🩶🤍", "emoji": "💙", "name": "Demiboy", "role_name": "—͟͞💙・Demiboy"},
+    "helicopter": {"flag": "🚁", "emoji": "🚁", "name": "Helikopter Bojowy", "role_name": "—͟͞👤・Helikopter Bojowy"},
+    "tajemnica": {"flag": "👽", "emoji": "👽", "name": "Tajemnica", "role_name": None}
+}
+
 # --- POMOCNICZE FUNKCJE DLA MONGODB ---
 # Jeśli bazy brak, używamy słownika w RAM (dla bezpieczeństwa przed crashem)
 ram_storage = {"economy": {}, "levels": {}, "profiles": {}, "tickets": {}, "clans": {}}

@@ -2,8 +2,8 @@ import discord
 from discord.ext import commands
 import asyncio
 from discord.ui import Modal, TextInput, View, Select
-from utils import get_profile_data, update_profile, get_level_data, get_data, KAWAII_PINK, KAWAII_BLUE, ORIENTATIONS
-from cogs.verification import RoleSelectView, ColorSelectView, COLOR_MAP
+from utils import get_profile_data, update_profile, get_level_data, get_data, KAWAII_PINK, KAWAII_BLUE, ORIENTATIONS, GENDERS
+from cogs.verification import RoleSelectView, ColorSelectView, COLOR_MAP, refresh_member_flags
 
 # --- MODAL DO WPISYWANIA URODZIN ---
 class BirthdayModal(Modal, title="Kiedy masz urodziny? 🎂"):
@@ -29,6 +29,7 @@ class CustomGenderModal(Modal, title="Wpisz swoją płeć ⚧"):
 
     async def on_submit(self, interaction: discord.Interaction):
         update_profile(interaction.user.id, "gender", self.gender_input.value)
+        await refresh_member_flags(interaction.user)
         await interaction.response.send_message(f"✅ Ustawiono niestandardową płeć: **{self.gender_input.value}**", ephemeral=True)
 
 # --- WYBÓR PŁCI ---
@@ -37,6 +38,8 @@ class GenderSelect(Select):
         options = [
             discord.SelectOption(label="Chłopak", emoji="👦", value="Chłopak"),
             discord.SelectOption(label="Dziewczyna", emoji="👧", value="Dziewczyna"),
+            discord.SelectOption(label="Demigirl", emoji="💗", value="Demigirl"),
+            discord.SelectOption(label="Demiboy", emoji="💙", value="Demiboy"),
             discord.SelectOption(label="Niestandardowa...", emoji="⚧", value="custom"),
             discord.SelectOption(label="Inna / Tajemnica", emoji="👽", value="Tajemnica"),
         ]
@@ -48,6 +51,7 @@ class GenderSelect(Select):
             await interaction.response.send_modal(CustomGenderModal())
         else:
             update_profile(interaction.user.id, "gender", val)
+            await refresh_member_flags(interaction.user)
             await interaction.response.defer(thinking=False)
 
 # --- WYBÓR ZAIMKÓW ---
@@ -280,6 +284,130 @@ class Profile(commands.Cog):
         # Podpis twórcy
         embed.set_footer(text=f"Stworzony przez BorysiaczekUwU 💖 • ID: {member.id}")
 
+        await ctx.send(embed=embed)
+
+    @commands.command(aliases=["genders"])
+    async def gendery(self, ctx):
+        """Pokazuje listę dostępnych płci i ich flagi"""
+        embed = discord.Embed(
+            title="⚧ Dostępne Płcie i Flagi ⚧",
+            description="Oto lista tożsamości płciowych, które możesz ustawić w swoim profilu (`!setbio`):",
+            color=KAWAII_BLUE
+        )
+        for k, g in GENDERS.items():
+            role_info = f"Rola: `{g['role_name']}`" if g['role_name'] else "Niestandardowa"
+            embed.add_field(
+                name=f"{g['emoji']} {g['name']}",
+                value=f"Flaga w nicku: {g['flag']}\n{role_info}",
+                inline=True
+            )
+        embed.set_footer(text="Użyj !setbio aby edytować swoją tożsamość! 💖")
+        await ctx.send(embed=embed)
+
+    @commands.command(aliases=["refresh", "update_roles"])
+    async def odswiez(self, ctx):
+        """Odświeża Twoje role profilowe, kolory oraz flagi w pseudonimie na serwerze"""
+        member = ctx.author
+        profile = get_profile_data(member.id)
+        
+        # 1. Odśwież flagi w nicku
+        await refresh_member_flags(member, profile)
+        
+        # 2. Upewnij się, że role profilowe istnieją na serwerze i są nadane
+        gender = profile.get("gender", "")
+        orientation = profile.get("orientation", "")
+        color = profile.get("color", "")
+        
+        roles_to_add = []
+        
+        # Znajdź rolę dla płci
+        gender_role_name = None
+        for g in GENDERS.values():
+            if g["name"] == gender or (g["role_name"] and g["role_name"] == gender) or (g["role_name"] and g["role_name"] in gender):
+                gender_role_name = g.get("role_name")
+                break
+        
+        if gender_role_name:
+            r = discord.utils.get(ctx.guild.roles, name=gender_role_name)
+            if not r:
+                try:
+                    r = await ctx.guild.create_role(name=gender_role_name, reason="Auto-tworzenie brakującej roli płci")
+                except: pass
+            if r:
+                roles_to_add.append(r)
+                
+        # Znajdź rolę dla orientacji
+        if orientation:
+            clean_orient = orientation.split()[-1] if len(orientation.split()) > 1 else orientation
+            orient_role_name = None
+            for v in ORIENTATIONS.values():
+                if v["name"] == clean_orient or v["name"] in orientation:
+                    orient_role_name = v["name"]
+                    break
+            if orient_role_name:
+                r = discord.utils.get(ctx.guild.roles, name=orient_role_name)
+                if not r:
+                    try:
+                        color_val = next((v["color"] for v in ORIENTATIONS.values() if v["name"] == orient_role_name), None)
+                        role_color = discord.Color(color_val) if color_val else discord.Color.default()
+                        r = await ctx.guild.create_role(name=orient_role_name, reason="Auto-tworzenie brakującej roli orientacji", color=role_color)
+                    except: pass
+                if r:
+                    roles_to_add.append(r)
+                    
+        # Znajdź rolę dla koloru
+        if color:
+            r = discord.utils.get(ctx.guild.roles, name=color)
+            if not r:
+                try:
+                    color_val = COLOR_MAP.get(color)
+                    role_color = discord.Color(color_val) if color_val else discord.Color.default()
+                    r = await ctx.guild.create_role(name=color, reason="Auto-tworzenie brakującej roli koloru", color=role_color)
+                except: pass
+            if r:
+                roles_to_add.append(r)
+                
+        if roles_to_add:
+            try:
+                await member.add_roles(*roles_to_add)
+                roles_names = ", ".join([f"`{r.name}`" for r in roles_to_add])
+                await ctx.send(f"✅ Pomyślnie odświeżono profil! Upewniono się, że posiadasz role: {roles_names} i zaktualizowano pseudonim. ✨")
+            except discord.Forbidden:
+                await ctx.send("⚠️ Odświeżono pseudonim, ale bot nie ma wystarczających uprawnień do zarządzania niektórymi rolami.")
+            except Exception as e:
+                await ctx.send(f"❌ Wystąpił problem podczas nadawania ról: {e}")
+        else:
+            await ctx.send("✅ Odświeżono pseudonim i flagi w profilu! (Brak ról do nadania)")
+
+    @commands.command(aliases=["random_id", "tozsamosc"])
+    async def losowa_tozsamosc(self, ctx):
+        """Losuje śmieszną tożsamość dla Ciebie! 🌀"""
+        import random
+        # Wybieramy losowe elementy
+        rand_gender = random.choice(list(GENDERS.values()))
+        rand_orient = random.choice(list(ORIENTATIONS.values()))
+        
+        pronouns_list = ["Ono/Jego", "Ona/Jej", "Oni/Ich", "On/Jego", "Jeno/Tego", "Helikopter/Helikoptera", "Abstrakcyjne/Inne"]
+        rand_pronouns = random.choice(pronouns_list)
+        
+        absurd_adjectives = [
+            "bardzo uroczy(a)", "ciągle śpiący(a)", "uzależniony(a) od zupki chińskiej",
+            "tajny agent żabiego zakonu", "poszukiwacz diamentów w kopalni życia",
+            "zawodowy spacz w dzień", "nieoficjalny król/królowa spamu",
+            "poskromiciel dzikich Creeperów", "miłośnik pizzy z ananasem"
+        ]
+        rand_adj = random.choice(absurd_adjectives)
+        
+        embed = discord.Embed(
+            title="🌀 Maszyna Losująca Tożsamość 🌀",
+            description=f"Wylosowano nową, absolutnie unikalną tożsamość dla {ctx.author.mention}! 🧬",
+            color=KAWAII_BLUE
+        )
+        embed.add_field(name="⚧ Płeć", value=f"{rand_gender['emoji']} **{rand_gender['name']}**", inline=True)
+        embed.add_field(name="🏳️‍🌈 Orientacja", value=f"{rand_orient.get('emoji', '🌈')} **{rand_orient['name']}**", inline=True)
+        embed.add_field(name="🗣️ Zaimki", value=f"**{rand_pronouns}**", inline=True)
+        embed.add_field(name="🔮 Dodatkowa cecha", value=f"Jest to osoba, która jest **{rand_adj}**!", inline=False)
+        embed.set_footer(text="Identity Generator v1.0 • Nyanko Bot 🌸")
         await ctx.send(embed=embed)
 
 async def setup(bot):
