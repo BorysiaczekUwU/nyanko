@@ -75,6 +75,16 @@ podzielona na poszczególne moduły (kategorie).
 ⭐ !clearwarns <@użytkownik>
    └ Czyści wszystkie ostrzeżenia użytkownika.
 
+⭐ !dodaj_slowo <słowo>
+   └ [MODERACJA] Dodaje słowo do listy słów zakazanych.
+
+⭐ !usun_slowo <słowo>
+   └ [MODERACJA] Usuwa słowo z listy słów zakazanych.
+
+⭐ !zakazane
+   └ [MODERACJA] Pokazuje listę wszystkich słów zakazanych.
+
+
 ⭐ !pochwal 
    └ Wysyła pozytywną wiadomość dla całego serwera, by każdemu umilić dzień.
 

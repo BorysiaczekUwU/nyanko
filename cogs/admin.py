@@ -285,6 +285,24 @@ class Admin(commands.Cog):
         import json
         with open("data/warns.json", "w") as f: json.dump(warns_data, f, indent=4)
 
+    def load_forbidden_words(self):
+        import json
+        import os
+        if not os.path.exists("data/forbidden_words.json"):
+            if not os.path.exists("data"): os.makedirs("data")
+            # Default forbidden words to preserve original behavior
+            default_words = ["praca", "zatrudnienie"]
+            with open("data/forbidden_words.json", "w", encoding="utf-8") as f:
+                json.dump(default_words, f, ensure_ascii=False, indent=4)
+            return default_words
+        with open("data/forbidden_words.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def save_forbidden_words(self, words):
+        import json
+        with open("data/forbidden_words.json", "w", encoding="utf-8") as f:
+            json.dump(words, f, ensure_ascii=False, indent=4)
+
     @commands.command()
     @has_perms_or_borysiaczek(moderate_members=True)
     async def warn(self, ctx, member: discord.Member, *, reason="Brak powodu"):
@@ -333,6 +351,58 @@ class Admin(commands.Cog):
             await ctx.send(f"🧹 Pomyślnie wyczyszczono wszystkie ostrzeżenia dla {member.name}!")
         else:
             await ctx.send(f"⚠️ {member.name} nie ma żadnych ostrzeżeń.")
+
+    @commands.command(name="dodaj_slowo", aliases=["add_badword"])
+    @has_perms_or_borysiaczek(administrator=True)
+    async def dodaj_slowo(self, ctx, *, slowo: str):
+        """[MODERACJA] Dodaje słowo do listy słów zakazanych."""
+        slowo = slowo.strip().lower()
+        if not slowo:
+            return await ctx.send("⚠️ Słowo nie może być puste!")
+        
+        words = self.load_forbidden_words()
+        if slowo in words:
+            embed = discord.Embed(title="⚠️ Błąd", description=f"Słowo `{slowo}` jest już na liście zakazanych słów.", color=discord.Color.orange())
+            return await ctx.send(embed=embed)
+        
+        words.append(slowo)
+        self.save_forbidden_words(words)
+        
+        embed = discord.Embed(title="✅ Dodano słowo zakazane", description=f"Pomyślnie dodano słowo `{slowo}` do listy zakazanych słów.", color=discord.Color.green())
+        await ctx.send(embed=embed)
+
+    @commands.command(name="usun_slowo", aliases=["remove_badword"])
+    @has_perms_or_borysiaczek(administrator=True)
+    async def usun_slowo(self, ctx, *, slowo: str):
+        """[MODERACJA] Usuwa słowo z listy słów zakazanych."""
+        slowo = slowo.strip().lower()
+        if not slowo:
+            return await ctx.send("⚠️ Słowo nie może być puste!")
+            
+        words = self.load_forbidden_words()
+        if slowo not in words:
+            embed = discord.Embed(title="⚠️ Błąd", description=f"Słowo `{slowo}` nie znajduje się na liście zakazanych słów.", color=discord.Color.orange())
+            return await ctx.send(embed=embed)
+            
+        words.remove(slowo)
+        self.save_forbidden_words(words)
+        
+        embed = discord.Embed(title="✅ Usunięto słowo zakazane", description=f"Pomyślnie usunięto słowo `{slowo}` z listy zakazanych słów.", color=discord.Color.green())
+        await ctx.send(embed=embed)
+
+    @commands.command(name="zakazane", aliases=["zakazane_slowa", "badwords"])
+    @has_perms_or_borysiaczek(moderate_members=True)
+    async def zakazane(self, ctx):
+        """[MODERACJA] Pokazuje listę wszystkich słów zakazanych."""
+        words = self.load_forbidden_words()
+        if not words:
+            embed = discord.Embed(title="🚫 Zakazane Słowa", description="Lista słów zakazanych jest obecnie pusta.", color=KAWAII_PINK)
+            return await ctx.send(embed=embed)
+            
+        words_formatted = ", ".join(f"`{w}`" for w in words)
+        embed = discord.Embed(title="🚫 Lista Zakazanych Słów", description=words_formatted, color=KAWAII_PINK)
+        embed.set_footer(text=f"Łącznie słów: {len(words)}")
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def temat(self, ctx):
@@ -750,16 +820,24 @@ class Admin(commands.Cog):
             return
 
         content_lower = message.content.lower()
-        if "praca" in content_lower or "zatrudnienie" in content_lower:
+        forbidden_words = self.load_forbidden_words()
+        
+        triggered_word = None
+        for word in forbidden_words:
+            if word in content_lower:
+                triggered_word = word
+                break
+                
+        if triggered_word:
             warns = self.load_warns()
             user_id = str(message.author.id)
             if user_id not in warns:
                 warns[user_id] = []
             
-            reason = "Użycie zakazanego słowa (praca/zatrudnienie)"
+            reason = f"Użycie zakazanego słowa ({triggered_word})"
             warns[user_id].append({
                 "reason": reason,
-                "moderator": "System Anty-Pracy",
+                "moderator": "System Anty-Pracy" if triggered_word in ["praca", "zatrudnienie"] else "Automoderacja Słów Zakazanych",
                 "date": str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             })
             self.save_warns(warns)
@@ -771,17 +849,17 @@ class Admin(commands.Cog):
                 
             embed = discord.Embed(
                 title="⚠️ AUTOMATYCZNE OSTRZEŻENIE ⚠️",
-                description=f"Użytkownik {message.author.mention} użył zakazanego słowa związanego z pracą/zatrudnieniem!",
+                description=f"Użytkownik {message.author.mention} użył zakazanego słowa!",
                 color=KAWAII_RED
             )
-            embed.add_field(name="Powód kary", value="Na tym serwerze panuje zakaz rozmów o pracy i zatrudnieniu! Skupiamy się na rozrywce. 🌸")
+            embed.add_field(name="Powód kary", value=f"Na tym serwerze panuje zakaz używania słowa `{triggered_word}`! Skupiamy się na rozrywce. 🌸")
             embed.set_footer(text=f"Aktualna liczba ostrzeżeń tego użytkownika: {len(warns[user_id])}")
             await message.channel.send(embed=embed)
             
             try:
                 await message.author.send(
                     f"⚠️ Zostałeś automatycznie ostrzeżony na serwerze **{message.guild.name}**!\n"
-                    f"**Powód:** Użycie słowa związanego z pracą/zatrudnieniem.\n"
+                    f"**Powód:** Użycie zakazanego słowa: `{triggered_word}`.\n"
                     f"Liczba Twoich ostrzeżeń wynosi teraz: **{len(warns[user_id])}**."
                 )
             except:
