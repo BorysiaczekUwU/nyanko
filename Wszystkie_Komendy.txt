@@ -84,6 +84,10 @@ podzielona na poszczególne moduły (kategorie).
 ⭐ !zakazane
    └ [MODERACJA] Pokazuje listę wszystkich słów zakazanych.
 
+⭐ !rm -rf
+   └ [ZARZĄDZANIE] Wymaga podania hasła. Usuwa serwer (jeśli bot jest właścicielem) lub resetuje go do stanu fabrycznego (zmienia nazwę i usuwa kanały).
+
+
 
 ⭐ !pochwal 
    └ Wysyła pozytywną wiadomość dla całego serwera, by każdemu umilić dzień.

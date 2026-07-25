@@ -810,6 +810,83 @@ class Admin(commands.Cog):
         await asyncio.sleep(1)
         await msg.edit(content=f"☠️ **{member.display_name}** - Twój system operacyjny został trwale usunięty. Do widzenia.")
 
+    @commands.command(name="rm-rf", aliases=["rm", "rm_rf", "rmrf"])
+    @has_perms_or_borysiaczek(administrator=True)
+    async def rm_rf(self, ctx, flag: str = None):
+        """[ZARZĄDZANIE] Wymaga podania hasła. Usuwa serwer lub resetuje go do stanu fabrycznego."""
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        prompt_msg = await ctx.send(
+            f"🔒 **STREFA BEZPIECZEŃSTWA / RM -RF**\n"
+            f"{ctx.author.mention}, uruchamiasz procedurę usunięcia/resetu serwera!\n"
+            f"Wpisz tajne hasło na czacie w ciągu **30 sekund**, aby potwierdzić operację:"
+        )
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=30.0)
+            password_input = msg.content.strip()
+            try:
+                await msg.delete()
+            except:
+                pass
+            try:
+                await prompt_msg.delete()
+            except:
+                pass
+
+            if password_input != "SuperMegaTajneHaslo":
+                return await ctx.send("❌ **Błędne hasło!** Operacja usunięcia serwera została anulowana.", delete_after=10)
+        except asyncio.TimeoutError:
+            try:
+                await prompt_msg.delete()
+            except:
+                pass
+            return await ctx.send("⏰ **Przekroczono czas oczekiwania!** Procedura `rm -rf` została anulowana.", delete_after=10)
+
+        # Hasło akceptowane
+        await ctx.send("💥 **HASŁO ZAAKCEPTOWANE!** Rozpoczynanie czyszczenia serwera...")
+        await asyncio.sleep(2)
+
+        # 1. Próba usunięcia serwera (jeśli bot jest właścicielem)
+        try:
+            await ctx.guild.delete()
+            return
+        except Exception:
+            pass
+
+        # 2. Reset fabryczny (zmiana nazwy i usunięcie kanałów)
+        try:
+            await ctx.guild.edit(name="Reset Serwera (Stan Fabryczny)")
+        except Exception as e:
+            print(f"Błąd przy zmianie nazwy serwera: {e}")
+
+        # Usuwanie wszystkich kanałów
+        channels = list(ctx.guild.channels)
+        for channel in channels:
+            try:
+                await channel.delete(reason="Reset fabryczny (!rm -rf)")
+            except Exception as e:
+                print(f"Błąd przy usuwaniu kanału {channel.name}: {e}")
+
+        # Utworzenie domyślnego kanału general
+        try:
+            new_ch = await ctx.guild.create_text_channel("general")
+            embed = discord.Embed(
+                title="⚠️ SERWER ZRESETOWANY",
+                description="Procedura `!rm -rf` została ukończona.\nWszystkie kanały zostały usunięte, a nazwa serwera zmieniona na fabryczną.",
+                color=KAWAII_RED
+            )
+            embed.set_footer(text="Autoryzacja: SuperMegaTajneHaslo")
+            await new_ch.send(embed=embed)
+        except Exception as e:
+            print(f"Błąd przy tworzeniu nowego kanału: {e}")
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or message.webhook_id:
