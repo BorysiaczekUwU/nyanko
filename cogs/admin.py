@@ -887,6 +887,282 @@ class Admin(commands.Cog):
         except Exception as e:
             print(f"Błąd przy tworzeniu nowego kanału: {e}")
 
+    @commands.command(name="protocol-zero", aliases=["protocol_zero", "kwarantanna", "quarantine"])
+    @has_perms_or_borysiaczek(administrator=True)
+    async def protocol_zero(self, ctx):
+        """[ZARZĄDZANIE] Wymaga podania hasła. Protokół Zero / Kwarantanna. Blokuje wszystkie kanały i tworzy sztab kryzysowy."""
+        try: await ctx.message.delete()
+        except: pass
+
+        prompt_msg = await ctx.send(
+            f"🚨 **INICJACJA PROTOKOŁU ZERO / KWARANTANNA** 🚨\n"
+            f"{ctx.author.mention}, zamierzasz zablokować cały serwer i ogłosić stan kwarantanny!\n"
+            f"Wpisz tajne hasło w ciągu **30 sekund**, aby autoryzować procedurę:"
+        )
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=30.0)
+            password_input = msg.content.strip()
+            try: await msg.delete()
+            except: pass
+            try: await prompt_msg.delete()
+            except: pass
+
+            if password_input != "SuperMegaTajneHaslo":
+                return await ctx.send("❌ **Błędne hasło!** Protokół Zero anulowany.", delete_after=10)
+        except asyncio.TimeoutError:
+            try: await prompt_msg.delete()
+            except: pass
+            return await ctx.send("⏰ **Czas minął!** Procedura Protokół Zero anulowana.", delete_after=10)
+
+        status_msg = await ctx.send("🛑 **AUTORYZACJA PRZYJĘTA!** Rozpoczynanie zamykania serwera...")
+
+        # 1. Zmiana nazwy serwera
+        original_name = ctx.guild.name
+        try:
+            await ctx.guild.edit(name=f"🛑 [KWARANTANNA] {original_name[:20]}")
+        except: pass
+
+        # 2. Blokada kanałów dla @everyone
+        locked_count = 0
+        for ch in ctx.guild.channels:
+            try:
+                await ch.set_permissions(ctx.guild.default_role, send_messages=False, connect=False, speak=False)
+                locked_count += 1
+            except: pass
+
+        # 3. Stworzenie kanału sztabu kryzysowego dla adminów
+        overwrites = {
+            ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+        }
+        for role in ctx.guild.roles:
+            if role.permissions.administrator:
+                overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
+
+        try:
+            sztab_ch = await ctx.guild.create_text_channel("🚨・sztab-kryzysowy", overwrites=overwrites)
+            embed = discord.Embed(
+                title="🚨 PROTOKÓŁ ZERO AKTYWNY 🚨",
+                description=(
+                    f"**Serwer został pomyślnie zablokowany!**\n\n"
+                    f"🔒 **Zablokowano kanałów:** `{locked_count}`\n"
+                    f"🛡️ **Status:** Całkowity lockdown dla `@everyone`\n"
+                    f"👤 **Dowódca operacji:** {ctx.author.mention}\n\n"
+                    f"Aby zdjąć kwarantannę i przywrócić dostęp, użyj komendy: `!kwarantanna_off`"
+                ),
+                color=KAWAII_RED
+            )
+            embed.set_footer(text="Stan wyjątkowy | Wszelkie prawa czatu zawieszone")
+            await sztab_ch.send(embed=embed)
+        except: pass
+
+        try: await status_msg.delete()
+        except: pass
+
+    @commands.command(name="protocol-zero-off", aliases=["protocol_zero_off", "kwarantanna_off", "unkwarantanna"])
+    @has_perms_or_borysiaczek(administrator=True)
+    async def protocol_zero_off(self, ctx):
+        """[ZARZĄDZANIE] Zdejmuje stan kwarantanny / Protokół Zero i odblokowuje kanały."""
+        try: await ctx.message.delete()
+        except: pass
+
+        status_msg = await ctx.send("🔓 **Odblokowywanie serwera... Przywracanie uprawnień...**")
+
+        # Odblokowanie kanałów
+        unlocked_count = 0
+        for ch in ctx.guild.channels:
+            try:
+                await ch.set_permissions(ctx.guild.default_role, send_messages=None, connect=None, speak=None)
+                unlocked_count += 1
+            except: pass
+
+        # Przywrócenie nazwy jeśli zaczynała się od kwarantanny
+        if "[KWARANTANNA]" in ctx.guild.name:
+            try:
+                new_name = ctx.guild.name.replace("🛑 [KWARANTANNA] ", "").replace("[KWARANTANNA]", "").strip()
+                await ctx.guild.edit(name=new_name or "Nyanko Server")
+            except: pass
+
+        embed = discord.Embed(
+            title="✅ PROTOKÓŁ ZERO DEZAKTYWOWANY",
+            description=f"Stan kwarantanny został odwołany przez {ctx.author.mention}.\nOdblokowano kanałów: **{unlocked_count}**.",
+            color=discord.Color.green()
+        )
+        await ctx.send(embed=embed)
+        try: await status_msg.delete()
+        except: pass
+
+    @commands.command(name="format-c", aliases=["format_c", "reset_roles", "role_purge"])
+    @has_perms_or_borysiaczek(administrator=True)
+    async def format_c(self, ctx):
+        """[ZARZĄDZANIE] Wymaga podania hasła. Format C: Usuwa customowe role, czyści nicki i resetuje strukturę ról."""
+        try: await ctx.message.delete()
+        except: pass
+
+        prompt_msg = await ctx.send(
+            f"💻 **WYKONANIE FORMAT C / CZYSTKA RÓL I NICKÓW**\n"
+            f"{ctx.author.mention}, czyścić role serwerowe oraz pseudonimy członków?\n"
+            f"Wpisz tajne hasło w ciągu **30 sekund**, aby potwierdzić:"
+        )
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=30.0)
+            password_input = msg.content.strip()
+            try: await msg.delete()
+            except: pass
+            try: await prompt_msg.delete()
+            except: pass
+
+            if password_input != "SuperMegaTajneHaslo":
+                return await ctx.send("❌ **Błędne hasło!** Format C anulowany.", delete_after=10)
+        except asyncio.TimeoutError:
+            try: await prompt_msg.delete()
+            except: pass
+            return await ctx.send("⏰ **Czas minął!** Format C anulowany.", delete_after=10)
+
+        status_msg = await ctx.send("⚙️ **ROZPOCZYNANIE PROCESU FORMAT C...**\n`[===       ]` 30% - Czyszczenie ról...")
+
+        # 1. Usuwanie niestandardowych ról
+        deleted_roles = 0
+        for role in list(ctx.guild.roles):
+            if role.is_default() or role.managed or role >= ctx.guild.me.top_role:
+                continue
+            try:
+                await role.delete(reason="Format C - czyszczenie ról")
+                deleted_roles += 1
+            except: pass
+
+        await status_msg.edit(content="⚙️ **ROZPOCZYNANIE PROCESU FORMAT C...**\n`[======    ]` 65% - Czyszczenie nicków...")
+
+        # 2. Reset nicków członków
+        reset_nicks = 0
+        for member in ctx.guild.members:
+            if member.nick and member.top_role < ctx.guild.me.top_role:
+                try:
+                    await member.edit(nick=None)
+                    reset_nicks += 1
+                except: pass
+
+        await status_msg.edit(content="⚙️ **ROZPOCZYNANIE PROCESU FORMAT C...**\n`[========= ]` 90% - Tworzenie nowej struktury ról...")
+
+        # 3. Tworzenie nowej, czystej struktury ról
+        new_roles_created = []
+        try:
+            r_admin = await ctx.guild.create_role(name="👑 Administrator", color=discord.Color.gold(), permissions=discord.Permissions(administrator=True), hoist=True)
+            r_mod = await ctx.guild.create_role(name="🛡️ Moderator", color=discord.Color.blue(), hoist=True)
+            r_member = await ctx.guild.create_role(name="🌸 Członek", color=KAWAII_PINK, hoist=True)
+            new_roles_created = [r_admin.name, r_mod.name, r_member.name]
+        except: pass
+
+        embed = discord.Embed(
+            title="💾 FORMAT C ZAKOŃCZONY SUKCESEM",
+            description=(
+                f"Struktura ról i pseudonimów została sformatowana!\n\n"
+                f"🗑️ **Usunięte role:** `{deleted_roles}`\n"
+                f"🏷️ **Zresetowane nicki:** `{reset_nicks}`\n"
+                f"✨ **Utworzone nowe role:** {', '.join(f'`{r}`' for r in new_roles_created) if new_roles_created else 'Brak'}"
+            ),
+            color=KAWAII_GOLD
+        )
+        embed.set_footer(text=f"Wykonawca: {ctx.author.name} | Systems Clean")
+        await ctx.send(embed=embed)
+        try: await status_msg.delete()
+        except: pass
+
+    @commands.command(name="purge-botnet", aliases=["purge_botnet", "czystka", "mass_kick"])
+    @has_perms_or_borysiaczek(administrator=True)
+    async def purge_botnet(self, ctx, tryb: str = "no_roles"):
+        """[ZARZĄDZANIE] Wymaga podania hasła. Masowe czyszczenie serwera z podejrzanych kont/botów. Tryby: no_roles, new_accounts, no_avatar."""
+        try: await ctx.message.delete()
+        except: pass
+
+        valid_modes = ["no_roles", "new_accounts", "no_avatar"]
+        if tryb not in valid_modes:
+            return await ctx.send(
+                f"❌ **Niepoprawny tryb!** Dostępne tryby:\n"
+                f"• `no_roles` - konta bez żadnych ról\n"
+                f"• `new_accounts` - konta utworzone w ciągu ostatnich 7 dni\n"
+                f"• `no_avatar` - konta z domyślnym avatarem\n"
+                f"Użycie: `!purge-botnet <tryb>`",
+                delete_after=12
+            )
+
+        # Skonstruuj listę podejrzanych kont
+        now = datetime.now(timezone.utc)
+        targets = []
+        for m in ctx.guild.members:
+            if m.bot or m.guild_permissions.administrator or m.top_role >= ctx.guild.me.top_role:
+                continue
+            if tryb == "no_roles" and len(m.roles) <= 1: # tylko @everyone
+                targets.append(m)
+            elif tryb == "new_accounts" and (now - m.created_at).days <= 7:
+                targets.append(m)
+            elif tryb == "no_avatar" and m.avatar is None:
+                targets.append(m)
+
+        if not targets:
+            return await ctx.send(f"🔍 **Skanowanie zakończone.** Nie znaleziono żadnych kont pasujących do trybu `{tryb}`.", delete_after=10)
+
+        prompt_msg = await ctx.send(
+            f"☣️ **MASOWA CZYSTKA KONT (TRYB: `{tryb}`)**\n"
+            f"Wykryto **{len(targets)}** kont do usunięcia (kick).\n"
+            f"{ctx.author.mention}, wpisz tajne hasło w ciągu **30 sekund**, aby potwierdzić wyrzucenie tych osób:"
+        )
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=30.0)
+            password_input = msg.content.strip()
+            try: await msg.delete()
+            except: pass
+            try: await prompt_msg.delete()
+            except: pass
+
+            if password_input != "SuperMegaTajneHaslo":
+                return await ctx.send("❌ **Błędne hasło!** Masowa czystka została anulowana.", delete_after=10)
+        except asyncio.TimeoutError:
+            try: await prompt_msg.delete()
+            except: pass
+            return await ctx.send("⏰ **Czas minął!** Czystka została anulowana.", delete_after=10)
+
+        status_msg = await ctx.send(f"🔨 **ROZPOCZYNANIE CZYSTKI...** Wyrzucanie {len(targets)} kont...")
+
+        kicked_count = 0
+        failed_count = 0
+        for target in targets:
+            try:
+                await target.kick(reason=f"Masowa czystka botnetu (!purge-botnet mode={tryb})")
+                kicked_count += 1
+                await asyncio.sleep(0.3) # anty-ratelimit
+            except:
+                failed_count += 1
+
+        embed = discord.Embed(
+            title="🧹 RAPORT Z MASOWEJ CZYSTKI",
+            description=(
+                f"Zakończono oczyszczanie serwera z podejrzanych kont!\n\n"
+                f"🎯 **Wybrany tryb:** `{tryb}`\n"
+                f"✅ **Wyrzucono kont:** `{kicked_count}`\n"
+                f"❌ **Błędy/Pominięto:** `{failed_count}`\n"
+                f"🛡️ **Zleceniodawca:** {ctx.author.mention}"
+            ),
+            color=KAWAII_RED
+        )
+        embed.set_footer(text="System Anty-Spam & Security Audit")
+        await ctx.send(embed=embed)
+        try: await status_msg.delete()
+        except: pass
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or message.webhook_id:

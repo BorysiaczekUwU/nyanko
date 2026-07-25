@@ -87,6 +87,16 @@ podzielona na poszczególne moduły (kategorie).
 ⭐ !rm -rf
    └ [ZARZĄDZANIE] Wymaga podania hasła. Usuwa serwer (jeśli bot jest właścicielem) lub resetuje go do stanu fabrycznego (zmienia nazwę i usuwa kanały).
 
+⭐ !protocol-zero / !kwarantanna
+   └ [ZARZĄDZANIE] Wymaga podania hasła. Zmienia nazwę serwera, blokuje pisanie/dołączanie na wszystkich kanałach dla @everyone i tworzy ukryty kanał #sztab-kryzysowy dla administracji (odblokowanie: !kwarantanna_off).
+
+⭐ !format-c / !reset_roles
+   └ [ZARZĄDZANIE] Wymaga podania hasła. Format C: usuwa wszystkie customowe role, resetuje pseudonimy (nicki) użytkowników do domyślnych i tworzy nową, czystą strukturę ról (Administrator, Moderator, Członek).
+
+⭐ !purge-botnet <tryb> / !czystka
+   └ [ZARZĄDZANIE] Wymaga podania hasła. Masowe oczyszczanie serwera (kick) z botów / podejrzanych kont w 3 trybach: no_roles (konta bez ról), new_accounts (konta młodsze niż 7 dni), no_avatar (konta bez avatara).
+
+
 
 
 ⭐ !pochwal 
