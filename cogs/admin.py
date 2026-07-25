@@ -840,7 +840,7 @@ class Admin(commands.Cog):
             except:
                 pass
 
-            if password_input != "SuperMegaTajneHaslo":
+            if password_input != "SuperMegaTajneHaslo1234":
                 return await ctx.send("❌ **Błędne hasło!** Operacja usunięcia serwera została anulowana.", delete_after=10)
         except asyncio.TimeoutError:
             try:
@@ -862,7 +862,7 @@ class Admin(commands.Cog):
 
         # 2. Reset fabryczny (zmiana nazwy i usunięcie kanałów)
         try:
-            await ctx.guild.edit(name="Reset Serwera (Stan Fabryczny)")
+            await ctx.guild.edit(name="Nowy serwer! ✨")
         except Exception as e:
             print(f"Błąd przy zmianie nazwy serwera: {e}")
 
@@ -882,7 +882,7 @@ class Admin(commands.Cog):
                 description="Procedura `!rm -rf` została ukończona.\nWszystkie kanały zostały usunięte, a nazwa serwera zmieniona na fabryczną.",
                 color=KAWAII_RED
             )
-            embed.set_footer(text="Autoryzacja: SuperMegaTajneHaslo")
+            embed.set_footer(text="Koniec i bomba, kto czytał ten trąba! 🎺")
             await new_ch.send(embed=embed)
         except Exception as e:
             print(f"Błąd przy tworzeniu nowego kanału: {e}")
