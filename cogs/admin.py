@@ -876,7 +876,7 @@ class Admin(commands.Cog):
 
         # Utworzenie domyślnego kanału general
         try:
-            new_ch = await ctx.guild.create_text_channel("general")
+            new_ch = await ctx.guild.create_text_channel("💬・pogadanki")
             embed = discord.Embed(
                 title="⚠️ SERWER ZRESETOWANY",
                 description="Procedura `!rm -rf` została ukończona.\nWszystkie kanały zostały usunięte, a nazwa serwera zmieniona na fabryczną.",
