@@ -1218,5 +1218,156 @@ class Admin(commands.Cog):
             except:
                 pass
 
+    # --- KOMENDA POŻEGNANIE ---
+    @commands.command(name="pozegnanie")
+    @has_perms_or_borysiaczek(administrator=True)
+    async def pozegnanie(self, ctx):
+        """Żegna wszystkich i wyrzuca każdego z serwera. NIEODWRACALNE!"""
+        
+        # --- POTWIERDZENIE ---
+        confirm_embed = discord.Embed(
+            title="⚠️ UWAGA — OPERACJA NIEODWRACALNA ⚠️",
+            description=(
+                "Czy na pewno chcesz **pożegnać cały serwer**?\n\n"
+                "Ta komenda **wyrzuci WSZYSTKICH** członków serwera!\n"
+                "Zostaną tylko: bot i Ty.\n\n"
+                "Kliknij przycisk w ciągu **30 sekund**, aby potwierdzić."
+            ),
+            color=KAWAII_RED
+        )
+        confirm_embed.set_footer(text=f"Zażądał: {ctx.author.name}")
+
+        class ConfirmView(View):
+            def __init__(self, author):
+                super().__init__(timeout=30)
+                self.confirmed = False
+                self.author = author
+
+            @discord.ui.button(label="TAK, ŻEGNAJ WSZYSTKICH!", style=discord.ButtonStyle.danger, emoji="💀")
+            async def confirm_btn(self, interaction: discord.Interaction, button: Button):
+                if interaction.user.id != self.author.id:
+                    return await interaction.response.send_message("❌ Tylko autor komendy może potwierdzić!", ephemeral=True)
+                self.confirmed = True
+                button.disabled = True
+                button.label = "POTWIERDZONE"
+                await interaction.response.edit_message(view=self)
+                self.stop()
+
+            @discord.ui.button(label="Anuluj", style=discord.ButtonStyle.secondary, emoji="❌")
+            async def cancel_btn(self, interaction: discord.Interaction, button: Button):
+                if interaction.user.id != self.author.id:
+                    return await interaction.response.send_message("❌ Tylko autor komendy może anulować!", ephemeral=True)
+                self.confirmed = False
+                for child in self.children:
+                    child.disabled = True
+                await interaction.response.edit_message(content="❌ **Operacja anulowana.**", embed=None, view=self)
+                self.stop()
+
+        view = ConfirmView(ctx.author)
+        confirm_msg = await ctx.send(embed=confirm_embed, view=view)
+        await view.wait()
+
+        if not view.confirmed:
+            if not any(child.disabled for child in view.children):
+                await confirm_msg.edit(content="⏰ **Czas minął. Operacja anulowana.**", embed=None, view=None)
+            return
+
+        # --- POŻEGNANIE ---
+        FAREWELL_GIFS = [
+            "https://media.giphy.com/media/3oEdv6sy3ulljPMGdy/giphy.gif",
+            "https://media.giphy.com/media/l0HlvtIPdYkMKx0Ck/giphy.gif",
+            "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif",
+        ]
+
+        farewell_embed = discord.Embed(
+            title="🌸 POŻEGNANIE 🌸",
+            description=(
+                "**Nadszedł czas pożegnania...**\n\n"
+                "Było miło, było pięknie, ale wszystko kiedyś się kończy.\n"
+                "Dziękuję wszystkim za czas spędzony na tym serwerze! 💕\n\n"
+                "Za chwilę wszyscy zostaniecie wyrzuceni... Nie bierzcie tego do siebie! 😘\n\n"
+                "```\n"
+                "  ╔══════════════════════════════════╗\n"
+                "  ║    PA PA, DO ZOBACZENIA NIGDY!   ║\n"
+                "  ╚══════════════════════════════════╝\n"
+                "```"
+            ),
+            color=KAWAII_PINK
+        )
+        farewell_embed.set_image(url=random.choice(FAREWELL_GIFS))
+        farewell_embed.set_footer(text="Sayonara~ 🌸")
+        await ctx.send(embed=farewell_embed)
+
+        # --- ODLICZANIE ---
+        countdown_msg = await ctx.send("💀 **Odliczanie do końca serwera...**")
+        for i in range(10, 0, -1):
+            await asyncio.sleep(1)
+            emoji = "🔴" if i <= 3 else "🟡" if i <= 6 else "🟢"
+            bar = "█" * i + "░" * (10 - i)
+            await countdown_msg.edit(content=f"{emoji} **Odliczanie: {i}s**\n`[{bar}]`")
+        
+        await countdown_msg.edit(content="💥 **CZAS MINĄŁ! Rozpoczynam wyrzucanie...**")
+        await asyncio.sleep(1)
+
+        # --- WYRZUCANIE WSZYSTKICH ---
+        guild = ctx.guild
+        kicked = 0
+        failed = 0
+        total = len([m for m in guild.members if not m.bot and m.id != ctx.author.id])
+
+        progress_msg = await ctx.send(f"⏳ Wyrzucanie... `0/{total}`")
+
+        for member in guild.members:
+            if member.bot:
+                continue
+            if member.id == ctx.author.id:
+                continue
+            
+            try:
+                # Próba wysłania DM pożegnalnego
+                try:
+                    dm_embed = discord.Embed(
+                        title="🌸 Pożegnanie z serwera! 🌸",
+                        description=(
+                            f"Zostałeś wyrzucony z **{guild.name}**.\n\n"
+                            f"To pożegnanie od całego serwera — nie bierz tego do siebie!\n"
+                            f"Pa pa~ 💕"
+                        ),
+                        color=KAWAII_PINK
+                    )
+                    dm_embed.set_footer(text="Sayonara~ 🌸")
+                    await member.send(embed=dm_embed)
+                except:
+                    pass
+
+                await member.kick(reason="Komenda !pozegnanie — pożegnanie serwera 🌸")
+                kicked += 1
+            except:
+                failed += 1
+
+            # Aktualizacja progresu co 5 osób
+            if (kicked + failed) % 5 == 0 or (kicked + failed) == total:
+                try:
+                    await progress_msg.edit(content=f"⏳ Wyrzucanie... `{kicked + failed}/{total}` (✅ {kicked} | ❌ {failed})")
+                except:
+                    pass
+
+        # --- PODSUMOWANIE ---
+        summary_embed = discord.Embed(
+            title="💀 POŻEGNANIE ZAKOŃCZONE 💀",
+            description=(
+                f"**Operacja zakończona!**\n\n"
+                f"✅ Wyrzucono: **{kicked}** osób\n"
+                f"❌ Nie udało się: **{failed}** osób\n"
+                f"🤖 Boty: pominięte\n\n"
+                f"Serwer jest teraz pusty... 🌸\n"
+                f"*Sayonara~*"
+            ),
+            color=KAWAII_RED
+        )
+        summary_embed.set_footer(text=f"Wykonał: {ctx.author.name}")
+        await ctx.send(embed=summary_embed)
+
+
 async def setup(bot):
     await bot.add_cog(Admin(bot))
